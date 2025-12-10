@@ -65,9 +65,8 @@
         ]
     },
 
-    "global_activity": {
+    "main_activity": {
         "ws_server_address": "ws://",
-        "data": {},
-        "step_of_activities": 0
+        "data": {}
     }
 }
