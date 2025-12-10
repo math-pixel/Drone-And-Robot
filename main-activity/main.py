@@ -29,8 +29,10 @@ class WsDelegate(DelegateInterface):
         print("[+] Réponse envoyée au client.")
 
 if __name__ == "__main__":
-    server = AdvancedWSServer(delegate=WsDelegate(), config_file="./config.json")
-    server.start()
+    config_path = os.path.join(current_dir, "config.json")
+    print(f"path du config: {config_path}")
+    server = AdvancedWSServer(delegate=WsDelegate(), config_file=config_path)
+    asyncio.run(server.start())
     try:
         while True:
             pass  # Keep the main thread alive

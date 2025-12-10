@@ -22,9 +22,12 @@ class AdvancedWSServer:
     async def start(self):
         """Démarre le serveur WebSocket."""
         print(f"[*] Démarrage du serveur sur ws://{self.host}:{self.port}")
-        async with websockets.serve(self.handler, self.host, self.port):
-            # Maintient le serveur en vie indéfiniment
-            await asyncio.Future()
+        try:
+            async with websockets.serve(self.handler, self.host, self.port):
+                # Maintient le serveur en vie indéfiniment
+                await asyncio.Future()
+        except Exception as e:
+            print(f"[!] Erreur lors du démarrage du serveur: {e}")
 
     async def handler(self, websocket):
         """Gère chaque connexion entrante."""
