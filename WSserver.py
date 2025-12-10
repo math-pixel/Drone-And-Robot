@@ -4,10 +4,11 @@ import json
 import os
 
 class AdvancedWSServer:
-    def __init__(self, config_file="config.json"):
+    def __init__(self, delegate, config_file="config.json"):
         self.config = self._load_config(config_file)
         self.host = self.config.get("host", "localhost")
         self.port = self.config.get("port", 8765)
+        self.delegate = delegate
         print(f"[*] Configuration chargée: {self.host}:{self.port}")
 
     def _load_config(self, path):
@@ -45,7 +46,7 @@ class AdvancedWSServer:
                         print(json.dumps(data, indent=4, ensure_ascii=False))
                         
                         # 3. Appel de la méthode process
-                        await self.process(data, websocket)
+                        await self.delegate.process(data, websocket)
                 
                 except json.JSONDecodeError:
                     # Ce n'est pas du JSON, on ignore la suite logique
@@ -54,6 +55,7 @@ class AdvancedWSServer:
         except websockets.ConnectionClosed:
             print(f"[-] Connexion fermée : {client_address}")
 
+    # Process example
     async def process(self, data, websocket):
         """
         Méthode appelée uniquement si le JSON est valide et correspond au critère.
@@ -103,3 +105,7 @@ if __name__ == "__main__":
         asyncio.run(server.start())
     except KeyboardInterrupt:
         print("\n[*] Arrêt du serveur.")
+
+
+class DelegateInterface:
+    def process(self, data, websocket):
