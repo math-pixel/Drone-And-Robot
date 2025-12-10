@@ -109,3 +109,4 @@ if __name__ == "__main__":
 
 class DelegateInterface:
     def process(self, data, websocket):
+        pass

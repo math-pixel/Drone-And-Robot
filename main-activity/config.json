@@ -1,0 +1,5 @@
+{
+    "host": "localhost",
+    "port": 8765,
+    "remote_server_uri": "ws://localhost:9000"
+}
