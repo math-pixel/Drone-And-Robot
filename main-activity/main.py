@@ -137,7 +137,7 @@ class WsDelegate(DelegateInterface):
         print("[+] Réponse envoyée au client.")
 
 if __name__ == "__main__":
-    config_path = os.path.join(current_dir, "config.json")
+    config_path = os.path.join(parent_dir, "config.json")
     print(f"path du config: {config_path}")
     server = AdvancedWSServer(delegate=WsDelegate(), config_file=config_path)
     asyncio.run(server.start())
