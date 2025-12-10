@@ -45,6 +45,8 @@ class WsDelegate(DelegateInterface):
                     print("[+] Deuxième réponse reçue du client.")
                     data["sequencing"] += 1
                     await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
+                case _:
+                    print("[-] Ne corespond à aucune étape connue de sequencing.")
 
 
         
