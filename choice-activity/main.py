@@ -1,5 +1,6 @@
 import sys
 import os
+import threading
 
 # --- BLOC MAGIQUE A METTRE TOUT EN HAUT ---
 
@@ -39,6 +40,8 @@ class WsDelegate(DelegateInterface):
                 "status": "processed",
                 "original_data": data
             }
+            await websocket.send(json.dumps(response))
+            print("[+] Réponse envoyée au client.")
 
             match data.get("sequencing"):
                 case 6:
@@ -56,30 +59,35 @@ class WsDelegate(DelegateInterface):
                     input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                     await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
-                case 23:
-                    print("[+] Vingt-troisième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
-                    data["sequencing"] += 1
-                    await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
+                case 24:
+                    print("[+] Vingt-quatrième réponse reçue du client.")
+                    input(f"Appuyez sur Entrée pour terminer. ")
                 case _:
                     print("[-] Ne corespond à aucune étape connue de sequencing.")
 
-
-        
-        await websocket.send(json.dumps(response))
-        print("[+] Réponse envoyée au client.")
+def run_server():
+    result = asyncio.run(server.start())
 
 if __name__ == "__main__":
     config_path = os.path.join(parent_dir, "config.json")
     print(f"path du config: {config_path}")
     config_ws = {
-        "host": "",
-        "port": 8080
+        "host": "192.168.10.182",
+        "port": 8002
     }
     server = AdvancedWSServer(delegate=WsDelegate(), config=config_ws)
-    asyncio.run(server.start())
+    thread1 = threading.Thread(target=run_server, daemon=True)
+    thread1.start()
+    
+    print("[+] Serveur WebSocket démarré.")
+    with open(config_path, 'r') as f:
+        data = json.load(f)
+    input(f"Appuyez sur Entrée pour commencer...")
+    asyncio.run(ws_send_to(data.get("main_activity").get("ws_server_address"), data))
+    
     try:
         while True:
             pass  # Keep the main thread alive
     except KeyboardInterrupt:
         server.stop()
+

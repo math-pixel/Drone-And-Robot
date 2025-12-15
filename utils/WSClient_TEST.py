@@ -4,7 +4,7 @@ import websockets
 import json
 
 async def send_test():
-    uri = "ws://localhost:8765"
+    uri = "ws://192.168.10.50:8005"
     async with websockets.connect(uri) as websocket:
         # 1. Message normal
         await websocket.send("Salut serveur!")

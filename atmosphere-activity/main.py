@@ -38,45 +38,43 @@ class WsDelegate(DelegateInterface):
                 "status": "processed",
                 "original_data": data
             }
+            await websocket.send(json.dumps(response))
+            print("[+] Réponse envoyée au client.")
 
             match data.get("sequencing"):
                 case 2:
                     print("[+] Deuxième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                 case 5:
                     print("[+] Cinquième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                 case 8:
                     print("[+] Huitième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                 case 11:
                     print("[+] Onzième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
-                case 16:
-                    print("[+] Seizième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")   
+                case 14:
+                    print("[+] Quatorzième réponse reçue du client.")
                     data["sequencing"] += 1
-                case 19:
-                    print("[+] Dix-neuvième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
+                case 17:
+                    print("[+] Dix-septième réponse reçue du client.")
+                    data["sequencing"] += 1
+                case 20:
+                    print("[+] Vingtième réponse reçue du client.")
+                    data["sequencing"] += 1
+                case 23:
+                    print("[+] Vingt-troisième réponse reçue du client.")
                     data["sequencing"] += 1
                 case _:
                     print("[-] Ne corespond à aucune étape connue de sequencing.")
-
-
-        await websocket.send(json.dumps(response))
-        print("[+] Réponse envoyée au client.")
 
 if __name__ == "__main__":
     config_path = os.path.join(parent_dir, "config.json")
     print(f"path du config: {config_path}")
     config_ws = {
-        "host": "",
-        "port": 8080
+        "host": "192.168.10.182",
+        "port": 8001
     }
     server = AdvancedWSServer(delegate=WsDelegate(), config=config_ws)
     asyncio.run(server.start())
