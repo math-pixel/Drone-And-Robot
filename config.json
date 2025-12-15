@@ -32,7 +32,7 @@
     },
 
     "activity_knock_down": {
-        "ws_server_address": "ws://",
+        "ws_server_address": "ws://172.19.118.100:8080",
         "difficulty_level": 1,
         "enable": false,
         "number_of_points_detected": 0,

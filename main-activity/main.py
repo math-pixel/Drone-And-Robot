@@ -138,7 +138,11 @@ class WsDelegate(DelegateInterface):
 if __name__ == "__main__":
     config_path = os.path.join(parent_dir, "config.json")
     print(f"path du config: {config_path}")
-    server = AdvancedWSServer(delegate=WsDelegate(), config_file=config_path)
+    config_ws = {
+        "host": "localhost",
+        "port": 9000
+    }
+    server = AdvancedWSServer(delegate=WsDelegate(), config=config_ws)
     asyncio.run(server.start())
     try:
         while True:

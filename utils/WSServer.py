@@ -4,10 +4,18 @@ import json
 import os
 
 class AdvancedWSServer:
-    def __init__(self, delegate, config_file="config.json"):
-        self.config = self._load_config(config_file)
-        self.host = self.config.get("host", "localhost")
-        self.port = self.config.get("port", 8765)
+
+    DEFAULT_CONFIG = {
+        "host": "localhost",
+        "port": 8000
+    }
+
+    def __init__(self, delegate, config: dict = None):
+        #self.config = self._load_config(config_file)
+        print(config)
+        self.config = {**self.DEFAULT_CONFIG, **(config or {})}
+        self.host = self.config.get("host")
+        self.port = self.config.get("port")
         self.delegate = delegate
         print(f"[*] Configuration chargée: {self.host}:{self.port}")
 
