@@ -42,27 +42,32 @@ class WsDelegate(DelegateInterface):
             match data.get("sequencing"):
                 case 2:
                     print("[+] Deuxième réponse reçue du client.")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                 case 5:
                     print("[+] Cinquième réponse reçue du client.")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                 case 8:
                     print("[+] Huitième réponse reçue du client.")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                 case 11:
                     print("[+] Onzième réponse reçue du client.")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                 case 16:
                     print("[+] Seizième réponse reçue du client.")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")   
                     data["sequencing"] += 1
                 case 19:
                     print("[+] Dix-neuvième réponse reçue du client.")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                 case _:
                     print("[-] Ne corespond à aucune étape connue de sequencing.")
 
 
-        
         await websocket.send(json.dumps(response))
         print("[+] Réponse envoyée au client.")
 
