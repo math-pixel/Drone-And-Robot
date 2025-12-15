@@ -43,11 +43,12 @@ class WsDelegate(DelegateInterface):
             match data.get("sequencing"):
                 case 1:
                     print("[+] Première réponse reçue du client.")
-
+                    input("Appuyez sur Entrée pour continuer a l'etape 2...")
                     # sequencing passe à 2
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_atmosphere").get("ws_server_address"), data)
 
+                    input("Appuyez sur Entrée pour continuer a l'etape 3...")
                     # sequencing passe à 3
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_control").get("ws_server_address"), data)
@@ -131,8 +132,6 @@ class WsDelegate(DelegateInterface):
                 case _:
                     print("[-] Ne corespond à aucune étape connue de sequencing.")
 
-
-        
         await websocket.send(json.dumps(response))
         print("[+] Réponse envoyée au client.")
 
