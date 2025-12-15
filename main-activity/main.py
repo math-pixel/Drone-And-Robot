@@ -43,89 +43,90 @@ class WsDelegate(DelegateInterface):
             match data.get("sequencing"):
                 case 1:
                     print("[+] Première réponse reçue du client.")
-                    input("Appuyez sur Entrée pour continuer a l'etape 2...")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 2
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_atmosphere").get("ws_server_address"), data)
 
-                    input("Appuyez sur Entrée pour continuer a l'etape 3...")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
+                    
                     # sequencing passe à 3
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_control").get("ws_server_address"), data)
 
                 case 4:
                     print("[+] Quatrième réponse reçue du client.")
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 5
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_atmosphere").get("ws_server_address"), data)
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 6
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_monitoring").get("ws_server_address"), data)
 
                 case 7:
                     print("[+] Septième réponse reçue du client.")
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 8
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_atmosphere").get("ws_server_address"), data)
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 9
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_oral").get("ws_server_address"), data)
 
                 case 10:
                     print("[+] Dixième réponse reçue du client.")
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 11
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_atmosphere").get("ws_server_address"), data)
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 12
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_monitoring").get("ws_server_address"), data)
 
                 case 13:
                     print("[+] Treizième réponse reçue du client.")
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 14
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_atmosphere").get("ws_server_address"), data)
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 15
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_knock_down").get("ws_server_address"), data)
 
                 case 16:
                     print("[+] Quinzième réponse reçue du client.")
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 17
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_atmosphere").get("ws_server_address"), data)
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 18
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_monitoring").get("ws_server_address"), data)
 
                 case 19:
                     print("[+] Dix-huitième réponse reçue du client.")
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 20
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_atmosphere").get("ws_server_address"), data)
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 21
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_speak_to_mom").get("ws_server_address"), data)
 
                 case 22:
                     print("[+] Vingt-et-unième réponse reçue du client.")
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 23
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_atmosphere").get("ws_server_address"), data)
-
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     # sequencing passe à 24
                     data["sequencing"] += 1
                     await ws_send_to(data.get("activity_monitoring").get("ws_server_address"), data)
