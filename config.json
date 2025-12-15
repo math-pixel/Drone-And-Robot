@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "sequencing" : 0,
     "activity_atmosphere": {
-        "ws_server_address": "ws://",
+        "ws_server_address": "ws://192.168.10.182:8001",
         "dmx": [
             {"lamp1": 
                 {"channel": 1, "value": 255}
@@ -20,19 +20,19 @@
     },
 
     "activity_control": {
-        "ws_server_address": "ws://",
+        "ws_server_address": "ws://192.168.10.182:8003",
         "difficulty_level": 1,
         "enable": false
     },
 
     "activity_oral": {
-        "ws_server_address": "ws://",
+        "ws_server_address": "ws://192.168.10.50:8007",
         "difficulty_level": 1,
         "enable": false
     },
 
     "activity_knock_down": {
-        "ws_server_address": "ws://172.19.118.100:8080",
+        "ws_server_address": "ws://192.168.10.84:8080",
         "difficulty_level": 1,
         "enable": false,
         "number_of_points_detected": 0,
@@ -40,7 +40,7 @@
     },
 
     "activity_speak_to_mom": {
-        "ws_server_address": "ws://",
+        "ws_server_address": "ws://192.168.10.50:8006",
         "difficulty_level": 1,
         "enable": false,
         "llm_model": "gpt-4",
@@ -48,7 +48,7 @@
     },
 
     "activity_monitoring": {
-        "ws_server_address": "ws://",
+        "ws_server_address": "ws://192.168.10.182:8002",
         "emotions": [
             {
                 "type": "happiness",
@@ -66,7 +66,7 @@
     },
 
     "main_activity": {
-        "ws_server_address": "ws://",
+        "ws_server_address": "ws://192.168.10.50:8005",
         "data": {}
     }
 }

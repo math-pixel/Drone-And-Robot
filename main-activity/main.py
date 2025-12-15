@@ -40,6 +40,9 @@ class WsDelegate(DelegateInterface):
                 "original_data": data
             }
 
+            await websocket.send(json.dumps(response))
+            print("[+] Réponse envoyée au client.")
+
             match data.get("sequencing"):
                 case 1:
                     print("[+] Première réponse reçue du client.")
@@ -133,15 +136,14 @@ class WsDelegate(DelegateInterface):
                 case _:
                     print("[-] Ne corespond à aucune étape connue de sequencing.")
 
-        await websocket.send(json.dumps(response))
-        print("[+] Réponse envoyée au client.")
+        
 
 if __name__ == "__main__":
     config_path = os.path.join(parent_dir, "config.json")
     print(f"path du config: {config_path}")
     config_ws = {
-        "host": "localhost",
-        "port": 9000
+        "host": "192.168.10.50",
+        "port": 8005
     }
     server = AdvancedWSServer(delegate=WsDelegate(), config=config_ws)
     asyncio.run(server.start())
