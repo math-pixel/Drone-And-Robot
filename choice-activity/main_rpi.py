@@ -20,6 +20,28 @@ sys.path.append(parent_dir)
 
 from utils.WSServer import *
 from utils.WSClient import *
+from utils.rpi.Bouton import *
+
+# Création du bouton sur GPIO 17
+btn = Bouton(pin=17, pull_up=True, long_press_time=2.0)
+
+# === MÉTHODE 1: Avec callbacks ===
+def quand_appuye():
+    print("Bouton appuyé!")
+
+def quand_relache(duree):
+    print(f"Relâché après {duree:.2f}s")
+
+def quand_long():
+    print("Appui long détecté!")
+
+def quand_double():
+    print("Double-clic!")
+
+btn.on_press = quand_appuye
+btn.on_release = quand_relache
+btn.on_long_press = quand_long
+btn.on_double_click = quand_double
 
 class WsDelegate(DelegateInterface):
     async def process(self, data, websocket):
@@ -46,22 +68,22 @@ class WsDelegate(DelegateInterface):
             match data.get("sequencing"):
                 case 6:
                     print("[+] Sixième réponse reçue du client.")
-                    input(f"L'utilisateur doit faire un choix. Appuyez sur Entrée pour simuler (Passage à l'étape {data['sequencing'] + 1})")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                     await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
                 case 12:
                     print("[+] Douzième réponse reçue du client.")
-                    input(f"L'utilisateur doit faire un choix. Appuyez sur Entrée pour simuler (Passage à l'étape {data['sequencing'] + 1})")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                     await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
                 case 18:
                     print("[+] Dix-huitième réponse reçue du client.")
-                    input(f"L'utilisateur doit faire un choix. Appuyez sur Entrée pour simuler (Passage à l'étape {data['sequencing'] + 1})")
+                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
                     data["sequencing"] += 1
                     await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
                 case 24:
                     print("[+] Vingt-quatrième réponse reçue du client.")
-                    input(f"L'utilisateur a terminé. Appuyez sur Entrée pour simuler la fin.")
+                    input(f"Appuyez sur Entrée pour terminer. ")
                 case _:
                     print("[-] Ne corespond à aucune étape connue de sequencing.")
 
@@ -82,7 +104,10 @@ if __name__ == "__main__":
     print("[+] Serveur WebSocket démarré.")
     with open(config_path, 'r') as f:
         data = json.load(f)
-    input(f"L'utilisateur fait le premier choix sur les boutons. Appuyez sur Entrée pour simuler...")
+    
+    print("Appuyez sur le bouton...")
+    btn.wait_for_press()
+
     asyncio.run(ws_send_to(data.get("main_activity").get("ws_server_address"), data))
     
     try:
