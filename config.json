@@ -44,7 +44,7 @@
   },
 
   "activity_monitoring": {
-    "ws_server_address": "ws://192.168.10.182:8002",
+    "ws_server_address": "ws://192.168.10.103:8002",
     "emotions": [
       {
         "type": "happiness",
