@@ -1,65 +1,90 @@
 {
   "name": "global_data_transfer",
   "version": "1.0.0",
-  "sequencing": 1,
-
-  "atmosphere_activity": {
-    "ws_server_address": "ws://192.168.10.182:8001",
-    "dmx": [
-      { "lamp1": { "channel": 1, "value": 255 } },
-      { "lamp2": { "channel": 2, "value": 128 } }
-    ],
-    "sound": {
-      "file": "background_music.mp3",
-      "volume": 0.8,
-      "loop": true
-    }
-  },
-
-  "test_activity": {
-    "ws_server_address": "ws://192.168.10.182:8003"
-  },
-
-  "presentation_activity": {
-    "ws_server_address": "ws://192.168.10.50:8007"
-  },
-
-  "throw_activity": {
-    "ws_server_address": "ws://192.168.10.84:8080",
-    "number_of_points_detected": 0
-  },
-
-  "mom_activity": {
-    "ws_server_address": "ws://192.168.10.50:8006",
-    "llm_model": "gpt-4",
-    "llm_server_address": "http://"
-  },
-
-  "choice_activity": {
-    "ws_server_address": "ws://192.168.10.182:8002"
-  },
-  
-  "main_activity": {
-    "ws_server_address": "ws://192.168.10.50:8005",
-    "data": {}
-  },
-
+  "ws_server_address": "ws://xxx.xxx.xx.xxx:80xx",
+  "key": "<name>_<client/host>_<nom>_<id>_<finished>",
+  "nessage": "",
   "emotions": [
     {
       "type": "happiness",
-      "level": 0.7
+      "level": 7.0
     },
     {
       "type": "stress",
-      "level": 0.3
+      "level": 4
     },
     {
       "type": "shame",
-      "level": 0.5
+      "level": 3
     },
     {
       "type": "angry",
-      "level": 0.2
+      "level": 2
     }
+  ],
+  "activity":[
+    {"atmosphere_activity": {
+      "ws_client_adress":"ws://xxx.xxx.xx.xxx:80xx",
+      "dmx": [
+        { "lamp1": { "channel": 1, "value": 255 } },
+        { "lamp2": { "channel": 2, "value": 128 } }
+      ],
+      "sound": {
+        "file": "background_music.mp3",
+        "volume": 0.8,
+        "loop": true
+      }
+    }},
+    {"test_activity": {
+      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "connected": false,
+      "step": [
+        { "id": "1", "name": "step1", "finished": false },
+        { "id": "2", "name": "step2", "finished": false }
+      ]
+    }},
+    {"presentation_activity": {
+      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "connected": false,
+      "step": [
+        { "id": "1", "name": "step1", "finished": false },
+        { "id": "2", "name": "step2", "finished": false }
+      ]
+    }},
+    {"throw_activity": {
+      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "connected": false,
+      "step": [
+        { "id": "1", "name": "step1", "finished": false },
+        { "id": "2", "name": "step2", "finished": false }
+      ],
+      "number_of_points_detected": 0
+    }},
+    {"mom_activity": {
+      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "connected": false,
+      "step": [
+        { "id": "1", "name": "step1", "finished": false },
+        { "id": "2", "name": "step2", "finished": false }
+      ],
+      "llm_model": "gpt-4",
+      "llm_server_address": "http://"
+    }},
+    {"choice_activity": {
+      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "connected": false,
+      "step": [
+        { "id": "1", "name": "step1", "finished": false },
+        { "id": "2", "name": "step2", "finished": false }
+      ]
+    }},
+    {"main_activity": {
+      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "connected": false,
+      "step": [
+        { "id": "1", "name": "step1", "finished": false },
+        { "id": "2", "name": "step2", "finished": false }
+      ]
+    }}, 
   ]
 }
