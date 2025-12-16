@@ -46,22 +46,22 @@ class WsDelegate(DelegateInterface):
             match data.get("sequencing"):
                 case 6:
                     print("[+] Sixième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
+                    input(f"L'utilisateur doit faire un choix. Appuyez sur Entrée pour simuler (Passage à l'étape {data['sequencing'] + 1})")
                     data["sequencing"] += 1
                     await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
                 case 12:
                     print("[+] Douzième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
+                    input(f"L'utilisateur doit faire un choix. Appuyez sur Entrée pour simuler (Passage à l'étape {data['sequencing'] + 1})")
                     data["sequencing"] += 1
                     await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
                 case 18:
                     print("[+] Dix-huitième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
+                    input(f"L'utilisateur doit faire un choix. Appuyez sur Entrée pour simuler (Passage à l'étape {data['sequencing'] + 1})")
                     data["sequencing"] += 1
                     await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
                 case 24:
                     print("[+] Vingt-quatrième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour terminer. ")
+                    input(f"L'utilisateur a terminé. Appuyez sur Entrée pour simuler la fin.")
                 case _:
                     print("[-] Ne corespond à aucune étape connue de sequencing.")
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     print("[+] Serveur WebSocket démarré.")
     with open(config_path, 'r') as f:
         data = json.load(f)
-    input(f"Appuyez sur Entrée pour commencer...")
+    input(f"L'utilisateur fait le premier choix sur les boutons. Appuyez sur Entrée pour simuler...")
     asyncio.run(ws_send_to(data.get("main_activity").get("ws_server_address"), data))
     
     try:

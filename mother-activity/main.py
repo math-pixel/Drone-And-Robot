@@ -49,7 +49,7 @@ class WsDelegate(DelegateInterface):
             match data.get("sequencing"):
                 case 21:
                     print("[+] Deuxième réponse reçue du client.")
-                    input(f"Appuyez sur Entrée pour continuer a l'etape {data['sequencing'] + 1}...")
+                    input(f"Activité Mom en cours. Appuyez sur Entrée pour simuler (Passage à l'étape {data['sequencing'] + 1})")
                     data["sequencing"] += 1
                     await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
                 case _:
