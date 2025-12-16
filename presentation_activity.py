@@ -3,7 +3,7 @@ import json
 import websockets
 
 async def main():
-    ws_url = "ws://192.168.10.182:8057/ws"
+    ws_url = "ws://192.168.1.13:8057/ws"
     input(f"Press Enter to connect to {ws_url}...")
 
     async with websockets.connect(ws_url) as ws:
@@ -15,7 +15,7 @@ async def main():
 
         match key:
             case "identification_request":
-                data["key"] = "identification_test_activity"
+                data["key"] = "identification_presentation_activity"
                 print(data["key"])
 
                 payload = json.dumps(data)
@@ -23,7 +23,8 @@ async def main():
 
                 try:
                     reply = await asyncio.wait_for(ws.recv(), timeout=2)
-                    print("\nServer replied/broadcasted:\n", reply)
+                    json_reply = json.loads(reply)
+                    print("\nServer replied/broadcasted:\n", json_reply["key"])
                 except asyncio.TimeoutError:
                     pass
 
@@ -35,7 +36,8 @@ async def main():
         try:
             while True:
                 msg = await ws.recv()
-                print("\n📥 Received:\n", msg)
+                json_msg = json.loads(msg)
+                print("\n📥 Received:\n", json_msg["key"])
         except asyncio.CancelledError:
             pass
         except KeyboardInterrupt:
