@@ -11,6 +11,7 @@
 		142CBD062EEB58DE003FF139 /* NIOHTTP1 in Frameworks */ = {isa = PBXBuildFile; productRef = 142CBD052EEB58DE003FF139 /* NIOHTTP1 */; };
 		142CBD082EEB58DE003FF139 /* NIOWebSocket in Frameworks */ = {isa = PBXBuildFile; productRef = 142CBD072EEB58DE003FF139 /* NIOWebSocket */; };
 		142CBD0B2EEB59CE003FF139 /* NIOTransportServices in Frameworks */ = {isa = PBXBuildFile; productRef = 142CBD0A2EEB59CE003FF139 /* NIOTransportServices */; };
+		142CBD122EF09AFF003FF139 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = 142CBD112EF09AFF003FF139 /* Starscream */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +47,7 @@
 				142CBD042EEB58DE003FF139 /* NIO in Frameworks */,
 				142CBD062EEB58DE003FF139 /* NIOHTTP1 in Frameworks */,
 				142CBD082EEB58DE003FF139 /* NIOWebSocket in Frameworks */,
+				142CBD122EF09AFF003FF139 /* Starscream in Frameworks */,
 				142CBD0B2EEB59CE003FF139 /* NIOTransportServices in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -93,6 +95,7 @@
 				142CBD052EEB58DE003FF139 /* NIOHTTP1 */,
 				142CBD072EEB58DE003FF139 /* NIOWebSocket */,
 				142CBD0A2EEB59CE003FF139 /* NIOTransportServices */,
+				142CBD112EF09AFF003FF139 /* Starscream */,
 			);
 			productName = "bully-activity";
 			productReference = 142CBCD82EEB55DA003FF139 /* bully-activity.app */;
@@ -125,6 +128,7 @@
 			packageReferences = (
 				142CBD022EEB58DE003FF139 /* XCRemoteSwiftPackageReference "swift-nio" */,
 				142CBD092EEB59CE003FF139 /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */,
+				142CBD102EF09AFF003FF139 /* XCRemoteSwiftPackageReference "Starscream" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 142CBCD92EEB55DA003FF139 /* Products */;
@@ -384,6 +388,14 @@
 				minimumVersion = 1.26.0;
 			};
 		};
+		142CBD102EF09AFF003FF139 /* XCRemoteSwiftPackageReference "Starscream" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/daltoniam/Starscream.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.8;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -406,6 +418,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 142CBD092EEB59CE003FF139 /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */;
 			productName = NIOTransportServices;
+		};
+		142CBD112EF09AFF003FF139 /* Starscream */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 142CBD102EF09AFF003FF139 /* XCRemoteSwiftPackageReference "Starscream" */;
+			productName = Starscream;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

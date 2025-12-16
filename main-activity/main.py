@@ -142,7 +142,7 @@ if __name__ == "__main__":
     config_path = os.path.join(parent_dir, "config.json")
     print(f"path du config: {config_path}")
     config_ws = {
-        "host": "192.168.10.50",
+        "host": "192.168.1.13",
         "port": 8005
     }
     server = AdvancedWSServer(delegate=WsDelegate(), config=config_ws)

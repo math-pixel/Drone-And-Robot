@@ -1,6 +1,15 @@
 {
-  "originHash" : "13f1ea47621de0a4485e799e92788c913d580fd80ef7d005a251e94f866298a1",
+  "originHash" : "216b51169565a5fab8b24523e5607f3d61c5c4c46685210e0c5afe1e427e3944",
   "pins" : [
+    {
+      "identity" : "starscream",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/daltoniam/Starscream.git",
+      "state" : {
+        "revision" : "c6bfd1af48efcc9a9ad203665db12375ba6b145a",
+        "version" : "4.0.8"
+      }
+    },
     {
       "identity" : "swift-atomics",
       "kind" : "remoteSourceControl",
