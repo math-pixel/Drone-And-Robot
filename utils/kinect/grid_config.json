@@ -1,9 +1,9 @@
 {
-    "start_x": 20,
-    "start_y": 130,
-    "cols": 8,
+    "start_x": 30,
+    "start_y": 90,
+    "cols": 7,
     "rows": 4,
-    "cell_w": 60,
+    "cell_w": 65,
     "cell_h": 50,
     "grid_color": [
         0,
@@ -19,5 +19,8 @@
         0,
         0,
         0
-    ]
+    ],
+    "detection_enabled": true,
+    "detection_threshold": 5,
+    "alert_duration": 1.0
 }

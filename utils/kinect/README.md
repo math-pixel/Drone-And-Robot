@@ -36,6 +36,11 @@ C	Sauvegarder capture PNG + CSV
 R	Reset aux valeurs par défaut
 Q ou Echap	Quitter
 
+Touche	Action
+T	Activer/Désactiver la détection
+[ / ]	Diminuer/Augmenter le seuil (±10mm)
+{ / }	Diminuer/Augmenter la durée d'alerte (±0.1s)
+
 grid_config.json
 {
     "start_x": 100,
