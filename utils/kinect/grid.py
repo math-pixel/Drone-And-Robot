@@ -3,207 +3,179 @@ from pykinect2 import PyKinectRuntime
 import numpy as np
 import cv2
 
-# ============================================
-# PARAMÈTRES DE LA GRILLE (À MODIFIER)
-# ============================================
-
-# Position du coin supérieur gauche de la grille
-GRID_START_X = 50      # Position X de départ (0-512)
-GRID_START_Y = 50      # Position Y de départ (0-424)
-
-# Nombre de cellules
-GRID_COLS = 5          # Nombre de colonnes
-GRID_ROWS = 4          # Nombre de lignes
-
-# Taille de chaque cellule (en pixels)
-CELL_WIDTH = 80        # Largeur d'une cellule
-CELL_HEIGHT = 70       # Hauteur d'une cellule
-
-# Couleurs (BGR)
-GRID_COLOR = (0, 255, 0)       # Vert pour la grille
-TEXT_COLOR = (255, 255, 255)   # Blanc pour le texte
-BG_COLOR = (0, 0, 0)           # Noir pour le fond du texte
-
-# ============================================
-
-def calculate_grid_averages(depth_array, start_x, start_y, cols, rows, cell_w, cell_h):
-    """
-    Calcule la moyenne de profondeur pour chaque cellule de la grille
-    
-    Retourne une matrice (rows x cols) avec les moyennes en mm
-    """
-    averages = np.zeros((rows, cols), dtype=np.float32)
-    
-    for row in range(rows):
-        for col in range(cols):
-            # Coordonnées de la cellule
-            x1 = start_x + col * cell_w
-            y1 = start_y + row * cell_h
-            x2 = x1 + cell_w
-            y2 = y1 + cell_h
-            
-            # Vérifier les limites
-            x1 = max(0, min(x1, 512))
-            y1 = max(0, min(y1, 424))
-            x2 = max(0, min(x2, 512))
-            y2 = max(0, min(y2, 424))
-            
-            # Extraire la région
-            cell_depth = depth_array[y1:y2, x1:x2]
-            
-            # Filtrer les valeurs valides (entre 500 et 8000 mm)
-            valid_mask = (cell_depth > 0) & (cell_depth < 8000)
-            valid_depths = cell_depth[valid_mask]
-            
-            # Calculer la moyenne
-            if len(valid_depths) > 0:
-                averages[row, col] = np.mean(valid_depths)
-            else:
-                averages[row, col] = 0  # Pas de données valides
-    
-    return averages
-
-
-def draw_grid(image, start_x, start_y, cols, rows, cell_w, cell_h, averages):
-    """
-    Dessine la grille et affiche les moyennes sur l'image
-    """
-    for row in range(rows):
-        for col in range(cols):
-            # Coordonnées de la cellule
-            x1 = start_x + col * cell_w
-            y1 = start_y + row * cell_h
-            x2 = x1 + cell_w
-            y2 = y1 + cell_h
-            
-            # Dessiner le rectangle
-            cv2.rectangle(image, (x1, y1), (x2, y2), GRID_COLOR, 2)
-            
-            # Calculer le centre de la cellule
-            center_x = x1 + cell_w // 2
-            center_y = y1 + cell_h // 2
-            
-            # Récupérer la moyenne
-            avg = averages[row, col]
-            
-            if avg > 0:
-                # Formater le texte (en mm ou m)
-                if avg >= 1000:
-                    text = f"{avg/1000:.2f}m"
-                else:
-                    text = f"{int(avg)}mm"
-            else:
-                text = "---"
-            
-            # Taille du texte
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 0.4
-            thickness = 1
-            
-            # Obtenir la taille du texte pour centrer
-            (text_w, text_h), _ = cv2.getTextSize(text, font, font_scale, thickness)
-            
-            # Position du texte (centré)
-            text_x = center_x - text_w // 2
-            text_y = center_y + text_h // 2
-            
-            # Fond pour le texte (meilleure lisibilité)
-            padding = 2
-            cv2.rectangle(image, 
-                         (text_x - padding, text_y - text_h - padding),
-                         (text_x + text_w + padding, text_y + padding),
-                         BG_COLOR, -1)
-            
-            # Dessiner le texte
-            cv2.putText(image, text, (text_x, text_y), 
-                       font, font_scale, TEXT_COLOR, thickness)
-    
-    return image
-
-
-def main():
-    print("=" * 60)
-    print("KINECT V2 - GRILLE DE PROFONDEUR")
-    print("=" * 60)
-    print(f"\nConfiguration:")
-    print(f"  - Début: ({GRID_START_X}, {GRID_START_Y})")
-    print(f"  - Grille: {GRID_COLS} x {GRID_ROWS} cellules")
-    print(f"  - Taille cellule: {CELL_WIDTH} x {CELL_HEIGHT} pixels")
-    print(f"\nCommandes:")
-    print("  - 'q' : Quitter")
-    print("  - 's' : Sauvegarder une capture")
-    print("=" * 60)
-    
-    # Initialiser la Kinect
-    kinect = PyKinectRuntime.PyKinectRuntime(
-        PyKinectV2.FrameSourceTypes_Depth | 
-        PyKinectV2.FrameSourceTypes_Color
-    )
-    
-    print("\n✅ Kinect connectée!")
-    
-    capture_count = 0
-    
-    while True:
-        if kinect.has_new_depth_frame():
-            # Récupérer la profondeur
-            depth_frame = kinect.get_last_depth_frame()
-            depth_array = depth_frame.reshape((424, 512)).astype(np.uint16)
-            
-            # Calculer les moyennes de la grille
-            averages = calculate_grid_averages(
-                depth_array,
-                GRID_START_X, GRID_START_Y,
-                GRID_COLS, GRID_ROWS,
-                CELL_WIDTH, CELL_HEIGHT
-            )
-            
-            # Créer l'image de profondeur colorée
-            depth_display = np.clip(depth_array, 500, 4500)
-            depth_display = ((depth_display - 500) / 4000 * 255).astype(np.uint8)
-            depth_color = cv2.applyColorMap(depth_display, cv2.COLORMAP_JET)
-            
-            # Marquer les zones invalides en noir
-            depth_color[depth_array == 0] = [0, 0, 0]
-            
-            # Dessiner la grille
-            depth_color = draw_grid(
-                depth_color,
-                GRID_START_X, GRID_START_Y,
-                GRID_COLS, GRID_ROWS,
-                CELL_WIDTH, CELL_HEIGHT,
-                averages
-            )
-            
-            # Afficher
-            cv2.imshow('Grille de Profondeur', depth_color)
+class DepthGrid:
+    def __init__(self):
+        # Position de départ
+        self.start_x = 50
+        self.start_y = 50
         
-        # Gestion des touches
-        key = cv2.waitKey(1) & 0xFF
+        # Nombre de cellules
+        self.cols = 5
+        self.rows = 4
         
-        if key == ord('q'):
-            break
+        # Taille des cellules
+        self.cell_w = 80
+        self.cell_h = 70
+        
+        # Couleurs
+        self.grid_color = (0, 255, 0)
+        self.text_color = (255, 255, 255)
+        self.bg_color = (0, 0, 0)
+        
+        # Kinect
+        self.kinect = PyKinectRuntime.PyKinectRuntime(
+            PyKinectV2.FrameSourceTypes_Depth
+        )
+    
+    def calculate_averages(self, depth_array):
+        """Calcule les moyennes pour chaque cellule"""
+        averages = np.zeros((self.rows, self.cols), dtype=np.float32)
+        
+        for row in range(self.rows):
+            for col in range(self.cols):
+                x1 = self.start_x + col * self.cell_w
+                y1 = self.start_y + row * self.cell_h
+                x2 = min(x1 + self.cell_w, 512)
+                y2 = min(y1 + self.cell_h, 424)
+                x1 = max(0, x1)
+                y1 = max(0, y1)
+                
+                if x2 > x1 and y2 > y1:
+                    cell = depth_array[y1:y2, x1:x2]
+                    valid = cell[(cell > 0) & (cell < 8000)]
+                    
+                    if len(valid) > 0:
+                        averages[row, col] = np.mean(valid)
+        
+        return averages
+    
+    def draw(self, image, averages):
+        """Dessine la grille sur l'image"""
+        for row in range(self.rows):
+            for col in range(self.cols):
+                x1 = self.start_x + col * self.cell_w
+                y1 = self.start_y + row * self.cell_h
+                x2 = x1 + self.cell_w
+                y2 = y1 + self.cell_h
+                
+                # Rectangle
+                cv2.rectangle(image, (x1, y1), (x2, y2), self.grid_color, 2)
+                
+                # Texte au centre
+                avg = averages[row, col]
+                text = f"{avg/1000:.2f}m" if avg >= 1000 else f"{int(avg)}" if avg > 0 else "---"
+                
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                scale = 0.4
+                (tw, th), _ = cv2.getTextSize(text, font, scale, 1)
+                
+                tx = x1 + (self.cell_w - tw) // 2
+                ty = y1 + (self.cell_h + th) // 2
+                
+                # Fond
+                cv2.rectangle(image, (tx-2, ty-th-2), (tx+tw+2, ty+2), self.bg_color, -1)
+                # Texte
+                cv2.putText(image, text, (tx, ty), font, scale, self.text_color, 1)
+        
+        return image
+    
+    def draw_help(self, image):
+        """Affiche l'aide"""
+        help_text = [
+            f"Position: ({self.start_x}, {self.start_y}) | Fleches: deplacer",
+            f"Grille: {self.cols}x{self.rows} | +/-: colonnes | */.: lignes",
+            f"Cellule: {self.cell_w}x{self.cell_h} | W/S: largeur | A/D: hauteur",
+            "Q: Quitter | R: Reset | ESPACE: Sauvegarder"
+        ]
+        
+        y = 20
+        for text in help_text:
+            cv2.putText(image, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 
+                       0.4, (255, 255, 255), 1)
+            y += 18
+        
+        return image
+    
+    def handle_key(self, key):
+        """Gère les entrées clavier"""
+        # Déplacement
+        if key == 82 or key == ord('8'):    # Haut
+            self.start_y = max(0, self.start_y - 10)
+        elif key == 84 or key == ord('2'):  # Bas
+            self.start_y = min(424, self.start_y + 10)
+        elif key == 81 or key == ord('4'):  # Gauche
+            self.start_x = max(0, self.start_x - 10)
+        elif key == 83 or key == ord('6'):  # Droite
+            self.start_x = min(512, self.start_x + 10)
+        
+        # Nombre de cellules
+        elif key == ord('+') or key == ord('='):
+            self.cols = min(20, self.cols + 1)
+        elif key == ord('-'):
+            self.cols = max(1, self.cols - 1)
+        elif key == ord('*'):
+            self.rows = min(15, self.rows + 1)
+        elif key == ord('.'):
+            self.rows = max(1, self.rows - 1)
+        
+        # Taille des cellules
+        elif key == ord('w'):
+            self.cell_w = min(200, self.cell_w + 5)
         elif key == ord('s'):
-            # Sauvegarder la capture
-            filename = f"capture_{capture_count}.png"
-            cv2.imwrite(filename, depth_color)
-            print(f"\n📸 Capture sauvegardée: {filename}")
-            
-            # Sauvegarder aussi les données de la grille
-            data_filename = f"grid_data_{capture_count}.txt"
-            with open(data_filename, 'w') as f:
-                f.write("Moyennes de profondeur (mm)\n")
-                f.write("-" * 40 + "\n")
-                for row in range(GRID_ROWS):
-                    line = " | ".join([f"{averages[row, col]:7.1f}" for col in range(GRID_COLS)])
-                    f.write(line + "\n")
-            print(f"📊 Données sauvegardées: {data_filename}")
-            
-            capture_count += 1
+            self.cell_w = max(20, self.cell_w - 5)
+        elif key == ord('d'):
+            self.cell_h = min(200, self.cell_h + 5)
+        elif key == ord('a'):
+            self.cell_h = max(20, self.cell_h - 5)
+        
+        # Reset
+        elif key == ord('r'):
+            self.start_x, self.start_y = 50, 50
+            self.cols, self.rows = 5, 4
+            self.cell_w, self.cell_h = 80, 70
     
-    cv2.destroyAllWindows()
-    print("\n✅ Terminé!")
+    def run(self):
+        """Boucle principale"""
+        print("=" * 60)
+        print("GRILLE DE PROFONDEUR - CONTROLES INTERACTIFS")
+        print("=" * 60)
+        
+        while True:
+            if self.kinect.has_new_depth_frame():
+                # Profondeur
+                depth = self.kinect.get_last_depth_frame()
+                depth = depth.reshape((424, 512)).astype(np.uint16)
+                
+                # Moyennes
+                averages = self.calculate_averages(depth)
+                
+                # Image
+                img = np.clip(depth, 500, 4500)
+                img = ((img - 500) / 4000 * 255).astype(np.uint8)
+                img = cv2.applyColorMap(img, cv2.COLORMAP_JET)
+                img[depth == 0] = [0, 0, 0]
+                
+                # Dessiner
+                img = self.draw(img, averages)
+                img = self.draw_help(img)
+                
+                cv2.imshow('Grille de Profondeur', img)
+            
+            key = cv2.waitKey(1) & 0xFF
+            
+            if key == ord('q'):
+                break
+            elif key == ord(' '):
+                # Sauvegarder
+                np.savetxt('grid_averages.csv', averages, delimiter=',', fmt='%.1f')
+                cv2.imwrite('grid_capture.png', img)
+                print("✅ Sauvegardé!")
+            elif key != 255:
+                self.handle_key(key)
+        
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    main()
+    grid = DepthGrid()
+    grid.run()

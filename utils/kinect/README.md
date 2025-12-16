@@ -23,3 +23,14 @@ Vert        → ~2500 mm (2.5 m)
 Jaune       → ~3500 mm (3.5 m)
 Rouge       → Loin    (~4500 mm = 4.5 m)
 Noir        → Invalide (0)
+
+🎹 Contrôles
+Touche	Action
+Flèches	Déplacer la grille
++ / -	Ajouter/retirer colonnes
+***** / .	Ajouter/retirer lignes
+W / S	Augmenter/diminuer largeur cellule
+D / A	Augmenter/diminuer hauteur cellule
+R	Reset aux valeurs par défaut
+ESPACE	Sauvegarder capture + données
+Q	Quitter
