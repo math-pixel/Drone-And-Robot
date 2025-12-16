@@ -1,72 +1,68 @@
 {
-    "name": "global_data_transfer",
-    "version": "1.0.0",
-    "sequencing" : 0,
-    "activity_atmosphere": {
-        "ws_server_address": "ws://192.168.10.182:8001",
-        "dmx": [
-            {"lamp1": 
-                {"channel": 1, "value": 255}
-            },
-            {"lamp2": 
-                {"channel": 2, "value": 128}
-            }
-        ],
-        "sound": {
-            "file": "background_music.mp3",
-            "volume": 0.8,
-            "loop": true
-        }
-    },
-
-    "activity_control": {
-        "ws_server_address": "ws://192.168.10.182:8003",
-        "difficulty_level": 1,
-        "enable": false
-    },
-
-    "activity_oral": {
-        "ws_server_address": "ws://192.168.10.50:8007",
-        "difficulty_level": 1,
-        "enable": false
-    },
-
-    "activity_knock_down": {
-        "ws_server_address": "ws://192.168.10.84:8080",
-        "difficulty_level": 1,
-        "enable": false,
-        "number_of_points_detected": 0,
-        "rover_rotation_angle": 90
-    },
-
-    "activity_speak_to_mom": {
-        "ws_server_address": "ws://192.168.10.50:8006",
-        "difficulty_level": 1,
-        "enable": false,
-        "llm_model": "gpt-4",
-        "llm_server_address": "http://"
-    },
-
-    "activity_monitoring": {
-        "ws_server_address": "ws://192.168.10.182:8002",
-        "emotions": [
-            {
-                "type": "happiness",
-                "level": 0.7
-            },
-            {
-                "type": "stress",
-                "level": 0.3
-            },
-            {
-                "type": "engagement",
-                "level": 0.5
-            }
-        ]
-    },
-
-    "main_activity": {
-        "ws_server_address": "ws://192.168.10.50:8005",
-        "data": {}
+  "name": "global_data_transfer",
+  "version": "1.0.0",
+  "sequencing": 1,
+  "activity_atmosphere": {
+    "ws_server_address": "ws://192.168.10.182:8001",
+    "dmx": [
+      { "lamp1": { "channel": 1, "value": 255 } },
+      { "lamp2": { "channel": 2, "value": 128 } }
+    ],
+    "sound": {
+      "file": "background_music.mp3",
+      "volume": 0.8,
+      "loop": true
     }
+  },
+
+  "activity_control": {
+    "ws_server_address": "ws://192.168.10.182:8003",
+    "difficulty_level": 1,
+    "enable": false
+  },
+
+  "activity_oral": {
+    "ws_server_address": "ws://192.168.10.50:8007",
+    "difficulty_level": 1,
+    "enable": false
+  },
+
+  "activity_knock_down": {
+    "ws_server_address": "ws://192.168.10.84:8080",
+    "difficulty_level": 1,
+    "enable": false,
+    "number_of_points_detected": 0,
+    "rover_rotation_angle": 90
+  },
+
+  "activity_speak_to_mom": {
+    "ws_server_address": "ws://192.168.10.50:8006",
+    "difficulty_level": 1,
+    "enable": false,
+    "llm_model": "gpt-4",
+    "llm_server_address": "http://"
+  },
+
+  "activity_monitoring": {
+    "ws_server_address": "ws://192.168.10.182:8002",
+    "emotions": [
+      {
+        "type": "happiness",
+        "level": 0.7
+      },
+      {
+        "type": "stress",
+        "level": 0.3
+      },
+      {
+        "type": "engagement",
+        "level": 0.5
+      }
+    ]
+  },
+
+  "main_activity": {
+    "ws_server_address": "ws://192.168.10.50:8005",
+    "data": {}
+  }
 }
