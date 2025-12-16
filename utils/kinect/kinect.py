@@ -1,100 +1,81 @@
+"""
+Test Kinect v2 - Python 3.8 32-bit
+"""
+from pykinect2 import PyKinectV2
+from pykinect2 import PyKinectRuntime
 import numpy as np
 import cv2
-from pylibfreenect2 import Freenect2, SyncMultiFrameListener
-from pylibfreenect2 import FrameType, Registration, Frame
 
 def main():
-    # Initialisation
-    fn = Freenect2()
-    num_devices = fn.enumerateDevices()
+    print("=" * 50)
+    print("TEST KINECT V2")
+    print("=" * 50)
     
-    if num_devices == 0:
-        print("Aucune Kinect détectée!")
-        return
-    
-    serial = fn.getDeviceSerialNumber(0)
-    device = fn.openDevice(serial)
-    
-    # Configurer le listener
-    listener = SyncMultiFrameListener(
-        FrameType.Color | FrameType.Depth | FrameType.Ir
-    )
-    
-    device.setColorFrameListener(listener)
-    device.setIrAndDepthFrameListener(listener)
-    device.start()
-    
-    # Registration pour aligner couleur et profondeur
-    registration = Registration(device.getIrCameraParams(),
-                                device.getColorCameraParams())
-    
-    print("Kinect v2 démarrée. Appuyez sur 'q' pour quitter.")
+    # Initialiser la Kinect
+    print("\n[1/3] Initialisation de la Kinect...")
     
     try:
-        while True:
-            frames = listener.waitForNewFrame()
-            
-            # Récupérer les frames
-            color = frames["color"]
-            depth = frames["depth"]
-            ir = frames["ir"]
-            
-            # Convertir en arrays numpy
-            depth_array = depth.asarray() / 4500.0  # Normaliser (max ~4.5m)
-            color_array = color.asarray()
-            ir_array = ir.asarray() / 65535.0
-            
-            # Affichage
-            depth_display = np.uint8(depth_array * 255)
-            depth_colormap = cv2.applyColorMap(depth_display, cv2.COLORMAP_JET)
-            
-            cv2.imshow('Profondeur', depth_colormap)
-            cv2.imshow('Couleur', color_array)
-            cv2.imshow('Infrarouge', ir_array)
-            
-            listener.release(frames)
-            
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-                
-    finally:
-        device.stop()
-        device.close()
-        cv2.destroyAllWindows()
-
-import numpy as np
-from pyk4a import PyK4A
-
-def get_point_cloud(k4a):
-    """Génère un nuage de points 3D à partir de la profondeur"""
-    capture = k4a.get_capture()
+        kinect = PyKinectRuntime.PyKinectRuntime(
+            PyKinectV2.FrameSourceTypes_Depth | 
+            PyKinectV2.FrameSourceTypes_Color
+        )
+        print("✅ Kinect initialisée avec succès!")
+    except Exception as e:
+        print(f"❌ Erreur: {e}")
+        print("\nVérifiez que:")
+        print("  - La Kinect est branchée en USB 3.0")
+        print("  - Le SDK Kinect v2 est installé")
+        print("  - Les drivers sont à jour")
+        return
     
-    if capture.depth is not None:
-        # Obtenir le nuage de points (X, Y, Z pour chaque pixel)
-        points = capture.transformed_depth_point_cloud
-        
-        # Reshape en liste de points (N, 3)
-        points_3d = points.reshape(-1, 3)
-        
-        # Filtrer les points invalides (z = 0)
-        valid_points = points_3d[points_3d[:, 2] > 0]
-        
-        return valid_points
+    print("\n[2/3] Démarrage du flux vidéo...")
+    print("Appuyez sur 'q' pour quitter\n")
     
-    return None
-
-# Sauvegarder en format PLY
-def save_ply(points, filename):
-    with open(filename, 'w') as f:
-        f.write("ply\n")
-        f.write("format ascii 1.0\n")
-        f.write(f"element vertex {len(points)}\n")
-        f.write("property float x\n")
-        f.write("property float y\n")
-        f.write("property float z\n")
-        f.write("end_header\n")
-        for p in points:
-            f.write(f"{p[0]} {p[1]} {p[2]}\n")
+    frame_count = 0
+    
+    while True:
+        # === PROFONDEUR ===
+        if kinect.has_new_depth_frame():
+            depth_frame = kinect.get_last_depth_frame()
+            depth_array = depth_frame.reshape((424, 512)).astype(np.float32)
+            
+            # Distance au centre (en mm)
+            center_dist = depth_array[212, 256]
+            
+            # Normaliser pour affichage
+            depth_display = np.uint8(np.clip(depth_array / 4500 * 255, 0, 255))
+            depth_color = cv2.applyColorMap(depth_display, cv2.COLORMAP_JET)
+            
+            # Afficher la distance
+            cv2.putText(depth_color, f"Distance: {int(center_dist)} mm", 
+                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            
+            # Point central
+            cv2.circle(depth_color, (256, 212), 5, (255, 255, 255), -1)
+            
+            cv2.imshow('Profondeur', depth_color)
+            frame_count += 1
+        
+        # === COULEUR ===
+        if kinect.has_new_color_frame():
+            color_frame = kinect.get_last_color_frame()
+            color_array = color_frame.reshape((1080, 1920, 4))
+            
+            # Redimensionner pour affichage
+            color_small = cv2.resize(color_array, (960, 540))
+            cv2.imshow('Couleur', color_small)
+        
+        # Afficher le compteur
+        if frame_count % 30 == 0:
+            print(f"Frames capturées: {frame_count}", end='\r')
+        
+        # Quitter
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    
+    print(f"\n\n[3/3] Fermeture... ({frame_count} frames capturées)")
+    cv2.destroyAllWindows()
+    print("✅ Terminé!")
 
 if __name__ == "__main__":
     main()
