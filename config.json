@@ -2,6 +2,7 @@
   "name": "global_data_transfer",
   "version": "1.0.0",
   "sequencing": 1,
+
   "atmosphere_activity": {
     "ws_server_address": "ws://192.168.10.182:8001",
     "dmx": [
@@ -16,53 +17,49 @@
   },
 
   "test_activity": {
-    "ws_server_address": "ws://192.168.10.182:8003",
-    "difficulty_level": 1,
-    "enable": false
+    "ws_server_address": "ws://192.168.10.182:8003"
   },
 
   "presentation_activity": {
-    "ws_server_address": "ws://192.168.10.50:8007",
-    "difficulty_level": 1,
-    "enable": false
+    "ws_server_address": "ws://192.168.10.50:8007"
   },
 
   "throw_activity": {
     "ws_server_address": "ws://192.168.10.84:8080",
-    "difficulty_level": 1,
-    "enable": false,
-    "number_of_points_detected": 0,
-    "rover_rotation_angle": 90
+    "number_of_points_detected": 0
   },
 
   "mom_activity": {
     "ws_server_address": "ws://192.168.10.50:8006",
-    "difficulty_level": 1,
-    "enable": false,
     "llm_model": "gpt-4",
     "llm_server_address": "http://"
   },
 
   "choice_activity": {
-    "ws_server_address": "ws://192.168.10.182:8002",
-    "emotions": [
-      {
-        "type": "happiness",
-        "level": 0.7
-      },
-      {
-        "type": "stress",
-        "level": 0.3
-      },
-      {
-        "type": "engagement",
-        "level": 0.5
-      }
-    ]
+    "ws_server_address": "ws://192.168.10.182:8002"
   },
-
+  
   "main_activity": {
     "ws_server_address": "ws://192.168.10.50:8005",
     "data": {}
-  }
+  },
+
+  "emotions": [
+    {
+      "type": "happiness",
+      "level": 0.7
+    },
+    {
+      "type": "stress",
+      "level": 0.3
+    },
+    {
+      "type": "shame",
+      "level": 0.5
+    },
+    {
+      "type": "angry",
+      "level": 0.2
+    }
+  ]
 }
