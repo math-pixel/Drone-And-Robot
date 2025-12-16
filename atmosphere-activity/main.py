@@ -43,28 +43,28 @@ class WsDelegate(DelegateInterface):
 
             match data.get("sequencing"):
                 case 2:
-                    print("[+] Deuxième réponse reçue du client.")
+                    print(f"Mise à jour de l'atmosphère. Passage à l'étape {data['sequencing'] + 1}.")
                     data["sequencing"] += 1
                 case 5:
-                    print("[+] Cinquième réponse reçue du client.")
+                    print(f"Mise à jour de l'atmosphère. Passage à l'étape {data['sequencing'] + 1}.")
                     data["sequencing"] += 1
                 case 8:
-                    print("[+] Huitième réponse reçue du client.")
+                    print(f"Mise à jour de l'atmosphère. Passage à l'étape {data['sequencing'] + 1}.")
                     data["sequencing"] += 1
                 case 11:
-                    print("[+] Onzième réponse reçue du client.")
+                    print(f"Mise à jour de l'atmosphère. Passage à l'étape {data['sequencing'] + 1}.")
                     data["sequencing"] += 1
                 case 14:
-                    print("[+] Quatorzième réponse reçue du client.")
+                    print(f"Mise à jour de l'atmosphère. Passage à l'étape {data['sequencing'] + 1}.")
                     data["sequencing"] += 1
                 case 17:
-                    print("[+] Dix-septième réponse reçue du client.")
+                    print(f"Mise à jour de l'atmosphère. Passage à l'étape {data['sequencing'] + 1}.")
                     data["sequencing"] += 1
                 case 20:
-                    print("[+] Vingtième réponse reçue du client.")
+                    print(f"Mise à jour de l'atmosphère. Passage à l'étape {data['sequencing'] + 1}.")
                     data["sequencing"] += 1
                 case 23:
-                    print("[+] Vingt-troisième réponse reçue du client.")
+                    print(f"Mise à jour de l'atmosphère. Passage à l'étape {data['sequencing'] + 1}.")
                     data["sequencing"] += 1
                 case _:
                     print("[-] Ne corespond à aucune étape connue de sequencing.")
