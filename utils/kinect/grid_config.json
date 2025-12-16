@@ -1,0 +1,23 @@
+{
+    "start_x": 20,
+    "start_y": 130,
+    "cols": 8,
+    "rows": 4,
+    "cell_w": 60,
+    "cell_h": 50,
+    "grid_color": [
+        0,
+        255,
+        0
+    ],
+    "text_color": [
+        255,
+        255,
+        255
+    ],
+    "bg_color": [
+        0,
+        0,
+        0
+    ]
+}

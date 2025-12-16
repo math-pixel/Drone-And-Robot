@@ -26,11 +26,25 @@ Noir        → Invalide (0)
 
 🎹 Contrôles
 Touche	Action
-Flèches	Déplacer la grille
+Flèches ou ZQSD	Déplacer la grille
 + / -	Ajouter/retirer colonnes
-***** / .	Ajouter/retirer lignes
-W / S	Augmenter/diminuer largeur cellule
-D / A	Augmenter/diminuer hauteur cellule
+***** / /	Ajouter/retirer lignes
+I / K	Augmenter/diminuer largeur cellule
+L / J	Augmenter/diminuer hauteur cellule
+ESPACE	Sauvegarder config JSON
+C	Sauvegarder capture PNG + CSV
 R	Reset aux valeurs par défaut
-ESPACE	Sauvegarder capture + données
-Q	Quitter
+Q ou Echap	Quitter
+
+grid_config.json
+{
+    "start_x": 100,
+    "start_y": 80,
+    "cols": 6,
+    "rows": 5,
+    "cell_w": 70,
+    "cell_h": 60,
+    "grid_color": [0, 255, 0],
+    "text_color": [255, 255, 255],
+    "bg_color": [0, 0, 0]
+}
