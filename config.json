@@ -2,7 +2,7 @@
   "name": "global_data_transfer",
   "version": "1.0.0",
   "sequencing": 1,
-  "activity_atmosphere": {
+  "atmosphere_activity": {
     "ws_server_address": "ws://192.168.10.182:8001",
     "dmx": [
       { "lamp1": { "channel": 1, "value": 255 } },
@@ -15,19 +15,19 @@
     }
   },
 
-  "activity_control": {
+  "test_activity": {
     "ws_server_address": "ws://192.168.10.182:8003",
     "difficulty_level": 1,
     "enable": false
   },
 
-  "activity_oral": {
+  "presentation_activity": {
     "ws_server_address": "ws://192.168.10.50:8007",
     "difficulty_level": 1,
     "enable": false
   },
 
-  "activity_knock_down": {
+  "throw_activity": {
     "ws_server_address": "ws://192.168.10.84:8080",
     "difficulty_level": 1,
     "enable": false,
@@ -35,7 +35,7 @@
     "rover_rotation_angle": 90
   },
 
-  "activity_speak_to_mom": {
+  "mom_activity": {
     "ws_server_address": "ws://192.168.10.50:8006",
     "difficulty_level": 1,
     "enable": false,
@@ -43,7 +43,7 @@
     "llm_server_address": "http://"
   },
 
-  "activity_monitoring": {
+  "choice_activity": {
     "ws_server_address": "ws://192.168.10.182:8002",
     "emotions": [
       {
