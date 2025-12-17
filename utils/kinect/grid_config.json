@@ -1,10 +1,10 @@
 {
-    "start_x": 30,
-    "start_y": 90,
-    "cols": 7,
-    "rows": 4,
-    "cell_w": 65,
-    "cell_h": 50,
+    "start_x": 240,
+    "start_y": 170,
+    "cols": 2,
+    "rows": 1,
+    "cell_w": 35,
+    "cell_h": 30,
     "grid_color": [
         0,
         255,
@@ -21,6 +21,6 @@
         0
     ],
     "detection_enabled": true,
-    "detection_threshold": 5,
+    "detection_threshold": 4,
     "alert_duration": 1.0
 }

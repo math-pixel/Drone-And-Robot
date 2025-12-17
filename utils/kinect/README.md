@@ -1,7 +1,7 @@
 pip install pylibfreenect2
 pip install numpy opencv-python
 
-use python 3.10.6
+use python 3.8.6
 
 # Créer l'environnement
 C:\Python38-32\python.exe -m venv C:\kinect_env
@@ -11,6 +11,9 @@ C:\kinect_env\Scripts\activate
 
 # Installer
 pip install pykinect2 numpy opencv-python comtypes==1.1.7
+
+# Patcher pykinect2 pour time.clock
+python -c "import os; import pykinect2; p=os.path.join(pykinect2.__path__[0],'PyKinectRuntime.py'); f=open(p,'r'); c=f.read(); f.close(); c=c.replace('time.clock','time.perf_counter'); f=open(p,'w'); f.write(c); f.close(); print('Patch OK!')"
 
 # Lancer
 python kinect.py
