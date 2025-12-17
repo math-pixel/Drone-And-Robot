@@ -82,7 +82,7 @@
       "choice_activity": {
         "ws_session_id": "",
         "connected": false,
-        "choices": []
+        "step": []
       }
     }
   ]
