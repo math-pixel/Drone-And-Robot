@@ -40,6 +40,8 @@
     },
     {
       "test_activity": {
+        "authorized": false,
+        "finished": false,
         "ws_session_id": "",
         "connected": false,
         "step": []
@@ -47,6 +49,8 @@
     },
     {
       "presentation_activity": {
+        "authorized": false,
+        "finished": false,
         "ws_session_id": "",
         "connected": false,
         "step": []
@@ -54,6 +58,8 @@
     },
     {
       "throw_activity": {
+        "authorized": false,
+        "finished": false,
         "ws_session_id": "",
         "connected": false,
         "step": [],
@@ -62,6 +68,8 @@
     },
     {
       "mom_activity": {
+        "authorized": false,
+        "finished": false,
         "ws_session_id": "",
         "connected": false,
         "step": [],
@@ -74,13 +82,6 @@
         "ws_session_id": "",
         "connected": false,
         "choices": []
-      }
-    },
-    {
-      "main_activity": {
-        "ws_session_id": "",
-        "connected": false,
-        "step": []
       }
     }
   ]
