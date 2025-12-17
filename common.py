@@ -79,6 +79,13 @@ async def handle_steps(ws, data: dict, client_key: str):
 
         await send_json(ws, data, data["key"])
 
+    activity["finished"] = True
+    data["key"] = f"{client_key}_finished"
+
+    print(f"\n🏁 {client_key} finished")
+
+    await send_json(ws, data, data["key"])
+
 
 async def handle_choices(ws, data: dict, client_key: str):
     activity = find_activity(data, client_key)
