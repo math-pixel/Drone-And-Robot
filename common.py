@@ -93,10 +93,8 @@ async def handle_choices(ws, data: dict, client_key: str):
 
     for index, choice in enumerate(choices, start=1):
 
-        # 🔐 À partir du choix 2 → autorisation requise
-        if index > 1:
-            print(f"\n⏳ Waiting authorization for choice {choice['id']}...")
-            await wait_for_choice_authorization(ws, choice["id"])
+        print(f"\n⏳ Waiting authorization for choice {choice['id']}...")
+        await wait_for_choice_authorization(ws, choice["id"])
 
         print(f"\n🔘 Choice {choice['id']}: {choice['name']}")
         for i, opt in enumerate(choice.get("options", [])):
