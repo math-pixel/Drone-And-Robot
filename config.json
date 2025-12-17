@@ -24,7 +24,8 @@
   ],
   "activity":[
     {"atmosphere_activity": {
-      "ws_client_adress":"ws://xxx.xxx.xx.xxx:80xx",
+      "ws_session_id": "",
+      "connected": false,
       "dmx": [
         { "lamp1": { "channel": 1, "value": 255 } },
         { "lamp2": { "channel": 2, "value": 128 } }
@@ -36,7 +37,7 @@
       }
     }},
     {"test_activity": {
-      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "ws_session_id": "",
       "connected": false,
       "step": [
         { "id": "1", "name": "step1", "finished": false },
@@ -44,7 +45,7 @@
       ]
     }},
     {"presentation_activity": {
-      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "ws_session_id": "",
       "connected": false,
       "step": [
         { "id": "1", "name": "step1", "finished": false },
@@ -52,7 +53,7 @@
       ]
     }},
     {"throw_activity": {
-      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "ws_session_id": "",
       "connected": false,
       "step": [
         { "id": "1", "name": "step1", "finished": false },
@@ -61,7 +62,7 @@
       "number_of_points_detected": 0
     }},
     {"mom_activity": {
-      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "ws_session_id": "",
       "connected": false,
       "step": [
         { "id": "1", "name": "step1", "finished": false },
@@ -71,7 +72,7 @@
       "llm_server_address": "http://"
     }},
     {"choice_activity": {
-      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "ws_session_id": "",
       "connected": false,
       "step": [
         { "id": "1", "name": "step1", "finished": false },
@@ -79,7 +80,7 @@
       ]
     }},
     {"main_activity": {
-      "ws_client_adress": "ws://xxx.xxx.xx.xxx:80xx",
+      "ws_session_id": "",
       "connected": false,
       "step": [
         { "id": "1", "name": "step1", "finished": false },
