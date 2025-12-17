@@ -30,6 +30,7 @@ async def run_client(client_key: str, items: list[dict]):
         except KeyboardInterrupt:
             print("\n🛑 Client stopped by user")
 
+
 def handle_identification(data: dict, client_key: str, items: list[dict]):
     data["key"] = f"identification_{client_key}"
 
@@ -71,15 +72,27 @@ async def handle_choices(ws, data: dict, client_key: str):
     activity = find_activity(data, client_key)
     choices = activity.get("choices", [])
 
-    for index, choice in enumerate(choices, start=1):
-        print(f"\n🔘 Choice {index}: {choice['name']}")
-        for i, opt in enumerate(choice.get("options", []), start=1):
-            print(f"  {i}. {opt}")
+    while True:
+        remaining = [c for c in choices if c.get("chosen", -1) == -1]
+        if not remaining:
+            print("\n✅ All choices completed")
+            return
 
-        input("➡️ Press Enter to validate choice")
+        choice = remaining[0]
+        print(f"\n🔘 Choice {choice['id']}: {choice['name']}")
 
-        choice["finished"] = True
-        data["key"] = f"{client_key}_activity_finished_choice_{index}"
+        for i, opt in enumerate(choice.get("options", [])):
+            print(f"  {i}: {opt}")
+
+        selected = None
+        while selected not in (0, 1):
+            try:
+                selected = int(input("➡️ Choose 0 or 1: "))
+            except ValueError:
+                pass
+
+        choice["chosen"] = selected
+        data["key"] = f"{client_key}_{choice['id']}_{selected}"
 
         await send_json(ws, data, data["key"])
 
@@ -93,6 +106,5 @@ def find_activity(data: dict, client_key: str) -> dict | None:
 
 async def send_json(ws, data: dict, label: str):
     payload = json.dumps(data)
-    print(f"\n📤 Sending → {payload}")
+    print(f"\n📤 Sending → {label}")
     await ws.send(payload)
-    print(f"📤 Sent → {label}")

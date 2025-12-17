@@ -4,8 +4,8 @@ from common import run_client
 CLIENT_KEY = "choice_activity"
 
 CHOICES = [
-    {"id": "1", "name": "Habit", "options": ["Option A", "Option B"], "finished": False},
-    {"id": "2", "name": "Discussion", "options": ["Option A", "Option B"], "finished": False},
+    {"id": "1", "name": "Habit", "options": ["Option A", "Option B"], "chosen": -1},
+    {"id": "2", "name": "Discussion", "options": ["Option A", "Option B"], "chosen": -1},
 ]
 
 if __name__ == "__main__":
