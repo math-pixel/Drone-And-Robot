@@ -2,7 +2,7 @@
   "name": "global_data_transfer",
   "version": "1.0.0",
   "ws_server_address": "ws://xxx.xxx.xx.xxx:80xx",
-  "key": "<name>_<client/host>_<nom>_<id>_<finished>",
+  "key": "",
   "nessage": "",
   "emotions": [
     {
