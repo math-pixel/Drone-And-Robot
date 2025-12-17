@@ -2,7 +2,7 @@ import asyncio
 import json
 import websockets
 
-WS_URL = "ws://192.168.1.13:8057/ws"
+WS_URL = "ws://192.168.10.182:8057/ws"
 
 async def run_client(client_key: str, items: list[dict] | None = None):
     input(f"Press Enter to connect to {WS_URL}...")
@@ -18,7 +18,10 @@ async def run_client(client_key: str, items: list[dict] | None = None):
             await send_json(ws, data, f"identification_{client_key}")
 
             if mode == "step":
+                print("⏳ Waiting for start_authorization...")
+                await wait_for_authorization(ws)
                 await handle_steps(ws, data, client_key)
+
             elif mode == "choices":
                 await handle_choices(ws, data, client_key)
 
@@ -72,7 +75,7 @@ async def handle_steps(ws, data: dict, client_key: str):
         input(f"\n➡️ Press Enter to finish step {index}: {step['name']}")
 
         step["finished"] = True
-        data["key"] = f"{client_key}_activity_finished_step_{index}"
+        data["key"] = f"{client_key}_finished_step_{index}"
 
         await send_json(ws, data, data["key"])
 
@@ -117,3 +120,22 @@ async def send_json(ws, data: dict, label: str):
     payload = json.dumps(data)
     print(f"\n📤 Sending → {label}")
     await ws.send(payload)
+
+
+async def wait_for_authorization(ws):
+    while True:
+        msg = await ws.recv()
+        data = json.loads(msg)
+        key = data.get("key")
+
+        if key == "start_authorization":
+            print("✅ start_authorization received. You may start.")
+            return
+
+        elif key == "update_emotions":
+            print("\n🎭 Emotions update new value:")
+            for emo in data.get("emotions", []):
+                print(f"  - {emo.get('type')}: {emo.get('level')}")
+
+        else:
+            print("⏳ Waiting authorization, received:", key)
