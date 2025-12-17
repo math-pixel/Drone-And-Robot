@@ -2,25 +2,27 @@ import asyncio
 import json
 import websockets
 
-async def run_client(ws_url: str, client_key: str, steps: list[dict]):
-    input(f"Press Enter to connect to {ws_url}...")
+WS_URL = "ws://192.168.1.13:8057/ws"
 
-    async with websockets.connect(ws_url) as ws:
-        # --- Receive initial JSON ---
+async def run_client(client_key: str, items: list[dict]):
+    input(f"Press Enter to connect to {WS_URL}...")
+
+    async with websockets.connect(WS_URL) as ws:
         raw = await ws.recv()
         data = json.loads(raw)
 
         print("\n📥 Initial key:", data.get("key"))
 
         if data.get("key") == "identification_request":
-            data = handle_identification(data, client_key, steps)
+            data, mode = handle_identification(data, client_key, items)
             await send_json(ws, data, f"identification_{client_key}")
 
-        # --- Interactive steps ---
-        await handle_steps(ws, data, client_key)
+            if mode == "step":
+                await handle_steps(ws, data, client_key)
+            elif mode == "choices":
+                await handle_choices(ws, data, client_key)
 
-        # --- Keep alive ---
-        print("\n✅ All steps done. Waiting for server messages (Ctrl+C to exit)\n")
+        print("\n✅ Client ready. Waiting for server (Ctrl+C to exit)\n")
         try:
             while True:
                 msg = await ws.recv()
@@ -28,33 +30,56 @@ async def run_client(ws_url: str, client_key: str, steps: list[dict]):
         except KeyboardInterrupt:
             print("\n🛑 Client stopped by user")
 
-def handle_identification(data: dict, client_key: str, steps: list[dict]) -> dict:
+def handle_identification(data: dict, client_key: str, items: list[dict]):
     data["key"] = f"identification_{client_key}"
 
     for wrapper in data.get("activity", []):
         if client_key in wrapper:
             activity = wrapper[client_key]
             activity["connected"] = True
-            activity["step"] = steps
-            print(f"✅ {client_key} activated with {len(steps)} steps")
-            break
-    else:
-        print(f"⚠️ Activity '{client_key}' not found")
 
-    return data
+            if "step" in activity:
+                activity["step"] = items
+                mode = "step"
+            elif "choices" in activity:
+                activity["choices"] = items
+                mode = "choices"
+            else:
+                mode = "unknown"
+
+            print(f"✅ {client_key} activated ({mode})")
+            return data, mode
+
+    print(f"⚠️ Activity '{client_key}' not found")
+    return data, None
+
 
 async def handle_steps(ws, data: dict, client_key: str):
     activity = find_activity(data, client_key)
-    if not activity:
-        return
-
     steps = activity.get("step", [])
 
     for index, step in enumerate(steps, start=1):
-        input(f"\n➡️ Press Enter to complete step {index}: {step['name']}")
+        input(f"\n➡️ Press Enter to finish step {index}: {step['name']}")
 
         step["finished"] = True
         data["key"] = f"{client_key}_activity_finished_step_{index}"
+
+        await send_json(ws, data, data["key"])
+
+
+async def handle_choices(ws, data: dict, client_key: str):
+    activity = find_activity(data, client_key)
+    choices = activity.get("choices", [])
+
+    for index, choice in enumerate(choices, start=1):
+        print(f"\n🔘 Choice {index}: {choice['name']}")
+        for i, opt in enumerate(choice.get("options", []), start=1):
+            print(f"  {i}. {opt}")
+
+        input("➡️ Press Enter to validate choice")
+
+        choice["finished"] = True
+        data["key"] = f"{client_key}_activity_finished_choice_{index}"
 
         await send_json(ws, data, data["key"])
 
@@ -65,7 +90,9 @@ def find_activity(data: dict, client_key: str) -> dict | None:
             return wrapper[client_key]
     return None
 
+
 async def send_json(ws, data: dict, label: str):
     payload = json.dumps(data)
+    print(f"\n📤 Sending → {payload}")
     await ws.send(payload)
     print(f"📤 Sent → {label}")

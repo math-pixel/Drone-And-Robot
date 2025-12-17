@@ -1,7 +1,6 @@
 import asyncio
 from common import run_client
 
-WS_URL = "ws://192.168.1.13:8057/ws"
 CLIENT_KEY = "presentation_activity"
 
 STEPS = [
@@ -11,4 +10,4 @@ STEPS = [
 ]
 
 if __name__ == "__main__":
-    asyncio.run(run_client(WS_URL, CLIENT_KEY, STEPS))
+    asyncio.run(run_client(CLIENT_KEY, STEPS))
