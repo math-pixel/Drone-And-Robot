@@ -4,6 +4,7 @@
   "ws_server_address": "ws://xxx.xxx.xx.xxx:80xx",
   "key": "",
   "nessage": "",
+  "started": false,
   "emotions": [
     {
       "type": "happiness",
