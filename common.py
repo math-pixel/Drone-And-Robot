@@ -4,7 +4,7 @@ import websockets
 
 WS_URL = "ws://192.168.1.13:8057/ws"
 
-async def run_client(client_key: str, items: list[dict]):
+async def run_client(client_key: str, items: list[dict] | None = None):
     input(f"Press Enter to connect to {WS_URL}...")
 
     async with websockets.connect(WS_URL) as ws:
@@ -26,7 +26,16 @@ async def run_client(client_key: str, items: list[dict]):
         try:
             while True:
                 msg = await ws.recv()
-                print("\n📥 Received:", json.loads(msg).get("key"))
+                data = json.loads(msg)
+                key = data.get("key")
+
+                if key == "update_emotions":
+                    print("\n🎭 Emotions update new value:")
+                    for emo in data.get("emotions", []):
+                        print(f"  - {emo.get('type')}: {emo.get('level')}")
+                else:
+                    print("\n📥 Received:", key)
+
         except KeyboardInterrupt:
             print("\n🛑 Client stopped by user")
 
