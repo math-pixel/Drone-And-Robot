@@ -2,7 +2,7 @@ import asyncio
 import json
 import websockets
 
-WS_URL = "ws://192.168.1.13:8057/ws"
+WS_URL = "ws://192.168.10.182:8057/ws"
 
 # ======================================================
 # MAIN
