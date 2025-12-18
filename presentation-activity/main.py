@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 
 # --- BLOC MAGIQUE A METTRE TOUT EN HAUT ---
 
@@ -19,51 +20,45 @@ sys.path.append(parent_dir)
 
 from utils.WSServer import *
 from utils.WSClient import *
+from utils.kinect.DephDetector import DepthDetector
 
-class WsDelegate(DelegateInterface):
-    async def process(self, data, websocket):
+class DepthDetectorDelegate:
 
-        if not data:
-            print("[-] Aucune donnée reçue.")
-            return
+    def __init__(self):
+        self.current_grid_completed = [[]]
+
+    def joinGrid(self, grid_values):
+        # Conversion en arrays numpy et OR logique
+        self.current_grid_completed = np.logical_or(
+            self.current_grid_completed, 
+            grid_values
+        ).astype(int)
+   
+    def isActivityFinish(self) -> bool:
+        config_grid = self.load_config("config.json")["depth_detector"]["grid_validation"]
+        config_array = np.array(config_grid)
         
-        if data.get("name") != "global_data_transfer":
-            print("[-] Données non pertinentes reçues.")
-            response = {
-                "status": "received",
-                "original_data": data
-            }
+        # Vérifie que tous les 1 de la grille de validation sont présents dans la grille actuelle
+        # Les 1 supplémentaires dans la grille actuelle sont ignorés
+        return np.all(self.current_grid_completed >= config_array)
+        
+    def playSound(self, grid_values):
+        for row in range(grid_values.shape[0]):
+            for col in range(grid_values.shape[1]):
+                if grid_values[row, col] == 1:
+                    print(f"Jouer le son pour la cellule ({row}, {col})")
+
+    def process(self, grid_values):
+        # Traiter les valeurs de la grille reçues du DepthDetector
+        print("Grille de profondeur mise à jour:")
+        print(grid_values)
+        self.joinGrid(grid_values)
+        if self.isActivityFinish():
+            print("Envoie Activité terminée !")
         else:
-            print("[+] Données pertinentes reçues.")
-            response = {
-                "status": "processed",
-                "original_data": data
-            }
-
-            await websocket.send(json.dumps(response))
-            print("[+] Réponse envoyée au client.")
-
-            match data.get("sequencing"):
-                case 9:
-                    print("[+] Deuxième réponse reçue du client.")
-                    input(f"Activité Exposé en cours. Appuyez sur Entrée pour simuler (Passage à l'étape {data['sequencing'] + 1})")
-                    data["sequencing"] += 1
-                    await ws_send_to(data.get("main_activity").get("ws_server_address"), data)
-                case _:
-                    print("[-] Ne corespond à aucune étape connue de sequencing.")
-
+            print("envoie Nouvelle donner recu sur la grille de profondeur.")
 
 if __name__ == "__main__":
     config_path = os.path.join(parent_dir, "config.json")
-    print(f"path du config: {config_path}")
-    config_ws = {
-        "host": "192.168.10.50",
-        "port": 8007
-    }
-    server = AdvancedWSServer(delegate=WsDelegate(), config=config_ws)
-    asyncio.run(server.start())
-    try:
-        while True:
-            pass  # Keep the main thread alive
-    except KeyboardInterrupt:
-        server.stop()
+    depth_detector_delegate = DepthDetectorDelegate()
+    depth_detector = DepthDetector(delegate=depth_detector_delegate)

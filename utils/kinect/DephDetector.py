@@ -31,6 +31,7 @@ class DepthDetector:
             "color_object": [0, 0, 255],          # Rouge pour les objets
             "color_grid": [0, 255, 0],            # Vert pour la grille
             "color_text": [255, 255, 255],        # Blanc pour le texte
+            "show_graph": True
         }
         
         # Charger la configuration
