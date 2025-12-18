@@ -82,54 +82,73 @@ async def handle_steps(ws, data: dict, client_key: str):
 # ======================================================
 async def handle_choice_steps(ws, data: dict, client_key: str):
     activity = find_activity(data, client_key)
-    steps = activity.get("step", [])
+    steps = {step["id"]: step for step in activity.get("step", [])}
+    finished_steps = set()
 
-    for step in steps:
-        step_id = step["id"]
+    print("\n🎯 Waiting for step authorizations (any order)...")
 
-        print(f"\n⏳ Waiting authorization for step {step_id}...")
-        data = await wait_for_step_authorization(ws, step_id)
+    while len(finished_steps) < len(steps):
+        msg = await ws.recv()
+        incoming = json.loads(msg)
+        key = incoming.get("key")
 
-        print(f"✅ Step {step_id} authorized")
+        # 🎭 émotions toujours traitées
+        if key == "update_emotions":
+            handle_incoming(incoming)
+            continue
 
-        # 🔁 Re-synchroniser avec le JSON reçu
-        activity = find_activity(data, client_key)
-        step = next(s for s in activity["step"] if s["id"] == step_id)
+        # 🔑 Autorisation de step
+        if key and key.startswith(f"{client_key}_step_") and key.endswith("_authorization"):
+            step_id = int(key.split("_")[3])
 
-        for action in step.get("actions", []):
-            action_id = action["id"]
+            if step_id in finished_steps:
+                continue  # déjà fait
 
-            if action["type"] == "video":
-                input(f"\n🎬 Press Enter to finish video {action['file']}")
-                action["finished"] = True
+            print(f"\n✅ Authorization received for step {step_id}")
 
-                data["key"] = f"{client_key}_step_{step_id}_{action_id}_finished"
-                await send_json(ws, data, data["key"])
+            data = incoming  # 🔴 TRÈS IMPORTANT
+            await execute_choice_step(ws, data, client_key, step_id)
 
-            elif action["type"] == "choice":
-                print(f"\n🔘 Choice: {action['name']}")
-                for i, opt in enumerate(action["options"]):
-                    print(f"  {i}: {opt}")
-
-                selected = None
-                while selected not in (0, 1):
-                    try:
-                        selected = int(input("➡️ Choose 0 or 1: "))
-                    except ValueError:
-                        pass
-
-                action["chosen"] = selected
-                data["key"] = f"{client_key}_{step_id}_{action_id}_{selected}"
-                await send_json(ws, data, data["key"])
-
-        # ✅ STEP TERMINÉ → message supplémentaire
-        step["finished"] = True
-        data["key"] = f"{client_key}_step_{step_id}_finished"
-
-        print(f"🏁 Step {step_id} finished")
-        await send_json(ws, data, data["key"])
+            finished_steps.add(step_id)
 
     print("\n🏁 choice_activity completed")
+
+async def execute_choice_step(ws, data: dict, client_key: str, step_id: int):
+    activity = find_activity(data, client_key)
+    step = next(s for s in activity["step"] if s["id"] == step_id)
+
+    for action in step.get("actions", []):
+        action_id = action["id"]
+
+        if action["type"] == "video":
+            input(f"\n🎬 Press Enter to finish video {action['file']}")
+            action["finished"] = True
+            data["key"] = f"{client_key}_step_{step_id}_{action_id}_finished"
+            await send_json(ws, data, data["key"])
+
+        elif action["type"] == "choice":
+            print(f"\n🔘 Choice: {action['name']}")
+            for i, opt in enumerate(action["options"]):
+                print(f"  {i}: {opt}")
+
+            selected = None
+            while selected not in (0, 1):
+                try:
+                    selected = int(input("➡️ Choose 0 or 1: "))
+                except ValueError:
+                    pass
+
+            action["chosen"] = selected
+            data["key"] = f"{client_key}_{step_id}_{action_id}_{selected}"
+            await send_json(ws, data, data["key"])
+
+    # ✅ STEP TERMINÉ
+    step["finished"] = True
+    data["key"] = f"{client_key}_step_{step_id}_finished"
+
+    print(f"🏁 Step {step_id} finished")
+    await send_json(ws, data, data["key"])
+
 
 
 # ======================================================
