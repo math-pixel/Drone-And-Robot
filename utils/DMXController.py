@@ -16,6 +16,7 @@ class DMXController:
             # Création de l'objet ArtNet pour cet univers (512 canaux)
             # StupidArtnet(ip, universe, packet_size, frame_rate, is_broadcast, enable_loop)
             artnet_node = StupidArtnet(self.target_ip, universe_id, 512, self.packet_rate, True, True)
+            # artnet_node = StupidArtnet(self.target_ip, universe_id, 512, self.packet_rate, False, True)
             artnet_node.start() # Démarre le thread d'envoi continu
             self.universes[universe_id] = artnet_node
             print(f"[DMX] Univers {universe_id} initialisé vers {self.target_ip}")
@@ -47,7 +48,7 @@ class DMXController:
         try:
             node.set_single_value(channel, value)
             # Optionnel : log pour debug
-            # print(f"[DMX] U:{universe} | Ch:{channel} -> {value}")
+            print(f"[DMX] U:{universe} | Ch:{channel} -> {value}")
         except Exception as e:
             print(f"[ERREUR DMX] {e}")
 
@@ -74,16 +75,20 @@ if __name__ == "__main__":
         print("Envoi de DMX...")
         
         # Allumer le canal 1 à fond sur l'univers 1
-        dmx.set(channel=1, value=255, universe=1)
+        dmx.set(channel=1, value=255, universe=0)
         
         # Mettre le canal 10 à 50% sur l'univers 2
         dmx.set(channel=10, value=127, universe=2)
         
         # Petit effet chenillard simple pour tester
-        for i in range(1, 10):
-            dmx.set(i, 255)
-            time.sleep(0.2)
-            dmx.set(i, 0)
+        # for i in range(1, 10):
+        #     dmx.set(i, 255)
+        #     time.sleep(0.2)
+        #     dmx.set(i, 0)
+
+        print("Appuyez Ctrl+C pour arrêter...")
+        while True:
+            time.sleep(1)
             
     except KeyboardInterrupt:
         pass
