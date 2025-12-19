@@ -1,5 +1,5 @@
 import asyncio
-from common import run_client
+from WSClient import WSClient
 
 CLIENT_KEY = "test_activity"
 
@@ -10,4 +10,5 @@ STEPS = [
 ]
 
 if __name__ == "__main__":
-    asyncio.run(run_client(CLIENT_KEY, STEPS))
+    client = WSClient()
+    asyncio.run(client.run(CLIENT_KEY, STEPS))
