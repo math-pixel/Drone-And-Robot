@@ -1,35 +1,46 @@
+
+def map_level_to_leds(level, num_leds):
+    """
+    Mappe un level (0-1) sur le nombre de LEDs à allumer
+    
+    Args:
+        level: Valeur entre 0 et 1
+        num_leds: Nombre total de LEDs sur le strip
+        
+    Returns:
+        int: Nombre de LEDs à allumer
+    """
+    level = max(0, min(1, level))  # Clamp entre 0 et 1
+    return round(level * num_leds)
+
+
 if __name__ == "__main__":
     
     # --- IMPORTS ---
     from utils.rpi.BandeauLED import BandeauLED # Adapte le chemin selon où tu as mis le fichier
+    import board
+
+    NUM_LEDS = 15  # LEDs par bandeau
 
     # --- CONFIGURATION LED ---
-    # Initialisation du bandeau (GPIO 18 est le standard pour les LEDs)
-    LEDS_TOTAL = 30  # Nombre total de LEDs sur ton ruban
-    led_strip = BandeauLED(num_leds=LEDS_TOTAL, pin=18, luminosite=100)
-
-    def afficher_jauge(pourcentage, couleur="vert"):
-        """
-        Allume un pourcentage du bandeau (0 à 100)
-        """
-        # Sécurité : on borne entre 0 et 100
-        pourcentage = max(0, min(100, pourcentage))
-        
-        # --- LE PRODUIT EN CROIX ---
-        # (Pourcentage * NombreTotal) / 100
-        nb_leds_allumees = int((pourcentage * led_strip.num_leds) / 100)
-        
-        # On parcourt toutes les LEDs du bandeau
-        for i in range(led_strip.num_leds):
-            if i < nb_leds_allumees:
-                # Allumer
-                led_strip.set_pixel(i, couleur, auto_afficher=False)
-            else:
-                # Éteindre le reste
-                led_strip.set_pixel(i, "noir", auto_afficher=False)
-                
-        # On envoie l'info au bandeau une seule fois à la fin
-        led_strip.afficher()
+    strips = {
+        "happiness": {
+            "controller": LEDController(pin=board.D18, num_leds=NUM_LEDS),
+            "color": (255, 223, 0)     # Jaune
+        },
+        "stress": {
+            "controller": LEDController(pin=board.D21, num_leds=NUM_LEDS),
+            "color": (255, 100, 0)     # Orange
+        },
+        "shame": {
+            "controller": LEDController(pin=board.D12, num_leds=NUM_LEDS),
+            "color": (180, 0, 255)     # Violet
+        },
+        "angry": {
+            "controller": LEDController(pin=board.D16, num_leds=NUM_LEDS),
+            "color": (255, 0, 0)       # Rouge
+        }
+    }
 
     # Définition des steps
     STEPS = [
@@ -61,29 +72,38 @@ if __name__ == "__main__":
         
         match action_type:
             case "update_emotion":
-                # transformer les strip led
-                await client.send_choice_result(step_id, action_id, selected)
+                """
+                Traite le JSON des émotions et allume les LEDs correspondantes
                 
-                # Enregistrer le choix
-                action["chosen"] = selected
-            case "gauge":
-                # Récupération de la valeur (0 à 100)
-                valeur = action.get("value", 0)
+                Args:
+                    action: Dict contenant "emotions"
+                    ease: Délai animation (0 = instantané)
+                """
+                emotions = action.get("emotions", [])
                 
-                # Optionnel : récupérer une couleur si envoyée, sinon bleu par défaut
-                couleur = action.get("color", "bleu")
-                
-                print(f"     📊 Mise à jour jauge : {valeur}% ({couleur})")
-                
-                # Appel de la fonction
-                afficher_jauge(valeur, couleur)
-                
-                # On signale que c'est fait
-                action["finished"] = True
-                await client.send_action_finished(step_id, action_id)
-                
+                for emotion in emotions:
+                    emotion_type = emotion.get("type")
+                    level = emotion.get("level", 0)
+                    
+                    if emotion_type not in strips:
+                        continue
+                    
+                    strip = strips[emotion_type]
+                    controller = strip["controller"]
+                    r, g, b = strip["color"]
+                    
+                    # Mapper le level en nombre de LEDs
+                    num_leds_on = map_level_to_leds(level, NUM_LEDS)
+                    
+                    # Éteindre le strip puis allumer le bon nombre de LEDs
+                    controller.lightsOFF()
+                    # todo defined led start index for kept the bottom of the jauge always on
+                    if num_leds_on > 0:
+                        controller.lightUp(0, num_leds_on - 1, r, g, b, ease)                
             case _:
                 print(f"     ⚠️  Unknown action type: {action_type}")
+
+        
 
     # ======================================================
     # RUN
