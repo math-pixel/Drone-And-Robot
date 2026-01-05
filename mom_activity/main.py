@@ -221,36 +221,35 @@ async def my_action_handler(action: dict, client: WSClient, step_id: int):
     
     print(f"\n📥 Action Reçue : {action_type} (ID: {action_id})")
 
-    match action_type:
-        case "activity":
-            print("▶️ Démarrage de l'activité Vocale...")
-            
-            # Exécuter la logique lourde dans un thread séparé pour ne pas couper le WS
-            # run_activity_logic contient (Record -> STT -> LLM -> Servo)
-            result_sentiment = await asyncio.to_thread(run_activity_logic, pwm_global)
-            
-            print(f"✅ Activité terminée. Résultat : {result_sentiment}")
-            
-            # Mettre à jour l'action locale (optionnel)
-            action["finished"] = True
-            action["result"] = result_sentiment
-            
-            # Renvoyer au serveur que c'est fini
-            # On adapte selon la méthode disponible dans ta classe WSClient
-            # Si tu as une méthode générique 'send_action_update' ou similaire :
-            if hasattr(client, 'send_choice_result'):
-                # On détourne send_choice_result pour renvoyer le résultat, 
-                # ou tu crées une méthode send_action_finished(step_id, action_id, data)
-                await client.send_choice_result(step_id, action_id, result_sentiment)
-            else:
-                print("⚠️ Aucune méthode d'envoi trouvée sur le client (ex: send_choice_result)")
+    if action_type == "activity":
+        print("▶️ Démarrage de l'activité Vocale...")
+        
+        # Exécuter la logique lourde dans un thread séparé pour ne pas couper le WS
+        # run_activity_logic contient (Record -> STT -> LLM -> Servo)
+        result_sentiment = await asyncio.to_thread(run_activity_logic, pwm_global)
+        
+        print(f"✅ Activité terminée. Résultat : {result_sentiment}")
+        
+        # Mettre à jour l'action locale (optionnel)
+        action["finished"] = True
+        action["result"] = result_sentiment
+        
+        # Renvoyer au serveur que c'est fini
+        # On adapte selon la méthode disponible dans ta classe WSClient
+        # Si tu as une méthode générique 'send_action_update' ou similaire :
+        if hasattr(client, 'send_choice_result'):
+            # On détourne send_choice_result pour renvoyer le résultat, 
+            # ou tu crées une méthode send_action_finished(step_id, action_id, data)
+            await client.send_choice_result(step_id, action_id, result_sentiment)
+        else:
+            print("⚠️ Aucune méthode d'envoi trouvée sur le client (ex: send_choice_result)")
 
-        case "choice":
-            # Ta logique bouton existante...
-            pass
-            
-        case _:
-            print(f"⚠️ Type d'action inconnu : {action_type}")
+    elif action_type == "choice":
+        # Ta logique bouton existante...
+        pass
+        
+    else:
+        print(f"⚠️ Type d'action inconnu : {action_type}")
 
 # ============================================================
 # 6. MAIN

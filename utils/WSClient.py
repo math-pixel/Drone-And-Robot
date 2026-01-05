@@ -314,74 +314,74 @@ if __name__ == "__main__":
     # KEY DELEGATE (appelé à chaque message reçu)
     # ======================================================
     
-    async def my_key_handler(data: dict, client: WSClient):
-        """
-        Delegate appelé à chaque réception de message.
-        Permet de réagir à n'importe quel message du serveur.
-        """
-        key = data.get("key", "")
+    # async def my_key_handler(data: dict, client: WSClient):
+    #     """
+    #     Delegate appelé à chaque réception de message.
+    #     Permet de réagir à n'importe quel message du serveur.
+    #     """
+    #     key = data.get("key", "")
         
-        print(f"🔑 [KEY DELEGATE] Received: {key}")
+    #     print(f"🔑 [KEY DELEGATE] Received: {key}")
         
-        # Exemples de traitement personnalisé
-        match key:
-            case "update_emotions":
-                emotions = data.get("emotions", [])
-                print(f"   → Emotions received: {len(emotions)} items")
-                # Faire quelque chose avec les émotions...
+    #     # Exemples de traitement personnalisé
+    #     match key:
+    #         case "update_emotions":
+    #             emotions = data.get("emotions", [])
+    #             print(f"   → Emotions received: {len(emotions)} items")
+    #             # Faire quelque chose avec les émotions...
                 
-            case "pause_requested":
-                print("   → ⏸️ Server requested pause!")
-                # Mettre en pause le client...
+    #         case "pause_requested":
+    #             print("   → ⏸️ Server requested pause!")
+    #             # Mettre en pause le client...
                 
-            case "custom_event":
-                payload = data.get("payload", {})
-                print(f"   → Custom event with payload: {payload}")
-                # Traiter l'événement personnalisé...
+    #         case "custom_event":
+    #             payload = data.get("payload", {})
+    #             print(f"   → Custom event with payload: {payload}")
+    #             # Traiter l'événement personnalisé...
                 
-            case _ if key.endswith("_authorization"):
-                print(f"   → Step authorization detected")
+    #         case _ if key.endswith("_authorization"):
+    #             print(f"   → Step authorization detected")
                 
-            case _:
-                pass  # Ignorer les autres clés
+    #         case _:
+    #             pass  # Ignorer les autres clés
 
     # ======================================================
     # ACTION DELEGATE (gestion des actions)
     # ======================================================
     
-    async def my_action_handler(action: dict, client: WSClient, step_id: int):
-        """Delegate personnalisé pour gérer les actions."""
-        action_id = action.get("id")
-        action_type = action.get("type")
+    # async def my_action_handler(action: dict, client: WSClient, step_id: int):
+    #     """Delegate personnalisé pour gérer les actions."""
+    #     action_id = action.get("id")
+    #     action_type = action.get("type")
         
-        match action_type:
-            case "video":
-                file = action.get("file")
-                print(f"     🎥 Playing video: {file}")
-                input(f"     ⏸️  Press Enter when video '{file}' is finished...")
-                action["finished"] = True
-                await client.send_action_finished(step_id, action_id)
+    #     match action_type:
+    #         case "video":
+    #             file = action.get("file")
+    #             print(f"     🎥 Playing video: {file}")
+    #             input(f"     ⏸️  Press Enter when video '{file}' is finished...")
+    #             action["finished"] = True
+    #             await client.send_action_finished(step_id, action_id)
                 
-            case "choice":
-                name = action.get("name")
-                options = action.get("options", [])
+    #         case "choice":
+    #             name = action.get("name")
+    #             options = action.get("options", [])
                 
-                print(f"     ❓ {name}")
-                for i, opt in enumerate(options):
-                    print(f"        [{i}] {opt}")
+    #             print(f"     ❓ {name}")
+    #             for i, opt in enumerate(options):
+    #                 print(f"        [{i}] {opt}")
                 
-                selected = -1
-                while selected not in range(len(options)):
-                    try:
-                        selected = int(input("     👉 Your choice: "))
-                    except ValueError:
-                        print("     ⚠️  Invalid input")
+    #             selected = -1
+    #             while selected not in range(len(options)):
+    #                 try:
+    #                     selected = int(input("     👉 Your choice: "))
+    #                 except ValueError:
+    #                     print("     ⚠️  Invalid input")
                 
-                action["chosen"] = selected
-                await client.send_choice_result(step_id, action_id, selected)
+    #             action["chosen"] = selected
+    #             await client.send_choice_result(step_id, action_id, selected)
                 
-            case _:
-                print(f"     ⚠️  Unknown action type: {action_type}")
+    #         case _:
+    #             print(f"     ⚠️  Unknown action type: {action_type}")
 
     # ======================================================
     # RUN

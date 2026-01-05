@@ -24,8 +24,17 @@ from utils.kinect.DephDetector import DepthDetector
 
 class DepthDetectorDelegate:
 
-    def __init__(self):
+    def __init__(self, audio_grid=None):
         self.current_grid_completed = [[]]
+        self.player = AudioPlayer()
+        self.audio_grid = None
+
+        # Load multiple sounds at once
+        self.player.load_multiple({
+            "0": "music.wav",
+            "1": "explosion.wav",
+            "2": "jump.wav"
+        })
 
     def joinGrid(self, grid_values):
         # Conversion en arrays numpy et OR logique
@@ -46,6 +55,7 @@ class DepthDetectorDelegate:
         for row in range(grid_values.shape[0]):
             for col in range(grid_values.shape[1]):
                 if grid_values[row, col] == 1:
+                    self.player.play(str(audio_grid[row, col]))
                     print(f"Jouer le son pour la cellule ({row}, {col})")
 
     def process(self, grid_values):
@@ -59,6 +69,10 @@ class DepthDetectorDelegate:
             print("envoie Nouvelle donner recu sur la grille de profondeur.")
 
 if __name__ == "__main__":
+
+    import pygame
+    
+
     config_path = os.path.join(parent_dir, "config.json")
-    depth_detector_delegate = DepthDetectorDelegate()
+    depth_detector_delegate = DepthDetectorDelegate(audio_grid=config_path["grid_path_sound"])
     depth_detector = DepthDetector(delegate=depth_detector_delegate)
