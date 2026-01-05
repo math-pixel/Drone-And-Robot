@@ -177,9 +177,6 @@ function showFeedback(ok) {
     if (sel === "C")
       document.querySelector(".answerC .hl")?.classList.add("ko");
   }
-
-  els.feedback.textContent = ok ? "Bonne réponse ✅" : "Mauvaise réponse ❌";
-  els.feedback.classList.add("show");
 }
 
 function nextQuestion() {
