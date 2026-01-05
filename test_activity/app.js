@@ -5,7 +5,7 @@ const QCM_URL = "./qcm.geometry.json";
 
 const els = {
   btnConnect: document.getElementById("btnConnect"),
-
+  screenStartPrompt: document.getElementById("screenStartPrompt"),
   screenConnect: document.getElementById("screenConnect"),
   screenWait: document.getElementById("screenWait"),
   screenQuiz: document.getElementById("screenQuiz"),
@@ -37,6 +37,8 @@ let countdownTimeout = null;
 let nextQuestionTimeout = null;
 
 let lastReceivedLetter = null;
+let hasAuthorization = false;
+let hasStartSignal = false;
 
 function safeJsonParse(str) {
   try {
@@ -68,6 +70,7 @@ function findActivityObj(root, activityKey) {
 function showScreen(name) {
   els.screenConnect.classList.toggle("hidden", name !== "connect");
   els.screenWait.classList.toggle("hidden", name !== "wait");
+  els.screenStartPrompt.classList.toggle("hidden", name !== "startPrompt");
   els.screenQuiz.classList.toggle("hidden", name !== "quiz");
   els.screenDone.classList.toggle("hidden", name !== "done");
 }
@@ -226,6 +229,10 @@ function onAnswerReceived(letterLower) {
 
 function startQuiz() {
   if (!actions.length) return;
+  if (!hasStartSignal) {
+    showScreen("startPrompt");
+    return;
+  }
   currentIndex = -1;
   showScreen("quiz");
   nextQuestion();
@@ -269,9 +276,19 @@ function connect() {
     }
 
     if (key === "test_activity_step_1_authorization") {
-      startQuiz();
+      hasAuthorization = true;
+      if (!hasStartSignal) showScreen("startPrompt");
+      else startQuiz();
       return;
     }
+
+    if (key === "test_activity_start") {
+      hasStartSignal = true;
+      if (hasAuthorization) startQuiz();
+      else showScreen("startPrompt");
+      return;
+    }
+    
 
     if (awaitingAnswer && currentActionId != null) {
       const prefix = `test_activity_step_1_action_${currentActionId}_`;
@@ -287,6 +304,8 @@ function connect() {
     ws = null;
     lastRoot = null;
     els.btnConnect.disabled = false;
+    hasAuthorization = false;
+    hasStartSignal = false;
     stopAllTimers();
     showScreen("connect");
   };
@@ -296,6 +315,8 @@ function connect() {
     lastRoot = null;
     els.btnConnect.disabled = false;
     stopAllTimers();
+    hasAuthorization = false;
+    hasStartSignal = false;
     showScreen("connect");
   };
 }
