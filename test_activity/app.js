@@ -36,7 +36,6 @@ let countdownInterval = null;
 let countdownTimeout = null;
 let nextQuestionTimeout = null;
 
-let lastReceivedLetter = null;
 let hasAuthorization = false;
 let hasStartSignal = false;
 
@@ -136,7 +135,6 @@ function sendIdentificationWithSteps() {
 
 function renderQuestion(action, index, total) {
   if (els.progress) els.progress.textContent = `Question ${index + 1}/${total}`;
-  lastReceivedLetter = null;  
   els.question.textContent = action.name || `Question ${action.id}`;
 
   const opts = Array.isArray(action.options) ? action.options : [];
@@ -210,7 +208,6 @@ function nextQuestion() {
     if (!awaitingAnswer) return;
     awaitingAnswer = false;
     stopAllTimers();
-    lastReceivedLetter = null;
     showFeedback(false);
     nextQuestionTimeout = setTimeout(nextQuestion, 3000);
   }, 8000);
@@ -222,7 +219,6 @@ function onAnswerReceived(letterLower) {
   stopAllTimers();
 
   showFeedback();
-  lastReceivedLetter = letterLower.toUpperCase();
   showFeedback();
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
