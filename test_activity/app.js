@@ -206,7 +206,11 @@ function nextQuestion() {
 
   countdownTimeout = setTimeout(() => {
     if (!awaitingAnswer) return;
+
     awaitingAnswer = false;
+    wsSendRootWithKey(
+      `test_activity_step_1_action_${currentActionId}_finished`
+    );
     stopAllTimers();
     showFeedback(false);
     nextQuestionTimeout = setTimeout(nextQuestion, 3000);

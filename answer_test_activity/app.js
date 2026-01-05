@@ -265,12 +265,9 @@ function sendAnswer() {
   els.btnLetter.disabled = true;
 }
 
-function onAnswerEcho(actionId, letterLower) {
+function onAnswerEcho(actionId) {
   // on ne colore que si on est sur cette question
   if (currentActionId == null || actionId !== currentActionId) return;
-
-  // affiche la lettre reçue
-  els.btnLetter.textContent = letterLower.toUpperCase();
 
   // calcule correct vs mapping pour cet actionId
   const mapped = String(mapping[String(actionId)] || "").toUpperCase(); // "A"|"B"|"C"
@@ -291,6 +288,9 @@ function onActionFinished(actionId) {
     actionId !== waitingFinishedForActionId
   )
     return;
+
+  els.btnLetter.classList.remove("good", "bad");
+  els.btnLetter.classList.add("bad");
 
   // ensuite on attend une prochaine _started
   waitingFinishedForActionId = null;
