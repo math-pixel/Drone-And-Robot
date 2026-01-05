@@ -1,7 +1,7 @@
 // app.js (basé sur ton code, modifs minimales)
 const WS_URL = window.APP_CONFIG.WS_URL;
-const MAPPING_URL = "./answer_2.mapping.json"; // { "1": "a", "2": "b", ... }
-const QCM_URL = "../../test_activity/qcm.geometry.json"; // ajuste si besoin (même fichier que test_activity)
+const MAPPING_URL = "./answer.mapping.json";
+const QCM_URL = "../test_activity/qcm.geometry.json"; // ajuste si besoin (même fichier que test_activity)
 
 const els = {
   btnConnect: document.getElementById("btnConnect"),
@@ -12,6 +12,7 @@ const els = {
   screenAnswer: document.getElementById("screenAnswer"),
 
   btnLetter: document.getElementById("btnLetter"),
+  screenPick: document.getElementById("screenPick"),
 };
 
 let ws = null;
@@ -26,6 +27,19 @@ let readyToClick = false;
 
 let canStart = false;
 let waitingFinishedForActionId = null;
+
+let pickedPlayer = null; // 1|2|3
+
+function activityKey() {
+  return pickedPlayer
+    ? `answer_${pickedPlayer}_test_activity`
+    : "answer_2_test_activity";
+}
+function identificationKey() {
+  return pickedPlayer
+    ? `identification_answer_${pickedPlayer}_test_activity`
+    : "identification_answer_2_test_activity";
+}
 
 function safeJsonParse(str) {
   try {
@@ -47,6 +61,7 @@ function normalizeRoot(parsed) {
 }
 
 function showScreen(name) {
+  els.screenPick.classList.toggle("hidden", name !== "pick");
   els.screenConnect.classList.toggle("hidden", name !== "connect");
   els.screenStart.classList.toggle("hidden", name !== "start");
   els.screenAnswer.classList.toggle("hidden", name !== "answer");
@@ -59,7 +74,14 @@ async function loadMapping() {
     const data = await res.json();
     if (!data || typeof data !== "object" || Array.isArray(data))
       throw new Error("mapping must be an object");
-    mapping = data;
+
+    // data = { "1": {...}, "2": {...}, "3": {...} }
+    if (!pickedPlayer) throw new Error("no player picked");
+    const m = data[String(pickedPlayer)];
+    if (!m || typeof m !== "object" || Array.isArray(m))
+      throw new Error("missing mapping for picked player");
+
+    mapping = m;
   } catch {
     mapping = {};
   }
@@ -135,6 +157,12 @@ function connect() {
       onActionFinished(Number(mFinished[1]));
       return;
     }
+
+    const mEcho = key.match(/^test_activity_step_1_action_(\d+)_(a|b|c)$/);
+    if (mEcho) {
+      onAnswerEcho(Number(mEcho[1]), mEcho[2]);
+      return;
+    }
   };
 
   ws.onerror = () => {
@@ -159,14 +187,15 @@ function sendIdentificationAnswer2() {
   if (!lastRoot) return;
 
   const out = structuredCloneSafe(lastRoot);
-  out.key = "identification_answer_2_test_activity";
+  out.key = identificationKey();
 
   if (!Array.isArray(out.activity)) out.activity = [];
 
+  const aKey = activityKey();
   let found = false;
   for (const entry of out.activity) {
-    if (entry && typeof entry === "object" && entry["answer_2_test_activity"]) {
-      entry["answer_2_test_activity"].connected = true;
+    if (entry && typeof entry === "object" && entry[aKey]) {
+      entry[aKey].connected = true;
       found = true;
       break;
     }
@@ -174,7 +203,7 @@ function sendIdentificationAnswer2() {
 
   if (!found) {
     out.activity.push({
-      answer_2_test_activity: {
+      [aKey]: {
         authorized: false,
         finished: false,
         ws_session_id: "",
@@ -200,6 +229,7 @@ function sendStart() {
 }
 
 function onActionStarted(actionId) {
+  els.btnLetter.classList.remove("good", "bad");
   const letter = String(mapping[String(actionId)] || "").toLowerCase();
   if (letter !== "a" && letter !== "b" && letter !== "c") {
     resetUI();
@@ -235,6 +265,26 @@ function sendAnswer() {
   els.btnLetter.disabled = true;
 }
 
+function onAnswerEcho(actionId, letterLower) {
+  // on ne colore que si on est sur cette question
+  if (currentActionId == null || actionId !== currentActionId) return;
+
+  // affiche la lettre reçue
+  els.btnLetter.textContent = letterLower.toUpperCase();
+
+  // calcule correct vs mapping pour cet actionId
+  const mapped = String(mapping[String(actionId)] || "").toUpperCase(); // "A"|"B"|"C"
+  const correct = String(correctById.get(actionId) || "").toUpperCase(); // "A"|"B"|"C"
+
+  els.btnLetter.classList.remove("good", "bad");
+  els.btnLetter.classList.add(
+    mapped && correct && mapped === correct ? "good" : "bad"
+  );
+
+  // reste affiché/couleur jusqu’au prochain _started
+  els.btnLetter.disabled = true;
+}
+
 function onActionFinished(actionId) {
   if (
     waitingFinishedForActionId == null ||
@@ -242,25 +292,25 @@ function onActionFinished(actionId) {
   )
     return;
 
-  const correct = (correctById.get(actionId) || "").toUpperCase(); // "A"|"B"|"C"
-  const picked = (currentLetter || "").toUpperCase(); // "A"|"B"|"C"
-
-  els.btnLetter.classList.remove("good", "bad");
-  if (correct && picked) {
-    els.btnLetter.classList.add(picked === correct ? "good" : "bad");
-  }
-
   // ensuite on attend une prochaine _started
   waitingFinishedForActionId = null;
   currentActionId = null;
   currentLetter = null;
 }
 
+
 els.btnConnect.addEventListener("click", connect);
 els.btnStart.addEventListener("click", sendStart);
 els.btnLetter.addEventListener("click", sendAnswer);
 
 loadMapping();
+document.querySelectorAll(".btnPick").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    pickedPlayer = Number(btn.dataset.pick) || null;
+    await loadMapping(); // recharge mapping avec le bon profil
+    showScreen("connect");
+  });
+});
 loadQcm();
-showScreen("connect");
+showScreen("pick");
 resetUI();

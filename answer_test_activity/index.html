@@ -10,7 +10,18 @@
 <body>
 
   <!-- CONNECT -->
-  <main class="screen" id="screenConnect">
+  <main class="screen" id="screenPick">
+    <div class="paper">
+      <div style="display:flex; gap:24px;">
+        <button class="btnPick" data-pick="1">1</button>
+        <button class="btnPick" data-pick="2">2</button>
+        <button class="btnPick" data-pick="3">3</button>
+      </div>
+    </div>
+  </main>
+  
+  <!-- index.html : MODIFIE screenConnect pour qu’il soit hidden au départ -->
+  <main class="screen hidden" id="screenConnect">
     <div class="paper">
       <button class="btnConnect" id="btnConnect">CONNECT</button>
     </div>
@@ -26,7 +37,7 @@
     <button class="btnLetter" id="btnLetter" disabled>—</button>
   </main>
 
-  <script src="../../test_activity/config.js"></script>
+  <script src="../test_activity/config.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

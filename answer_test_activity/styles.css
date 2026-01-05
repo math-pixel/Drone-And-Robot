@@ -18,7 +18,7 @@ body {
 .paper{
   width: 100vw;
   height: 100vh;
-  background-image: url("../../test_activity/paper.png"); /* ajuste le chemin si besoin */
+  background-image: url("../test_activity/paper.png"); /* ajuste le chemin si besoin */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -52,7 +52,7 @@ body {
   border-radius: 0;
   cursor: pointer;
 
-  background-image: url("../../test_activity/paper.png"); /* ajuste le chemin si besoin */
+  background-image: url("../test_activity/paper.png"); /* ajuste le chemin si besoin */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -78,7 +78,7 @@ body {
   border: 0;
   border-radius: 0;
 
-  background-image: url("../../test_activity/paper.png"); /* ajuste le chemin si besoin */
+  background-image: url("../test_activity/paper.png"); /* ajuste le chemin si besoin */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -96,3 +96,15 @@ body {
   cursor: default;  /* pas cliquable tant que disabled */
 }
 
+.btnPick{
+  width: min(220px, 26vw);
+  height: min(220px, 26vw);
+  border: 0;
+  border-radius: 22px;
+  font-size: clamp(44px, 8vw, 92px);
+  font-weight: 1000;
+  color: #f3f6ff;
+  background: #101827;
+  cursor: pointer;
+}
+.btnPick:active{ transform: translateY(1px); }
