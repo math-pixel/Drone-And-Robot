@@ -43,7 +43,7 @@ class DepthDetector:
         
         # === ÉTAT DE LA GRILLE ===
         self.grid_values = None           # Valeurs binaires de la grille (0 ou 1)
-        self.delegate = None
+        self.delegate = delegate
 
         # Kinect
         self.kinect = PyKinectRuntime.PyKinectRuntime(

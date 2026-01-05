@@ -1,0 +1,29 @@
+{
+    "start_x": 70,
+    "start_y": 80,
+    "cols": 2,
+    "rows": 4,
+    "cell_w": 80,
+    "cell_h": 70,
+    "threshold": 200,
+    "color_background": [
+        255,
+        100,
+        0
+    ],
+    "color_object": [
+        0,
+        0,
+        255
+    ],
+    "color_grid": [
+        0,
+        255,
+        0
+    ],
+    "color_text": [
+        255,
+        255,
+        255
+    ]
+}

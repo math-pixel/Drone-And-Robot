@@ -1,8 +1,7 @@
 import asyncio
 import json
 import websockets
-from typing import Callable, Awaitable, Protocol
-
+from typing import Callable, Awaitable, Protocol, List, Dict, Set, Optional, Union
 
 # ======================================================
 # TYPES
@@ -26,7 +25,7 @@ class WSClient:
         url: str,
         client_key: str,
         action_delegate: ActionDelegate,
-        steps: list[dict] | None = None
+        steps: Optional[List[Dict]] = None
     ):
         self.url = url
         self.client_key = client_key
@@ -35,7 +34,7 @@ class WSClient:
         
         self.ws = None
         self.data = None
-        self._finished_steps: set[int] = set()
+        self._finished_steps: Set[int] = set()
 
     # ======================================================
     # PUBLIC API
@@ -199,14 +198,14 @@ class WSClient:
         step_index = parts.index("step") + 1
         return int(parts[step_index])
 
-    def _find_activity(self) -> dict | None:
+    def _find_activity(self) -> Optional[Dict]:
         """Trouve l'activité dans les données."""
         for wrapper in self.data.get("activity", []):
             if self.client_key in wrapper:
                 return wrapper[self.client_key]
         return None
 
-    def _find_step(self, step_id: int) -> dict | None:
+    def _find_step(self, step_id: int) -> Optional[Dict]:
         """Trouve un step par son ID."""
         # Chercher dans les steps locaux
         for step in self.steps:
@@ -243,6 +242,10 @@ class WSClient:
         key = self.data.get("key", "unknown")
         print(f"📤 Sending → {key}")
         await self.ws.send(payload)
+
+    async def send_data(self, data: dict):
+        json_data = json.dumps(data) 
+        await self.ws.send(json_data)
 
 
 # ======================================================
@@ -285,48 +288,48 @@ if __name__ == "__main__":
     # DELEGATE (à personnaliser par l'utilisateur)
     # ======================================================
     
-    async def my_action_handler(action: dict, client: WSClient, step_id: int):
-        """
-        Delegate personnalisé pour gérer les actions.
-        L'utilisateur implémente ici son match case.
-        """
-        action_id = action.get("id")
-        action_type = action.get("type")
+    # async def my_action_handler(action: dict, client: WSClient, step_id: int):
+    #     """
+    #     Delegate personnalisé pour gérer les actions.
+    #     L'utilisateur implémente ici son match case.
+    #     """
+    #     action_id = action.get("id")
+    #     action_type = action.get("type")
         
-        match action_type:
-            case "video":
-                file = action.get("file")
-                print(f"     🎥 Playing video: {file}")
+    #     match action_type:
+    #         case "video":
+    #             file = action.get("file")
+    #             print(f"     🎥 Playing video: {file}")
                 
-                # Simulation: attendre que la vidéo soit "jouée"
-                input(f"     ⏸️  Press Enter when video '{file}' is finished...")
+    #             # Simulation: attendre que la vidéo soit "jouée"
+    #             input(f"     ⏸️  Press Enter when video '{file}' is finished...")
                 
-                # Marquer comme terminé
-                action["finished"] = True
-                await client.send_action_finished(step_id, action_id)
+    #             # Marquer comme terminé
+    #             action["finished"] = True
+    #             await client.send_action_finished(step_id, action_id)
                 
-            case "choice":
-                name = action.get("name")
-                options = action.get("options", [])
+    #         case "choice":
+    #             name = action.get("name")
+    #             options = action.get("options", [])
                 
-                print(f"     ❓ {name}")
-                for i, opt in enumerate(options):
-                    print(f"        [{i}] {opt}")
+    #             print(f"     ❓ {name}")
+    #             for i, opt in enumerate(options):
+    #                 print(f"        [{i}] {opt}")
                 
-                # Attendre le choix
-                selected = -1
-                while selected not in range(len(options)):
-                    try:
-                        selected = int(input("     👉 Your choice: "))
-                    except ValueError:
-                        print("     ⚠️  Invalid input")
+    #             # Attendre le choix
+    #             selected = -1
+    #             while selected not in range(len(options)):
+    #                 try:
+    #                     selected = int(input("     👉 Your choice: "))
+    #                 except ValueError:
+    #                     print("     ⚠️  Invalid input")
                 
-                # Enregistrer le choix
-                action["chosen"] = selected
-                await client.send_choice_result(step_id, action_id, selected)
+    #             # Enregistrer le choix
+    #             action["chosen"] = selected
+    #             await client.send_choice_result(step_id, action_id, selected)
                 
-            case _:
-                print(f"     ⚠️  Unknown action type: {action_type}")
+    #         case _:
+    #             print(f"     ⚠️  Unknown action type: {action_type}")
 
     # ======================================================
     # RUN
