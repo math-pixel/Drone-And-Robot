@@ -1,0 +1,19 @@
+{
+    "depth_detector": {
+        "grid_rows": 4,
+        "grid_cols": 4,
+        "depth_threshold": 1000,
+        "grid_validation": [
+            [1, 1, 0, 0],
+            [0, 1, 1, 0],
+            [0, 1, 1, 0],
+            [1, 0, 1, 1]
+        ],
+        "grid_path_sound": [
+            ["sound1.wav", "sound2.wav", "sound3.wav", "sound4.wav"],
+            ["sound5.wav", "sound6.wav", "sound7.wav", "sound8.wav"],
+            ["sound9.wav", "sound10.wav", "sound11.wav", "sound12.wav"],
+            ["sound13.wav", "sound14.wav", "sound15.wav", "sound16.wav"]
+        ]
+    }
+}

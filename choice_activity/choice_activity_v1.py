@@ -1,5 +1,5 @@
 import asyncio
-from WSClient import WSClient
+from utils.WSClient import WSClient
 
 if __name__ == "__main__":
     

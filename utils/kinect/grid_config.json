@@ -1,0 +1,26 @@
+{
+    "start_x": 240,
+    "start_y": 170,
+    "cols": 2,
+    "rows": 1,
+    "cell_w": 35,
+    "cell_h": 30,
+    "grid_color": [
+        0,
+        255,
+        0
+    ],
+    "text_color": [
+        255,
+        255,
+        255
+    ],
+    "bg_color": [
+        0,
+        0,
+        0
+    ],
+    "detection_enabled": true,
+    "detection_threshold": 4,
+    "alert_duration": 1.0
+}
