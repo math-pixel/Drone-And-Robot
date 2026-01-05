@@ -1,0 +1,229 @@
+[
+  {
+    "id": 1,
+    "actions": [
+      {
+        "id": 1,
+        "name": "Combien de côtés possède un triangle ?",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "2" },
+          { "id": 2, "text": "3" },
+          { "id": 3, "text": "4" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 2,
+        "name": "Un angle droit mesure :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "45°" },
+          { "id": 2, "text": "90°" },
+          { "id": 3, "text": "180°" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 3,
+        "name": "Comment appelle-t-on un quadrilatère avec 4 angles droits ?",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Rectangle" },
+          { "id": 2, "text": "Losange" },
+          { "id": 3, "text": "Trapèze" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 4,
+        "name": "Combien de sommets a un carré ?",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "3" },
+          { "id": 2, "text": "4" },
+          { "id": 3, "text": "5" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 5,
+        "name": "Une droite est :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Limitée" },
+          { "id": 2, "text": "Infinie" },
+          { "id": 3, "text": "Courbe" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 6,
+        "name": "Deux droites qui se coupent en angle droit sont :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Parallèles" },
+          { "id": 2, "text": "Sécantes" },
+          { "id": 3, "text": "Perpendiculaires" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 7,
+        "name": "Quel instrument sert à mesurer un angle ?",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "La règle" },
+          { "id": 2, "text": "Le compas" },
+          { "id": 3, "text": "Le rapporteur" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 8,
+        "name": "Un cercle est défini par :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Son diamètre" },
+          { "id": 2, "text": "Son centre et son rayon" },
+          { "id": 3, "text": "Ses côtés" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 9,
+        "name": "Le diamètre d’un cercle est :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Deux fois le rayon" },
+          { "id": 2, "text": "La moitié du rayon" },
+          { "id": 3, "text": "Égal au rayon" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 10,
+        "name": "Combien de côtés a un pentagone ?",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "4" },
+          { "id": 2, "text": "5" },
+          { "id": 3, "text": "6" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 11,
+        "name": "Deux droites parallèles :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Se coupent" },
+          { "id": 2, "text": "Sont toujours perpendiculaires" },
+          { "id": 3, "text": "Ne se coupent jamais" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 12,
+        "name": "Un triangle équilatéral a :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Deux côtés égaux" },
+          { "id": 2, "text": "Trois côtés égaux" },
+          { "id": 3, "text": "Aucun côté égal" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 13,
+        "name": "Comment appelle-t-on un angle supérieur à 90° ?",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Angle aigu" },
+          { "id": 2, "text": "Angle obtus" },
+          { "id": 3, "text": "Angle droit" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 14,
+        "name": "Un losange a :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "4 angles droits" },
+          { "id": 2, "text": "4 côtés égaux" },
+          { "id": 3, "text": "2 côtés égaux" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 15,
+        "name": "Combien de diagonales a un carré ?",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "1" },
+          { "id": 2, "text": "2" },
+          { "id": 3, "text": "4" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 16,
+        "name": "Un triangle rectangle possède :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Deux angles droits" },
+          { "id": 2, "text": "Un angle droit" },
+          { "id": 3, "text": "Aucun angle droit" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 17,
+        "name": "Quel polygone a 6 côtés ?",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Hexagone" },
+          { "id": 2, "text": "Heptagone" },
+          { "id": 3, "text": "Octogone" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 18,
+        "name": "Le rayon d’un cercle est :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Le segment qui relie deux points du cercle" },
+          { "id": 2, "text": "Le segment qui relie le centre au cercle" },
+          { "id": 3, "text": "Le contour du cercle" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 19,
+        "name": "Une demi-droite :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Est infinie des deux côtés" },
+          { "id": 2, "text": "A une longueur finie" },
+          { "id": 3, "text": "Commence en un point et est infinie d’un côté" }
+        ],
+        "finished": false
+      },
+      {
+        "id": 20,
+        "name": "Un angle aigu mesure :",
+        "type": "choice",
+        "options": [
+          { "id": 1, "text": "Moins de 90°" },
+          { "id": 2, "text": "Exactement 90°" },
+          { "id": 3, "text": "Plus de 90°" }
+        ],
+        "finished": false
+      }
+    ],
+    "authorized": false,
+    "finished": false
+  }
+]

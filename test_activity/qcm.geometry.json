@@ -1,0 +1,165 @@
+{
+  "title": "QCM Géométrie (20 questions)",
+  "questions": [
+    {
+      "number": 1,
+      "question": "Combien de côtés possède un triangle ?",
+      "answers": { "A": "2", "B": "3", "C": "4" },
+      "correct": "B"
+    },
+    {
+      "number": 2,
+      "question": "Un angle droit mesure :",
+      "answers": { "A": "45°", "B": "90°", "C": "180°" },
+      "correct": "B"
+    },
+    {
+      "number": 3,
+      "question": "Comment appelle-t-on un quadrilatère avec 4 angles droits ?",
+      "answers": { "A": "Rectangle", "B": "Losange", "C": "Trapèze" },
+      "correct": "A"
+    },
+    {
+      "number": 4,
+      "question": "Combien de sommets a un carré ?",
+      "answers": { "A": "3", "B": "4", "C": "5" },
+      "correct": "B"
+    },
+    {
+      "number": 5,
+      "question": "Une droite est :",
+      "answers": { "A": "Limitée", "B": "Infinie", "C": "Courbe" },
+      "correct": "B"
+    },
+    {
+      "number": 6,
+      "question": "Deux droites qui se coupent en angle droit sont :",
+      "answers": {
+        "A": "Parallèles",
+        "B": "Sécantes",
+        "C": "Perpendiculaires"
+      },
+      "correct": "C"
+    },
+    {
+      "number": 7,
+      "question": "Quel instrument sert à mesurer un angle ?",
+      "answers": { "A": "La règle", "B": "Le compas", "C": "Le rapporteur" },
+      "correct": "C"
+    },
+    {
+      "number": 8,
+      "question": "Un cercle est défini par :",
+      "answers": {
+        "A": "Son diamètre",
+        "B": "Son centre et son rayon",
+        "C": "Ses côtés"
+      },
+      "correct": "B"
+    },
+    {
+      "number": 9,
+      "question": "Le diamètre d’un cercle est :",
+      "answers": {
+        "A": "Deux fois le rayon",
+        "B": "La moitié du rayon",
+        "C": "Égal au rayon"
+      },
+      "correct": "A"
+    },
+    {
+      "number": 10,
+      "question": "Combien de côtés a un pentagone ?",
+      "answers": { "A": "4", "B": "5", "C": "6" },
+      "correct": "B"
+    },
+    {
+      "number": 11,
+      "question": "Deux droites parallèles :",
+      "answers": {
+        "A": "Se coupent",
+        "B": "Sont toujours perpendiculaires",
+        "C": "Ne se coupent jamais"
+      },
+      "correct": "C"
+    },
+    {
+      "number": 12,
+      "question": "Un triangle équilatéral a :",
+      "answers": {
+        "A": "Deux côtés égaux",
+        "B": "Trois côtés égaux",
+        "C": "Aucun côté égal"
+      },
+      "correct": "B"
+    },
+    {
+      "number": 13,
+      "question": "Comment appelle-t-on un angle supérieur à 90° ?",
+      "answers": { "A": "Angle aigu", "B": "Angle obtus", "C": "Angle droit" },
+      "correct": "B"
+    },
+    {
+      "number": 14,
+      "question": "Un losange a :",
+      "answers": {
+        "A": "4 angles droits",
+        "B": "4 côtés égaux",
+        "C": "2 côtés égaux"
+      },
+      "correct": "B"
+    },
+    {
+      "number": 15,
+      "question": "Combien de diagonales a un carré ?",
+      "answers": { "A": "1", "B": "2", "C": "4" },
+      "correct": "B"
+    },
+    {
+      "number": 16,
+      "question": "Un triangle rectangle possède :",
+      "answers": {
+        "A": "Deux angles droits",
+        "B": "Un angle droit",
+        "C": "Aucun angle droit"
+      },
+      "correct": "B"
+    },
+    {
+      "number": 17,
+      "question": "Quel polygone a 6 côtés ?",
+      "answers": { "A": "Hexagone", "B": "Heptagone", "C": "Octogone" },
+      "correct": "A"
+    },
+    {
+      "number": 18,
+      "question": "Le rayon d’un cercle est :",
+      "answers": {
+        "A": "Le segment qui relie deux points du cercle",
+        "B": "Le segment qui relie le centre au cercle",
+        "C": "Le contour du cercle"
+      },
+      "correct": "B"
+    },
+    {
+      "number": 19,
+      "question": "Une demi-droite :",
+      "answers": {
+        "A": "Est infinie des deux côtés",
+        "B": "A une longueur finie",
+        "C": "Commence en un point et est infinie d’un côté"
+      },
+      "correct": "C"
+    },
+    {
+      "number": 20,
+      "question": "Un angle aigu mesure :",
+      "answers": {
+        "A": "Moins de 90°",
+        "B": "Exactement 90°",
+        "C": "Plus de 90°"
+      },
+      "correct": "A"
+    }
+  ]
+}

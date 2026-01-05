@@ -1,0 +1,68 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Test Activity (Web)</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header>
+    <div class="badge" id="status">DISCONNECTED</div>
+    <div class="small" id="wsUrl">ws://192.168.1.13:8057/ws</div>
+  </header>
+
+  <!-- CONNECT SCREEN -->
+  <main class="wrap" id="screenConnect">
+    <div class="card">
+      <h1>Test Activity</h1>
+      <p class="muted">Connecte-toi au serveur pour démarrer.</p>
+
+      <button id="btnConnect">Connect</button>
+
+      <div class="small muted mt" id="connectHint"></div>
+    </div>
+  </main>
+
+  <!-- QUIZ SCREEN -->
+  <main class="wrap hidden" id="screenQuiz">
+    <div class="card">
+      <div class="topline">
+        <div class="pill" id="progress">Question 1/20</div>
+        <div class="pill" id="timer">8s</div>
+      </div>
+
+      <h2 id="question">—</h2>
+
+      <div class="choices">
+        <div class="choice"><span class="key">A</span><span id="optA">—</span></div>
+        <div class="choice"><span class="key">B</span><span id="optB">—</span></div>
+        <div class="choice"><span class="key">C</span><span id="optC">—</span></div>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <details class="debug">
+        <summary>Debug</summary>
+        <textarea id="log" readonly></textarea>
+      </details>
+    </div>
+  </main>
+
+  <!-- DONE SCREEN -->
+  <main class="wrap hidden" id="screenDone">
+    <div class="card">
+      <h1>Terminé ✅</h1>
+      <p class="muted">Toutes les questions ont été jouées.</p>
+
+      <details class="debug">
+        <summary>Debug</summary>
+        <textarea id="logDone" readonly></textarea>
+      </details>
+    </div>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

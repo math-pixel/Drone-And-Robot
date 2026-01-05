@@ -1,0 +1,131 @@
+/* styles.css */
+:root { color-scheme: dark; }
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system;
+  background: #0b0f17;
+  color: #e8eefc;
+}
+
+header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #1f2a44;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid #2a3a64;
+  background: #111a2b;
+}
+
+.badge.ok { border-color: #2f6; }
+.badge.ko { border-color: #f66; }
+
+.small { font-size: 12px; opacity: .85; }
+
+.wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 18px 16px;
+}
+
+.hidden { display: none; }
+
+.card {
+  border: 1px solid #1f2a44;
+  background: #070b12;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+h1 { margin: 0 0 10px; font-size: 20px; }
+h2 { margin: 12px 0 12px; font-size: 18px; line-height: 1.35; }
+
+.muted { opacity: .75; margin: 0; }
+.mt { margin-top: 12px; }
+
+button {
+  cursor: pointer;
+  border: 1px solid #2a3a64;
+  background: #111a2b;
+  color: #e8eefc;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+.topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.pill {
+  font-size: 12px;
+  border: 1px solid #1f2a44;
+  background: #0b1324;
+  padding: 6px 10px;
+  border-radius: 999px;
+  opacity: .9;
+}
+
+.choices { display: grid; gap: 10px; margin-top: 12px; }
+.choice {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #1f2a44;
+  background: #0b1324;
+  padding: 12px;
+  border-radius: 12px;
+}
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid #2a3a64;
+  background: #111a2b;
+  font-weight: 800;
+}
+
+.feedback {
+  margin-top: 12px;
+  min-height: 22px;
+  font-weight: 700;
+}
+
+.feedback.ok { color: #6df58d; }
+.feedback.ko { color: #ff6b6b; }
+
+.debug { margin-top: 14px; opacity: .9; }
+.debug summary { cursor: pointer; }
+
+textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  border-radius: 12px;
+  border: 1px solid #1f2a44;
+  background: #050810;
+  color: #e8eefc;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 10px;
+}
