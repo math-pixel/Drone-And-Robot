@@ -1,14 +1,13 @@
-// app.js
+// app.js (même fonctionnement, juste adapté au nouveau DOM)
 const WS_URL = "ws://192.168.1.13:8057/ws";
 const STEPS_URL = "./steps.test_activity.json";
 const QCM_URL = "./qcm.geometry.json";
 
 const els = {
-  status: document.getElementById("status"),
   btnConnect: document.getElementById("btnConnect"),
-  connectHint: document.getElementById("connectHint"),
 
   screenConnect: document.getElementById("screenConnect"),
+  screenWait: document.getElementById("screenWait"),
   screenQuiz: document.getElementById("screenQuiz"),
   screenDone: document.getElementById("screenDone"),
 
@@ -19,45 +18,23 @@ const els = {
   optB: document.getElementById("optB"),
   optC: document.getElementById("optC"),
   feedback: document.getElementById("feedback"),
-
-  log: document.getElementById("log"),
-  logDone: document.getElementById("logDone"),
 };
 
 let ws = null;
-
-/** Latest received root object (server sends object OR [object]) */
 let lastRoot = null;
 
-/** Loaded step payload (array) */
 let TEST_ACTIVITY_STEPS = null;
-
-/** Loaded QCM questions + correct answers */
 let QCM = null;
-/** Map actionId(number) => correctLetter('A'|'B'|'C') */
 let correctById = new Map();
 
-/** Quiz runtime state */
-let actions = []; // actions list (20)
-let currentIndex = -1; // 0..n-1
-let currentActionId = null; // number
+let actions = [];
+let currentIndex = -1;
+let currentActionId = null;
 let awaitingAnswer = false;
 
 let countdownInterval = null;
 let countdownTimeout = null;
 let nextQuestionTimeout = null;
-
-function log(line) {
-  const ts = new Date().toLocaleTimeString();
-  if (els.log) els.log.value = `[${ts}] ${line}\n` + els.log.value;
-  if (els.logDone) els.logDone.value = `[${ts}] ${line}\n` + els.logDone.value;
-}
-
-function setStatus(text, ok = false, ko = false) {
-  els.status.textContent = text;
-  els.status.classList.toggle("ok", ok);
-  els.status.classList.toggle("ko", ko);
-}
 
 function safeJsonParse(str) {
   try {
@@ -66,12 +43,10 @@ function safeJsonParse(str) {
     return null;
   }
 }
-
 function structuredCloneSafe(obj) {
   if (typeof structuredClone === "function") return structuredClone(obj);
   return JSON.parse(JSON.stringify(obj));
 }
-
 function normalizeRoot(parsed) {
   if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
     return parsed;
@@ -79,131 +54,42 @@ function normalizeRoot(parsed) {
     return parsed[0];
   return null;
 }
-
 function findActivityObj(root, activityKey) {
   const arr = root?.activity;
   if (!Array.isArray(arr)) return null;
-
   for (const entry of arr) {
     if (entry && typeof entry === "object" && entry[activityKey])
       return entry[activityKey];
   }
   return null;
 }
-
 function showScreen(name) {
   els.screenConnect.classList.toggle("hidden", name !== "connect");
+  els.screenWait.classList.toggle("hidden", name !== "wait");
   els.screenQuiz.classList.toggle("hidden", name !== "quiz");
   els.screenDone.classList.toggle("hidden", name !== "done");
 }
-
 async function loadJson(url) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   return await res.json();
 }
-
 async function bootLoad() {
-  try {
-    TEST_ACTIVITY_STEPS = await loadJson(STEPS_URL);
-    if (!Array.isArray(TEST_ACTIVITY_STEPS))
-      throw new Error("steps JSON must be an array");
+  TEST_ACTIVITY_STEPS = await loadJson(STEPS_URL);
+  if (!Array.isArray(TEST_ACTIVITY_STEPS))
+    throw new Error("steps JSON must be an array");
 
-    QCM = await loadJson(QCM_URL);
-    if (!QCM || !Array.isArray(QCM.questions))
-      throw new Error("qcm JSON invalid");
+  QCM = await loadJson(QCM_URL);
+  if (!QCM || !Array.isArray(QCM.questions))
+    throw new Error("qcm JSON invalid");
 
-    correctById = new Map();
-    for (const q of QCM.questions) {
-      correctById.set(Number(q.number), String(q.correct).toUpperCase());
-    }
-
-    // We expect: STEPS[0].actions = [...]
-    const step0 = TEST_ACTIVITY_STEPS?.[0];
-    actions = Array.isArray(step0?.actions) ? step0.actions : [];
-
-    log(
-      `Loaded steps (${actions.length} actions) and QCM (${QCM.questions.length} questions)`
-    );
-  } catch (e) {
-    log(`Boot load failed: ${String(e.message || e)}`);
-    els.connectHint.textContent =
-      "Erreur: JSON steps/qcm introuvable ou invalide.";
+  correctById = new Map();
+  for (const q of QCM.questions) {
+    correctById.set(Number(q.number), String(q.correct).toUpperCase());
   }
-}
 
-function connect() {
-  if (
-    ws &&
-    (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)
-  )
-    return;
-
-  showScreen("connect");
-  setStatus("CONNECTING…");
-  log(`Connecting to ${WS_URL}`);
-
-  ws = new WebSocket(WS_URL);
-
-  ws.onopen = () => {
-    setStatus("CONNECTED", true, false);
-    els.btnConnect.disabled = true;
-    els.connectHint.textContent = "Connecté. Attente des données du serveur…";
-    log("WebSocket open");
-  };
-
-  ws.onmessage = (evt) => {
-    const raw = typeof evt.data === "string" ? evt.data : "";
-    const parsed = safeJsonParse(raw);
-    if (!parsed) return;
-
-    const root = normalizeRoot(parsed);
-    if (!root) return;
-
-    lastRoot = root;
-
-    const key = String(root.key || "");
-    log(`Received key=${key}`);
-
-    // 1) On identification_request -> send identification_test_activity with steps + connected
-    if (key === "identification_request") {
-      sendIdentificationWithSteps();
-      return;
-    }
-
-    // 2) Wait for authorization key before starting quiz
-    if (key === "test_activity_step_1_authorization") {
-      startQuiz();
-      return;
-    }
-
-    // 3) During quiz: listen for answer keys
-    if (awaitingAnswer && currentActionId != null) {
-      const prefix = `test_activity_step_1_action_${currentActionId}_`;
-      if (key.startsWith(prefix)) {
-        const suffix = key.slice(prefix.length).toLowerCase(); // 'a'|'b'|'c' or other
-        if (suffix === "a" || suffix === "b" || suffix === "c") {
-          onAnswerReceived(suffix);
-        }
-      }
-    }
-  };
-
-  ws.onerror = () => {
-    setStatus("ERROR", false, true);
-    log("WebSocket error");
-  };
-
-  ws.onclose = (evt) => {
-    setStatus("DISCONNECTED");
-    log(`WebSocket closed (code=${evt.code})`);
-    ws = null;
-    lastRoot = null;
-    els.btnConnect.disabled = false;
-    els.connectHint.textContent = "Déconnecté.";
-    stopAllTimers();
-    showScreen("connect");
-  };
+  const step0 = TEST_ACTIVITY_STEPS?.[0];
+  actions = Array.isArray(step0?.actions) ? step0.actions : [];
 }
 
 function stopAllTimers() {
@@ -222,7 +108,6 @@ function wsSendRootWithKey(newKey) {
   const out = structuredCloneSafe(lastRoot);
   out.key = newKey;
   ws.send(JSON.stringify(out));
-  log(`Sent key=${newKey}`);
   return true;
 }
 
@@ -236,41 +121,17 @@ function sendIdentificationWithSteps() {
   const testActivity = findActivityObj(out, "test_activity");
   if (testActivity && typeof testActivity === "object") {
     testActivity.connected = true;
-
-    if (Array.isArray(TEST_ACTIVITY_STEPS)) {
-      // NOTE: you said you renamed to `steps` (plural)
-      testActivity.steps = structuredCloneSafe(TEST_ACTIVITY_STEPS);
-    } else {
-      testActivity.steps = [];
-      log("Warning: steps not loaded (test_activity.steps sent empty)");
-    }
-  } else {
-    log("Warning: test_activity not found in payload");
+    testActivity.steps = Array.isArray(TEST_ACTIVITY_STEPS)
+      ? structuredCloneSafe(TEST_ACTIVITY_STEPS)
+      : [];
   }
 
   ws.send(JSON.stringify(out));
-  log("Sent identification_test_activity (connected=true + steps)");
-  els.connectHint.textContent =
-    "Identification envoyée. Attente d’autorisation…";
-}
-
-function startQuiz() {
-  if (!actions.length) {
-    log("No actions loaded, cannot start quiz");
-    return;
-  }
-
-  showScreen("quiz");
-  els.feedback.textContent = "";
-  els.feedback.className = "feedback";
-  currentIndex = -1;
-
-  log("Authorization received, starting quiz");
-  nextQuestion();
 }
 
 function renderQuestion(action, index, total) {
-  els.progress.textContent = `Question ${index + 1}/${total}`;
+  if (els.progress) els.progress.textContent = `Question ${index + 1}/${total}`;
+
   els.question.textContent = action.name || `Question ${action.id}`;
 
   const opts = Array.isArray(action.options) ? action.options : [];
@@ -279,7 +140,12 @@ function renderQuestion(action, index, total) {
   els.optC.textContent = opts[2]?.text ?? "—";
 
   els.feedback.textContent = "";
-  els.feedback.className = "feedback";
+  els.feedback.classList.remove("show");
+}
+
+function showFeedback(ok) {
+  els.feedback.textContent = ok ? "Bonne réponse ✅" : "Mauvaise réponse ❌";
+  els.feedback.classList.add("show");
 }
 
 function nextQuestion() {
@@ -298,10 +164,8 @@ function nextQuestion() {
 
   renderQuestion(action, currentIndex, actions.length);
 
-  // Send "started" key using the *latest* JSON received
   wsSendRootWithKey(`test_activity_step_1_action_${currentActionId}_started`);
 
-  // Start 8s timer
   let remaining = 8;
   els.timer.textContent = `${remaining}s`;
 
@@ -312,17 +176,12 @@ function nextQuestion() {
   }, 1000);
 
   countdownTimeout = setTimeout(() => {
-    // no answer received in time
-    onTimeout();
+    if (!awaitingAnswer) return;
+    awaitingAnswer = false;
+    stopAllTimers();
+    showFeedback(false);
+    nextQuestionTimeout = setTimeout(nextQuestion, 3000);
   }, 8000);
-}
-
-function onTimeout() {
-  if (!awaitingAnswer) return;
-  awaitingAnswer = false;
-  stopAllTimers();
-  showFeedback(false);
-  nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 
 function onAnswerReceived(letterLower) {
@@ -330,23 +189,19 @@ function onAnswerReceived(letterLower) {
   awaitingAnswer = false;
   stopAllTimers();
 
-  const picked = letterLower.toUpperCase(); // A/B/C
+  const picked = letterLower.toUpperCase();
   const correct = correctById.get(currentActionId) || null;
-
   const isCorrect = correct ? picked === correct : false;
-  showFeedback(isCorrect);
 
+  showFeedback(isCorrect);
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 
-function showFeedback(ok) {
-  if (ok) {
-    els.feedback.textContent = "Bonne réponse ✅";
-    els.feedback.className = "feedback ok";
-  } else {
-    els.feedback.textContent = "Mauvaise réponse ❌";
-    els.feedback.className = "feedback ko";
-  }
+function startQuiz() {
+  if (!actions.length) return;
+  currentIndex = -1;
+  showScreen("quiz");
+  nextQuestion();
 }
 
 function finishQuiz() {
@@ -355,12 +210,72 @@ function finishQuiz() {
   currentActionId = null;
 
   wsSendRootWithKey("test_activity_step_1_finished");
-  log("Quiz finished, sent test_activity_step_1_finished");
-
   showScreen("done");
+}
+
+function connect() {
+  if (
+    ws &&
+    (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)
+  )
+    return;
+
+  els.btnConnect.disabled = true;
+  showScreen("wait");
+
+  ws = new WebSocket(WS_URL);
+
+  ws.onmessage = (evt) => {
+    const raw = typeof evt.data === "string" ? evt.data : "";
+    const parsed = safeJsonParse(raw);
+    if (!parsed) return;
+
+    const root = normalizeRoot(parsed);
+    if (!root) return;
+
+    lastRoot = root;
+    const key = String(root.key || "");
+
+    if (key === "identification_request") {
+      sendIdentificationWithSteps();
+      return;
+    }
+
+    if (key === "test_activity_step_1_authorization") {
+      startQuiz();
+      return;
+    }
+
+    if (awaitingAnswer && currentActionId != null) {
+      const prefix = `test_activity_step_1_action_${currentActionId}_`;
+      if (key.startsWith(prefix)) {
+        const suffix = key.slice(prefix.length).toLowerCase();
+        if (suffix === "a" || suffix === "b" || suffix === "c")
+          onAnswerReceived(suffix);
+      }
+    }
+  };
+
+  ws.onerror = () => {
+    ws = null;
+    lastRoot = null;
+    els.btnConnect.disabled = false;
+    stopAllTimers();
+    showScreen("connect");
+  };
+
+  ws.onclose = () => {
+    ws = null;
+    lastRoot = null;
+    els.btnConnect.disabled = false;
+    stopAllTimers();
+    showScreen("connect");
+  };
 }
 
 els.btnConnect.addEventListener("click", () => connect());
 
-// Load JSON assets on page load
-bootLoad();
+bootLoad().catch(() => {
+  // si JSON pas dispo, on laisse connect possible, mais ça ne jouera pas
+});
+showScreen("connect");
