@@ -1,11 +1,16 @@
-// app.js (minimal UX version, still robust)
-const WS_URL = "ws://172.28.55.91:8057/ws";
+// app.js (basé sur ton code, modifs minimales)
+const WS_URL = window.APP_CONFIG.WS_URL;
 const MAPPING_URL = "./answer_2.mapping.json"; // { "1": "a", "2": "b", ... }
+const QCM_URL = "../../test_activity/qcm.geometry.json"; // ajuste si besoin (même fichier que test_activity)
 
 const els = {
   btnConnect: document.getElementById("btnConnect"),
+  btnStart: document.getElementById("btnStart"),
+
   screenConnect: document.getElementById("screenConnect"),
+  screenStart: document.getElementById("screenStart"),
   screenAnswer: document.getElementById("screenAnswer"),
+
   btnLetter: document.getElementById("btnLetter"),
 };
 
@@ -13,9 +18,14 @@ let ws = null;
 let lastRoot = null;
 
 let mapping = {}; // actionId -> 'a'|'b'|'c'
+let correctById = new Map(); // actionId -> 'A'|'B'|'C'
+
 let currentActionId = null;
 let currentLetter = null;
 let readyToClick = false;
+
+let canStart = false;
+let waitingFinishedForActionId = null;
 
 function safeJsonParse(str) {
   try {
@@ -24,12 +34,10 @@ function safeJsonParse(str) {
     return null;
   }
 }
-
 function structuredCloneSafe(obj) {
   if (typeof structuredClone === "function") return structuredClone(obj);
   return JSON.parse(JSON.stringify(obj));
 }
-
 function normalizeRoot(parsed) {
   if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
     return parsed;
@@ -40,6 +48,7 @@ function normalizeRoot(parsed) {
 
 function showScreen(name) {
   els.screenConnect.classList.toggle("hidden", name !== "connect");
+  els.screenStart.classList.toggle("hidden", name !== "start");
   els.screenAnswer.classList.toggle("hidden", name !== "answer");
 }
 
@@ -56,13 +65,31 @@ async function loadMapping() {
   }
 }
 
+async function loadQcm() {
+  try {
+    const res = await fetch(QCM_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const qcm = await res.json();
+    if (!qcm || !Array.isArray(qcm.questions)) throw new Error("qcm invalid");
+
+    correctById = new Map();
+    for (const q of qcm.questions) {
+      correctById.set(Number(q.number), String(q.correct || "").toUpperCase());
+    }
+  } catch {
+    correctById = new Map();
+  }
+}
+
 function resetUI() {
   currentActionId = null;
   currentLetter = null;
   readyToClick = false;
+  waitingFinishedForActionId = null;
 
   els.btnLetter.textContent = "—";
   els.btnLetter.disabled = true;
+  els.btnLetter.classList.remove("good", "bad");
 }
 
 function connect() {
@@ -73,12 +100,11 @@ function connect() {
     return;
 
   els.btnConnect.disabled = true;
+  showScreen("start");
+  els.btnStart.disabled = true;
+  canStart = false;
 
   ws = new WebSocket(WS_URL);
-
-  ws.onopen = () => {
-    // wait for identification_request
-  };
 
   ws.onmessage = (evt) => {
     const raw = typeof evt.data === "string" ? evt.data : "";
@@ -91,22 +117,27 @@ function connect() {
     lastRoot = root;
     const key = String(root.key || "");
 
-    // On identification_request -> reply identification_answer_2_test_activity (connected=true)
     if (key === "identification_request") {
       sendIdentificationAnswer2();
+      canStart = true;
+      els.btnStart.disabled = false;
       return;
     }
 
-    // Wait for started keys
-    const m = key.match(/^test_activity_step_1_action_(\d+)_started$/);
-    if (m) {
-      onActionStarted(Number(m[1]));
+    const mStarted = key.match(/^test_activity_step_1_action_(\d+)_started$/);
+    if (mStarted) {
+      onActionStarted(Number(mStarted[1]));
+      return;
+    }
+
+    const mFinished = key.match(/^test_activity_step_1_action_(\d+)_finished$/);
+    if (mFinished) {
+      onActionFinished(Number(mFinished[1]));
       return;
     }
   };
 
   ws.onerror = () => {
-    // allow reconnect
     els.btnConnect.disabled = false;
     ws = null;
     lastRoot = null;
@@ -154,9 +185,18 @@ function sendIdentificationAnswer2() {
   }
 
   ws.send(JSON.stringify(out));
+}
 
-  showScreen("answer");
-  resetUI();
+function sendStart() {
+  if (!canStart) return;
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  if (!lastRoot) return;
+
+  const out = structuredCloneSafe(lastRoot);
+  out.key = "test_activity_start";
+  ws.send(JSON.stringify(out));
+
+  els.btnStart.disabled = true;
 }
 
 function onActionStarted(actionId) {
@@ -171,6 +211,7 @@ function onActionStarted(actionId) {
   currentLetter = letter;
   readyToClick = true;
 
+  els.btnLetter.classList.remove("good", "bad");
   els.btnLetter.textContent = letter.toUpperCase();
   els.btnLetter.disabled = false;
 
@@ -185,21 +226,41 @@ function sendAnswer() {
 
   const out = structuredCloneSafe(lastRoot);
   out.key = `test_activity_step_1_action_${currentActionId}_${currentLetter}`;
-
   ws.send(JSON.stringify(out));
 
-  // hide until next started
-  resetUI();
+  // attente du _finished pour colorer
+  readyToClick = false;
+  waitingFinishedForActionId = currentActionId;
+
+  els.btnLetter.disabled = true;
 }
 
-els.btnConnect.addEventListener("click", () => {
-  connect();
-});
+function onActionFinished(actionId) {
+  if (
+    waitingFinishedForActionId == null ||
+    actionId !== waitingFinishedForActionId
+  )
+    return;
 
-els.btnLetter.addEventListener("click", () => {
-  sendAnswer();
-});
+  const correct = (correctById.get(actionId) || "").toUpperCase(); // "A"|"B"|"C"
+  const picked = (currentLetter || "").toUpperCase(); // "A"|"B"|"C"
+
+  els.btnLetter.classList.remove("good", "bad");
+  if (correct && picked) {
+    els.btnLetter.classList.add(picked === correct ? "good" : "bad");
+  }
+
+  // ensuite on attend une prochaine _started
+  waitingFinishedForActionId = null;
+  currentActionId = null;
+  currentLetter = null;
+}
+
+els.btnConnect.addEventListener("click", connect);
+els.btnStart.addEventListener("click", sendStart);
+els.btnLetter.addEventListener("click", sendAnswer);
 
 loadMapping();
+loadQcm();
 showScreen("connect");
 resetUI();

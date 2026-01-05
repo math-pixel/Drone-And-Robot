@@ -218,13 +218,9 @@ function onAnswerReceived(letterLower) {
   awaitingAnswer = false;
   stopAllTimers();
 
-  const picked = letterLower.toUpperCase();
-  const correct = correctById.get(currentActionId) || null;
-  const isCorrect = correct ? picked === correct : false;
-
-  showFeedback(isCorrect);
+  showFeedback();
   lastReceivedLetter = letterLower.toUpperCase();
-  showFeedback(isCorrect);
+  showFeedback();
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 

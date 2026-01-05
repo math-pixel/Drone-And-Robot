@@ -1,4 +1,4 @@
-<!-- index.html -->
+<!-- index.html (modifs minimales) -->
 <!doctype html>
 <html lang="fr">
 <head>
@@ -8,14 +8,25 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
+
+  <!-- CONNECT -->
   <main class="screen" id="screenConnect">
-    <button class="btn btnConnect" id="btnConnect">CONNECT</button>
+    <div class="paper">
+      <button class="btnConnect" id="btnConnect">CONNECT</button>
+    </div>
   </main>
 
+  <!-- READY / START -->
+  <main class="screen hidden" id="screenStart">
+    <button class="btn btnFullStart" id="btnStart" disabled>COMMENCER</button>
+  </main>
+
+  <!-- ANSWER (tout l’écran cliquable) -->
   <main class="screen hidden" id="screenAnswer">
-    <button class="btn btnLetter" id="btnLetter" disabled>—</button>
+    <button class="btnLetter" id="btnLetter" disabled>—</button>
   </main>
 
+  <script src="../../test_activity/config.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // app.js (minimal UX version, still robust)
-const WS_URL = "ws://172.28.55.91:8057/ws";
+const WS_URL = window.APP_CONFIG.WS_URL;
 const MAPPING_URL = "./answer_3.mapping.json"; // { "1": "a", "2": "b", ... }
 
 const els = {
