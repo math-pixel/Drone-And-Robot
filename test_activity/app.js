@@ -1,5 +1,5 @@
 // app.js (même fonctionnement, juste adapté au nouveau DOM)
-const WS_URL = "ws://192.168.1.13:8057/ws";
+const WS_URL = window.APP_CONFIG.WS_URL;
 const STEPS_URL = "./steps.test_activity.json";
 const QCM_URL = "./qcm.geometry.json";
 
