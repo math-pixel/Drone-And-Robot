@@ -139,15 +139,22 @@ function renderQuestion(action, index, total) {
   els.optB.textContent = opts[1]?.text ?? "—";
   els.optC.textContent = opts[2]?.text ?? "—";
 
+  document
+    .querySelectorAll(".hl")
+    .forEach((el) => el.classList.remove("ok", "ko"));
+
+
   els.feedback.textContent = "";
   els.feedback.classList.remove("show");
 }
 
 function showFeedback(ok) {
+  const cls = ok ? "ok" : "ko";
+  document.querySelectorAll(".hl").forEach((el) => el.classList.add(cls));
+  // (optionnel) tu peux garder le texte si tu veux, sinon commente les 2 lignes:
   els.feedback.textContent = ok ? "Bonne réponse ✅" : "Mauvaise réponse ❌";
   els.feedback.classList.add("show");
 }
-
 function nextQuestion() {
   stopAllTimers();
 

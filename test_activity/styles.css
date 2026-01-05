@@ -21,16 +21,16 @@ body {
 
 /* PAPER BACKGROUND (mets ton image ici) */
 .paper{
-  width: min(1200px, 96vw);
-  height: min(680px, 86vh);
-  background-image: url("./paper.png"); /* <-- rename si besoin */
+  width: 100vw;
+  height: 100vh;
+  background-image: url("./paper.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  border-radius: 10px;
+  border-radius: 0;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+  box-shadow: none;
 }
 
 /* CONNECT */
@@ -74,42 +74,21 @@ body {
 
 /* QUESTION */
 .question{
-  position:absolute;
-  top: 12%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 86%;
-  margin: 0;
-  text-align: center;
-  font-size: clamp(28px, 5vw, 72px);
-  font-weight: 950;
-  color: #1a2cff;
-  mix-blend-mode: overlay; /* comme ton exemple */
-  line-height: 1.05;
+  top: 10%;
+  width: 92%;
+  font-size: clamp(34px, 5.8vw, 92px);
 }
 
-/* ANSWERS layout (A left, B right, C center) */
 .answers{
-  position:absolute;
-  left: 8%;
-  right: 8%;
-  top: 46%;
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-areas:
-    "a b"
-    "c c";
-  gap: clamp(18px, 2.6vw, 34px);
-  align-items: center;
+  left: 6%;
+  right: 6%;
+  top: 48%;
+  gap: clamp(20px, 3vw, 46px);
 }
 
 .answer{
-  display:flex;
-  align-items:center;
-  gap: 14px;
-  font-size: clamp(20px, 3.2vw, 56px);
-  font-weight: 950;
-  color: #0b0b0b;
+  font-size: clamp(26px, 3.8vw, 68px);
+  gap: 18px;
 }
 
 .answerA{ grid-area: a; justify-self: start; }
@@ -117,15 +96,41 @@ body {
 .answerC{ grid-area: c; justify-self: center; }
 
 .hl{
+  position: relative;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width: clamp(44px, 6vw, 86px);
-  height: clamp(44px, 6vw, 86px);
-  border-radius: 10px;
+  width: clamp(56px, 7vw, 110px);
+  height: clamp(56px, 7vw, 110px);
+  border-radius: 0;
   background: rgba(238, 186, 55, .95);
-  mix-blend-mode: multiply; /* surligneur */
+  mix-blend-mode: multiply;
   font-weight: 1000;
+  transform: rotate(-3deg);
+}
+
+.hl::before{
+  content:"";
+  position:absolute;
+  inset: -10% -14%;
+  background: rgba(238, 186, 55, .95);
+  mix-blend-mode: multiply;
+  z-index: -1;
+  transform: rotate(2deg);
+  clip-path: polygon(
+    6% 18%, 18% 8%, 34% 14%, 52% 6%, 72% 12%, 90% 8%,
+    96% 26%, 92% 46%, 98% 64%, 90% 82%, 70% 90%, 52% 84%,
+    34% 94%, 16% 88%, 8% 72%, 10% 52%, 4% 34%
+  );
+}
+
+.hl.ok,
+.hl.ok::before{
+  background: rgba(85, 214, 120, .95);
+}
+.hl.ko,
+.hl.ko::before{
+  background: rgba(255, 92, 92, .95);
 }
 
 .ansText{
