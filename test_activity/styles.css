@@ -71,24 +71,43 @@ body {
   color: #1a2cff;
   mix-blend-mode: overlay;
 }
-
-/* QUESTION */
 .question{
-  top: 10%;
   width: 92%;
   font-size: clamp(34px, 5.8vw, 92px);
+  position:absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  text-align: center;
+  font-weight: 950;
+  color: #1a2cff;
+  mix-blend-mode: overlay; /* comme ton exemple */
+  line-height: 1.05;
 }
 
+/* ANSWERS layout (A left, B right, C center) */
 .answers{
   left: 6%;
   right: 6%;
   top: 48%;
   gap: clamp(20px, 3vw, 46px);
+  position:absolute;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "a b"
+    "c c";
+  align-items: center;
 }
 
 .answer{
   font-size: clamp(26px, 3.8vw, 68px);
   gap: 18px;
+  display:flex;
+  align-items:center;
+  font-weight: 950;
+  color: #0b0b0b;
 }
 
 .answerA{ grid-area: a; justify-self: start; }

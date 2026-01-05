@@ -36,6 +36,8 @@ let countdownInterval = null;
 let countdownTimeout = null;
 let nextQuestionTimeout = null;
 
+let lastReceivedLetter = null;
+
 function safeJsonParse(str) {
   try {
     return JSON.parse(str);
@@ -131,7 +133,7 @@ function sendIdentificationWithSteps() {
 
 function renderQuestion(action, index, total) {
   if (els.progress) els.progress.textContent = `Question ${index + 1}/${total}`;
-
+  lastReceivedLetter = null;  
   els.question.textContent = action.name || `Question ${action.id}`;
 
   const opts = Array.isArray(action.options) ? action.options : [];
@@ -149,12 +151,37 @@ function renderQuestion(action, index, total) {
 }
 
 function showFeedback(ok) {
-  const cls = ok ? "ok" : "ko";
-  document.querySelectorAll(".hl").forEach((el) => el.classList.add(cls));
-  // (optionnel) tu peux garder le texte si tu veux, sinon commente les 2 lignes:
+  // reset
+  document
+    .querySelectorAll(".hl")
+    .forEach((el) => el.classList.remove("ok", "ko"));
+
+  const correct = (correctById.get(currentActionId) || "").toUpperCase(); // "A"|"B"|"C"
+  const selected = ok ? null : lastReceivedLetter || null; // on va le set juste en dessous
+
+  // color correct answer(s) in green
+  if (correct === "A")
+    document.querySelector(".answerA .hl")?.classList.add("ok");
+  if (correct === "B")
+    document.querySelector(".answerB .hl")?.classList.add("ok");
+  if (correct === "C")
+    document.querySelector(".answerC .hl")?.classList.add("ok");
+
+  // if user answered wrong OR timeout -> mark selected in red (if exists)
+  if (!ok && selected) {
+    const sel = selected.toUpperCase();
+    if (sel === "A")
+      document.querySelector(".answerA .hl")?.classList.add("ko");
+    if (sel === "B")
+      document.querySelector(".answerB .hl")?.classList.add("ko");
+    if (sel === "C")
+      document.querySelector(".answerC .hl")?.classList.add("ko");
+  }
+
   els.feedback.textContent = ok ? "Bonne réponse ✅" : "Mauvaise réponse ❌";
   els.feedback.classList.add("show");
 }
+
 function nextQuestion() {
   stopAllTimers();
 
@@ -186,6 +213,7 @@ function nextQuestion() {
     if (!awaitingAnswer) return;
     awaitingAnswer = false;
     stopAllTimers();
+    lastReceivedLetter = null;
     showFeedback(false);
     nextQuestionTimeout = setTimeout(nextQuestion, 3000);
   }, 8000);
@@ -201,6 +229,7 @@ function onAnswerReceived(letterLower) {
   const isCorrect = correct ? picked === correct : false;
 
   showFeedback(isCorrect);
+  lastReceivedLetter = letterLower.toUpperCase();
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 
