@@ -7,7 +7,7 @@ if __name__ == "__main__":
             "id": 1, 
             "actions": [
                 {"id": 1, "type": "video", "file": "classe.mp4", "finished": False},
-                {"id": 2, "type": "choice", "name": "question ?", "options": [
+                {"id": 2, "type": "choice", "chosen": -1, "name": "question ?", "options": [
                     {"id": 1, "text": "Passer plus tard"},
                     {"id": 2, "text": "Aller direct au tableau"}
                 ], "finished": False}
