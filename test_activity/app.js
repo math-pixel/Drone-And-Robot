@@ -157,9 +157,8 @@ function showFeedback(ok) {
     .forEach((el) => el.classList.remove("ok", "ko"));
 
   const correct = (correctById.get(currentActionId) || "").toUpperCase(); // "A"|"B"|"C"
-  const selected = ok ? null : lastReceivedLetter || null; // on va le set juste en dessous
 
-  // color correct answer(s) in green
+  // Correct en vert
   if (correct === "A")
     document.querySelector(".answerA .hl")?.classList.add("ok");
   if (correct === "B")
@@ -167,17 +166,15 @@ function showFeedback(ok) {
   if (correct === "C")
     document.querySelector(".answerC .hl")?.classList.add("ok");
 
-  // if user answered wrong OR timeout -> mark selected in red (if exists)
-  if (!ok && selected) {
-    const sel = selected.toUpperCase();
-    if (sel === "A")
-      document.querySelector(".answerA .hl")?.classList.add("ko");
-    if (sel === "B")
-      document.querySelector(".answerB .hl")?.classList.add("ko");
-    if (sel === "C")
-      document.querySelector(".answerC .hl")?.classList.add("ko");
-  }
+  // Les 2 autres en rouge (même si bonne réponse)
+  if (correct !== "A")
+    document.querySelector(".answerA .hl")?.classList.add("ko");
+  if (correct !== "B")
+    document.querySelector(".answerB .hl")?.classList.add("ko");
+  if (correct !== "C")
+    document.querySelector(".answerC .hl")?.classList.add("ko");
 }
+
 
 function nextQuestion() {
   stopAllTimers();
@@ -227,6 +224,7 @@ function onAnswerReceived(letterLower) {
 
   showFeedback(isCorrect);
   lastReceivedLetter = letterLower.toUpperCase();
+  showFeedback(isCorrect);
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 

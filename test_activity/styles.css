@@ -79,7 +79,7 @@ body {
 }
 .question{
   width: 92%;
-  font-size: clamp(34px, 5.8vw, 92px);
+  font-size: clamp(40px, 6.2vw, 104px);
   position:absolute;
   top: 10%;
   left: 50%;
@@ -108,8 +108,8 @@ body {
 }
 
 .answer{
-  font-size: clamp(26px, 3.8vw, 68px);
-  gap: 18px;
+  font-size: clamp(38px, 5.2vw, 96px);
+  gap: 22px;
   display:flex;
   align-items:center;
   font-weight: 950;
@@ -129,7 +129,6 @@ body {
   height: clamp(56px, 7vw, 110px);
   border-radius: 0;
   background: rgba(238, 186, 55, .95);
-  mix-blend-mode: multiply;
   font-weight: 1000;
   transform: rotate(-3deg);
 }
@@ -139,7 +138,6 @@ body {
   position:absolute;
   inset: -10% -14%;
   background: rgba(238, 186, 55, .95);
-  mix-blend-mode: multiply;
   z-index: -1;
   transform: rotate(2deg);
   clip-path: polygon(
@@ -158,6 +156,17 @@ body {
   background: rgba(255, 92, 92, .95);
 }
 
+.question,
+.waitTitle,
+.waitSub,
+.doneTitle,
+.answer,
+.timer{
+  color: #1a2cff;
+  mix-blend-mode: multiply; /* plus visible que overlay sur papier */
+  text-shadow: 0 2px 0 rgba(0,0,0,.08);
+}
+
 .ansText{
   display:inline-block;
   text-shadow: 0 1px 0 rgba(255,255,255,.12);
@@ -165,14 +174,15 @@ body {
 
 /* TIMER bottom-right (juste chiffre pour l’instant) */
 .timer{
+  font-size: clamp(30px, 3.8vw, 64px);
+  font-weight: 950;
+  background: rgba(255,255,255,.12);
+  padding: 14px 18px;
+
   position:absolute;
   right: 6%;
   bottom: 6%;
-  font-size: clamp(18px, 2.2vw, 34px);
-  font-weight: 900;
   color: #0b0b0b;
-  background: rgba(255,255,255,.2);
-  padding: 10px 14px;
   border-radius: 14px;
   backdrop-filter: blur(2px);
 }
