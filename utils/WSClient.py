@@ -9,9 +9,13 @@ from typing import Callable, Awaitable, Protocol, List, Dict, Set, Optional, Uni
 
 class ActionDelegate(Protocol):
     """Protocol pour le delegate d'actions."""
-    async def __call__(self, action: dict, client: "WSClient") -> None:
+    async def __call__(self, action: dict, client: "WSClient", step_id: int) -> None:
         ...
 
+class KeyDelegate(Protocol):
+    """Protocol pour le delegate de réception de messages."""
+    async def __call__(self, data: dict, client: "WSClient") -> None:
+        ...
 
 # ======================================================
 # WS CLIENT
@@ -25,11 +29,13 @@ class WSClient:
         url: str,
         client_key: str,
         action_delegate: ActionDelegate,
+        key_delegate: Optional[KeyDelegate] = None,  # ← Nouveau paramètre
         steps: Optional[List[Dict]] = None
     ):
         self.url = url
         self.client_key = client_key
         self.action_delegate = action_delegate
+        self.key_delegate = key_delegate  # ← Stockage du delegate
         self.steps = steps or []
         
         self.ws = None
@@ -78,6 +84,9 @@ class WSClient:
         key = self.data.get("key")
         print(f"📥 Received: {key}")
         
+        # Appel du key_delegate si défini
+        await self._notify_key_delegate(self.data)
+        
         if key != "identification_request":
             raise RuntimeError(f"Expected 'identification_request', got '{key}'")
 
@@ -111,6 +120,11 @@ class WSClient:
                 incoming = json.loads(msg)
                 key = incoming.get("key", "")
                 
+                # ════════════════════════════════════════════
+                # APPEL DU KEY DELEGATE À CHAQUE MESSAGE REÇU
+                # ════════════════════════════════════════════
+                await self._notify_key_delegate(incoming)
+                
                 # Vérifier si c'est une autorisation de step
                 if self._is_step_authorization(key):
                     step_id = self._extract_step_id(key)
@@ -132,6 +146,18 @@ class WSClient:
             print("\n🔌 Connection closed")
         except KeyboardInterrupt:
             print("\n🛑 Client stopped by user")
+
+    # ======================================================
+    # KEY DELEGATE
+    # ======================================================
+
+    async def _notify_key_delegate(self, data: dict):
+        """Notifie le key_delegate si défini."""
+        if self.key_delegate is not None:
+            try:
+                await self.key_delegate(data, self)
+            except Exception as e:
+                print(f"⚠️ Key delegate error: {e}")
 
     # ======================================================
     # STEP EXECUTION
@@ -285,14 +311,46 @@ if __name__ == "__main__":
     ]
 
     # ======================================================
-    # DELEGATE (à personnaliser par l'utilisateur)
+    # KEY DELEGATE (appelé à chaque message reçu)
+    # ======================================================
+    
+    # async def my_key_handler(data: dict, client: WSClient):
+    #     """
+    #     Delegate appelé à chaque réception de message.
+    #     Permet de réagir à n'importe quel message du serveur.
+    #     """
+    #     key = data.get("key", "")
+        
+    #     print(f"🔑 [KEY DELEGATE] Received: {key}")
+        
+    #     # Exemples de traitement personnalisé
+    #     match key:
+    #         case "update_emotions":
+    #             emotions = data.get("emotions", [])
+    #             print(f"   → Emotions received: {len(emotions)} items")
+    #             # Faire quelque chose avec les émotions...
+                
+    #         case "pause_requested":
+    #             print("   → ⏸️ Server requested pause!")
+    #             # Mettre en pause le client...
+                
+    #         case "custom_event":
+    #             payload = data.get("payload", {})
+    #             print(f"   → Custom event with payload: {payload}")
+    #             # Traiter l'événement personnalisé...
+                
+    #         case _ if key.endswith("_authorization"):
+    #             print(f"   → Step authorization detected")
+                
+    #         case _:
+    #             pass  # Ignorer les autres clés
+
+    # ======================================================
+    # ACTION DELEGATE (gestion des actions)
     # ======================================================
     
     # async def my_action_handler(action: dict, client: WSClient, step_id: int):
-    #     """
-    #     Delegate personnalisé pour gérer les actions.
-    #     L'utilisateur implémente ici son match case.
-    #     """
+    #     """Delegate personnalisé pour gérer les actions."""
     #     action_id = action.get("id")
     #     action_type = action.get("type")
         
@@ -300,11 +358,7 @@ if __name__ == "__main__":
     #         case "video":
     #             file = action.get("file")
     #             print(f"     🎥 Playing video: {file}")
-                
-    #             # Simulation: attendre que la vidéo soit "jouée"
     #             input(f"     ⏸️  Press Enter when video '{file}' is finished...")
-                
-    #             # Marquer comme terminé
     #             action["finished"] = True
     #             await client.send_action_finished(step_id, action_id)
                 
@@ -316,7 +370,6 @@ if __name__ == "__main__":
     #             for i, opt in enumerate(options):
     #                 print(f"        [{i}] {opt}")
                 
-    #             # Attendre le choix
     #             selected = -1
     #             while selected not in range(len(options)):
     #                 try:
@@ -324,7 +377,6 @@ if __name__ == "__main__":
     #                 except ValueError:
     #                     print("     ⚠️  Invalid input")
                 
-    #             # Enregistrer le choix
     #             action["chosen"] = selected
     #             await client.send_choice_result(step_id, action_id, selected)
                 
@@ -339,6 +391,7 @@ if __name__ == "__main__":
         url="ws://192.168.10.182:8057/ws",
         client_key="choice_activity",
         action_delegate=my_action_handler,
+        key_delegate=my_key_handler,  # ← Nouveau paramètre
         steps=STEPS
     )
     
