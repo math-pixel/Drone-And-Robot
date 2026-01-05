@@ -1,0 +1,64 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Test Activity (Web)</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+  <!-- CONNECT -->
+  <main class="screen" id="screenConnect">
+    <button class="btnConnect" id="btnConnect">CONNECT</button>
+  </main>
+
+  <!-- WAIT -->
+  <main class="screen hidden" id="screenWait">
+    <div class="paper">
+      <div class="waitTitle">EN ATTENTE</div>
+      <div class="waitSub">du début du jeu…</div>
+    </div>
+  </main>
+
+  <!-- QUIZ -->
+  <main class="screen hidden" id="screenQuiz">
+    <div class="paper">
+      <h1 class="question" id="question">—</h1>
+
+      <div class="answers">
+        <div class="answer answerA">
+          <span class="hl">A</span>
+          <span class="ansText" id="optA">—</span>
+        </div>
+
+        <div class="answer answerB">
+          <span class="hl">B</span>
+          <span class="ansText" id="optB">—</span>
+        </div>
+
+        <div class="answer answerC">
+          <span class="hl">C</span>
+          <span class="ansText" id="optC">—</span>
+        </div>
+      </div>
+
+      <div class="timer" id="timer">8s</div>
+      <div class="feedback" id="feedback"></div>
+
+      <!-- on garde l’ID pour le JS, mais on ne l’affiche pas -->
+      <div class="progress hidden" id="progress"></div>
+    </div>
+  </main>
+
+  <!-- DONE -->
+  <main class="screen hidden" id="screenDone">
+    <div class="paper done">
+      <div class="doneTitle">TERMINÉ ✅</div>
+    </div>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
