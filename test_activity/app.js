@@ -1,5 +1,5 @@
 // app.js
-const WS_URL = "ws://172.28.55.91:8057/ws";
+const WS_URL = "ws://192.168.1.13:8057/ws";
 const STEPS_URL = "./steps.test_activity.json";
 const QCM_URL = "./qcm.geometry.json";
 
