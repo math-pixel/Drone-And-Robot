@@ -230,6 +230,10 @@ function sendStart() {
 
 function onActionStarted(actionId) {
   els.btnLetter.classList.remove("good", "bad");
+
+  // ✅ AJOUTE ÇA
+  waitingFinishedForActionId = actionId;
+
   const letter = String(mapping[String(actionId)] || "").toLowerCase();
   if (letter !== "a" && letter !== "b" && letter !== "c") {
     resetUI();
@@ -247,6 +251,7 @@ function onActionStarted(actionId) {
 
   showScreen("answer");
 }
+
 
 function sendAnswer() {
   if (!readyToClick) return;
