@@ -1,7 +1,7 @@
 {
     "start_x": 70,
     "start_y": 80,
-    "cols": 2,
+    "cols": 4,
     "rows": 4,
     "cell_w": 80,
     "cell_h": 70,
