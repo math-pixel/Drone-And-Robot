@@ -262,16 +262,37 @@ class WSClient:
         else:
             print(f"\n📥 Received: {key}")
 
-    async def _send_json(self):
+    async def _send_json(self, key: Optional[str] = None):
         """Envoie les données JSON actuelles."""
+        key = key or self.data.get("key", "unknown")
+        self.data["key"] = key
         payload = json.dumps(self.data)
-        key = self.data.get("key", "unknown")
         print(f"📤 Sending → {key}")
         await self.ws.send(payload)
 
     async def send_data(self, data: dict):
         json_data = json.dumps(data) 
         await self.ws.send(json_data)
+
+    def set_emotion_levels(self, happiness: float, stress: float, shame: float, angry: float) -> dict:
+        """
+        Set (overwrite) the 4 emotions levels in-place on self.data["emotions"].
+        Expects emotions types: happiness, stress, shame, angry.
+        """
+        levels = {
+            "happiness": float(happiness),
+            "stress": float(stress),
+            "shame": float(shame),
+            "angry": float(angry),
+        }
+
+        emotions = self.data.get("emotions", [])
+        for e in emotions:
+            t = e.get("type")
+            if t in levels:
+                e["level"] = levels[t]
+
+        return self.data
 
 
 # ======================================================

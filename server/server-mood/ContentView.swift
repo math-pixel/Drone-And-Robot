@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var server: ServerManager
+    @EnvironmentObject var rover: RoverControlManager
 
     private let cols = [
         GridItem(.flexible(minimum: 260), spacing: 12),
@@ -11,7 +12,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 14) {
             
-            RoverActivityPanel()
+            ///RoverActivityPanel()
 
             // Top bar
             HStack(spacing: 12) {
@@ -35,6 +36,15 @@ struct ContentView: View {
                 }
 
                 Spacer()
+                
+                Button {
+                    rover.toggleConnection()
+                } label: {
+                    Text(rover.isConnected ? "Disconnect Rover" : "Connect Rover")
+                        .fontWeight(.semibold)
+                        .frame(minWidth: 170)
+                }
+                .buttonStyle(.borderedProminent)
 
                 Button {
                     server.startActivity()
@@ -75,7 +85,7 @@ struct ContentView: View {
                         LogsPanel(lines: server.logs)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
-                        DebugJSONPanel(json: server.globalJSON)
+                        ///DebugJSONPanel(json: server.globalJSON)
                     }
 
                 }
@@ -517,7 +527,7 @@ struct RoverActivityPanel: View {
                     .font(.headline)
 
                 Spacer()
-
+                
                 Button {
                     rover.toggleConnection()
                 } label: {
@@ -539,11 +549,6 @@ struct RoverActivityPanel: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(!rover.isConnected)
-            
-            HStack(spacing: 10) {
-                Button("Wheel L") { rover.spinWheelLeft() }
-                Button("Wheel R") { rover.spinWheelRight() }
-            }
             .buttonStyle(.borderedProminent)
             .disabled(!rover.isConnected)
 

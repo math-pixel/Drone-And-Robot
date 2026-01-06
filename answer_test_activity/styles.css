@@ -1,0 +1,110 @@
+/* styles.css (remplace tout par ça) */
+:root { color-scheme: dark; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system;
+}
+
+.hidden { display: none; }
+
+.screen{
+  height: 100%;
+}
+
+/* paper background plein écran */
+.paper{
+  width: 100vw;
+  height: 100vh;
+  background-image: url("../test_activity/paper.png"); /* ajuste le chemin si besoin */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* gros boutons */
+.btnConnect,
+.btnStart{
+  width: min(640px, 92vw);
+  height: min(280px, 42vh);
+  font-size: clamp(28px, 6vw, 62px);
+  font-weight: 950;
+  letter-spacing: .06em;
+  border-radius: 22px;
+  border: 0;
+  color: #f3f6ff;
+  background: #101827;
+  cursor: pointer;
+}
+.btnConnect:disabled,
+.btnStart:disabled{ opacity:.55; cursor:not-allowed; }
+
+/* tout l’écran cliquable + paper */
+.btnLetter{
+  width: 100vw;
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+
+  background-image: url("../test_activity/paper.png"); /* ajuste le chemin si besoin */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  font-size: min(50vh, 50vw);
+  font-weight: 1000;
+  color: #1a2cff;
+  text-shadow: 0 3px 0 rgba(0,0,0,.08);
+}
+
+.btnLetter:disabled{ opacity: 1; cursor: default; }
+
+/* feedback couleur après action_finished */
+.btnLetter.good{ color: #22c55e; }
+.btnLetter.bad{  color: #ef4444; }
+
+/* styles.css : AJOUTE ces règles */
+
+/* bouton start plein écran + fond paper */
+.btnFullStart{
+  width: 100vw;
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
+
+  background-image: url("../test_activity/paper.png"); /* ajuste le chemin si besoin */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  cursor: pointer;
+  font-size: min(12vh, 12vw);
+  font-weight: 1000;
+  letter-spacing: .06em;
+  color: #1a2cff;
+  text-shadow: 0 3px 0 rgba(0,0,0,.08);
+}
+
+.btnFullStart:disabled{
+  opacity: 1;        /* on garde visible */
+  cursor: default;  /* pas cliquable tant que disabled */
+}
+
+.btnPick{
+  width: min(220px, 26vw);
+  height: min(220px, 26vw);
+  border: 0;
+  border-radius: 22px;
+  font-size: clamp(44px, 8vw, 92px);
+  font-weight: 1000;
+  color: #f3f6ff;
+  background: #101827;
+  cursor: pointer;
+}
+.btnPick:active{ transform: translateY(1px); }

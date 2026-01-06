@@ -140,15 +140,6 @@ extension ServerManager {
             log("🧪 DEBUG \(name): not found in globalJSON.activity")
             return
         }
-
-        let stepAny = payload["steps"]
-        let stepType = String(describing: type(of: stepAny as Any))
-        let count: Int = (stepAny as? [Any])?.count ?? (stepAny as? [[String: Any]])?.count ?? -1
-
-        log("🧪 DEBUG \(name): step type=\(stepType) count=\(count)")
-        if let s = stringify(json: ["activity": [ [name: payload] ] ]) {
-            log("🧪 DEBUG \(name) payload:\n\(s)")
-        }
     }
 
     
@@ -406,8 +397,8 @@ extension ServerManager {
     }
 
     func sendEmotionsUpdateToAtmosphere() {
-        guard let session = getSessionForActivity("atmosphere_activity") else {
-            log("🛑🛑🛑 ERROR: atmosphere_activity is NOT connected — cannot send update_emotions 🛑🛑🛑")
+        guard let session = getSessionForActivity("jauge_activity") else {
+            log("🛑🛑🛑 ERROR: jauge_activity is NOT connected — cannot send update_emotions 🛑🛑🛑")
             return
         }
 
@@ -419,7 +410,7 @@ extension ServerManager {
             return
         }
 
-        log("➡️ Sending update_emotions to atmosphere_activity")
+        log("➡️ Sending update_emotions to jauge_activity")
         session.writeText(text)
     }
     
@@ -452,6 +443,23 @@ extension ServerManager {
 
         log("➡️ Sequencing: '\(incomingKey)' -> send '\(route.outgoingKey)' to \(route.targetActivity) (authorized=true)")
         targetSession.writeText(text)
+    }
+    
+    func forwardIncomingJSON(_ incoming: [String: Any], toActivities: [String], reason: String) {
+        guard let text = stringify(json: incoming) else {
+            log("❌ Failed to stringify incoming JSON for forward. reason=\(reason)")
+            return
+        }
+
+        for activity in toActivities {
+            guard let session = getSessionForActivity(activity) else {
+                log("⚠️ Forward skipped: \(activity) not connected. reason=\(reason)")
+                continue
+            }
+            session.writeText(text)
+        }
+
+        log("➡️ Forwarded incoming JSON to \(toActivities.joined(separator: ", ")) reason=\(reason)")
     }
     
     func extractFinished(activityName: String) -> Bool {

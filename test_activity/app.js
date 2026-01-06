@@ -1,11 +1,11 @@
 // app.js (même fonctionnement, juste adapté au nouveau DOM)
-const WS_URL = "ws://192.168.1.13:8057/ws";
+const WS_URL = window.APP_CONFIG.WS_URL;
 const STEPS_URL = "./steps.test_activity.json";
 const QCM_URL = "./qcm.geometry.json";
 
 const els = {
   btnConnect: document.getElementById("btnConnect"),
-
+  screenStartPrompt: document.getElementById("screenStartPrompt"),
   screenConnect: document.getElementById("screenConnect"),
   screenWait: document.getElementById("screenWait"),
   screenQuiz: document.getElementById("screenQuiz"),
@@ -36,7 +36,8 @@ let countdownInterval = null;
 let countdownTimeout = null;
 let nextQuestionTimeout = null;
 
-let lastReceivedLetter = null;
+let hasAuthorization = false;
+let hasStartSignal = false;
 
 function safeJsonParse(str) {
   try {
@@ -68,6 +69,7 @@ function findActivityObj(root, activityKey) {
 function showScreen(name) {
   els.screenConnect.classList.toggle("hidden", name !== "connect");
   els.screenWait.classList.toggle("hidden", name !== "wait");
+  els.screenStartPrompt.classList.toggle("hidden", name !== "startPrompt");
   els.screenQuiz.classList.toggle("hidden", name !== "quiz");
   els.screenDone.classList.toggle("hidden", name !== "done");
 }
@@ -133,7 +135,6 @@ function sendIdentificationWithSteps() {
 
 function renderQuestion(action, index, total) {
   if (els.progress) els.progress.textContent = `Question ${index + 1}/${total}`;
-  lastReceivedLetter = null;  
   els.question.textContent = action.name || `Question ${action.id}`;
 
   const opts = Array.isArray(action.options) ? action.options : [];
@@ -205,12 +206,15 @@ function nextQuestion() {
 
   countdownTimeout = setTimeout(() => {
     if (!awaitingAnswer) return;
+
     awaitingAnswer = false;
+    wsSendRootWithKey(
+      `test_activity_step_1_action_${currentActionId}_finished`
+    );
     stopAllTimers();
-    lastReceivedLetter = null;
     showFeedback(false);
     nextQuestionTimeout = setTimeout(nextQuestion, 3000);
-  }, 8000);
+  }, 30000);
 }
 
 function onAnswerReceived(letterLower) {
@@ -218,18 +222,17 @@ function onAnswerReceived(letterLower) {
   awaitingAnswer = false;
   stopAllTimers();
 
-  const picked = letterLower.toUpperCase();
-  const correct = correctById.get(currentActionId) || null;
-  const isCorrect = correct ? picked === correct : false;
-
-  showFeedback(isCorrect);
-  lastReceivedLetter = letterLower.toUpperCase();
-  showFeedback(isCorrect);
+  showFeedback();
+  showFeedback();
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 
 function startQuiz() {
   if (!actions.length) return;
+  if (!hasStartSignal) {
+    showScreen("startPrompt");
+    return;
+  }
   currentIndex = -1;
   showScreen("quiz");
   nextQuestion();
@@ -273,9 +276,19 @@ function connect() {
     }
 
     if (key === "test_activity_step_1_authorization") {
-      startQuiz();
+      hasAuthorization = true;
+      if (!hasStartSignal) showScreen("startPrompt");
+      else startQuiz();
       return;
     }
+
+    if (key === "test_activity_start") {
+      hasStartSignal = true;
+      if (hasAuthorization) startQuiz();
+      else showScreen("startPrompt");
+      return;
+    }
+    
 
     if (awaitingAnswer && currentActionId != null) {
       const prefix = `test_activity_step_1_action_${currentActionId}_`;
@@ -291,6 +304,8 @@ function connect() {
     ws = null;
     lastRoot = null;
     els.btnConnect.disabled = false;
+    hasAuthorization = false;
+    hasStartSignal = false;
     stopAllTimers();
     showScreen("connect");
   };
@@ -300,6 +315,8 @@ function connect() {
     lastRoot = null;
     els.btnConnect.disabled = false;
     stopAllTimers();
+    hasAuthorization = false;
+    hasStartSignal = false;
     showScreen("connect");
   };
 }

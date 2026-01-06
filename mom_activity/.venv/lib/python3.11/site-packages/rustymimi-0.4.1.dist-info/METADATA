@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: rustymimi
+Version: 0.4.1
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Summary: moshi, a real-time voice AI
+Keywords: machine-learning,audio
+License: MIT/Apache-2.0
+Requires-Python: >=3.8
+Project-URL: Source Code, https://github.com/kyutai-labs/moshi

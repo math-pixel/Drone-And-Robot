@@ -17,12 +17,35 @@ if __name__ == "__main__":
         },
     ]
 
+    def _ask_4_numbers(
+        prompt: str = "Enter 4 levels (happiness stress shame angry): "
+    ) -> tuple[float, float, float, float]:
+        while True:
+            raw = input(prompt).strip().replace(",", ".")
+            parts = raw.split()
+            if len(parts) != 4:
+                print("Please enter exactly 4 numbers, e.g. -26.5 -3 4 9.5")
+                continue
+            try:
+                return tuple(float(x) for x in parts)  # type: ignore[return-value]
+            except ValueError:
+                print("Invalid input. Use numbers only, e.g. -26.5 -3 4 9.5")
+
+
+
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
-        print("Custom action handler")
+        while True:
+            input("Press Enter to continue...")
+
+            d_h, d_s, d_sh, d_a = _ask_4_numbers()
+            client.set_emotion_levels(d_h, d_s, d_sh, d_a)
+
+            await client._send_json(key="update_emotions")
+        
 
     client = WSClient(
-            url="ws://172.28.55.91:8057/ws",
-            client_key="choice_activity",
+            url="ws://192.168.10.34:8057/ws",
+            client_key="throw_activity",
             action_delegate=my_action_handler,
             steps=STEPS
         )
