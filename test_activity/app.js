@@ -214,7 +214,7 @@ function nextQuestion() {
     stopAllTimers();
     showFeedback(false);
     nextQuestionTimeout = setTimeout(nextQuestion, 3000);
-  }, 8000);
+  }, 30000);
 }
 
 function onAnswerReceived(letterLower) {

@@ -1,6 +1,3 @@
-import itertools
-import random
-
 if __name__ == "__main__":
     import asyncio
     from utils.WSClient import WSClient
@@ -20,33 +17,31 @@ if __name__ == "__main__":
         },
     ]
 
+    def _ask_4_numbers(
+        prompt: str = "Enter 4 levels (happiness stress shame angry): "
+    ) -> tuple[float, float, float, float]:
+        while True:
+            raw = input(prompt).strip().replace(",", ".")
+            parts = raw.split()
+            if len(parts) != 4:
+                print("Please enter exactly 4 numbers, e.g. -26.5 -3 4 9.5")
+                continue
+            try:
+                return tuple(float(x) for x in parts)  # type: ignore[return-value]
+            except ValueError:
+                print("Invalid input. Use numbers only, e.g. -26.5 -3 4 9.5")
+
+
+
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
-        keys = [
-            "rover_stop",
-            "rover_forward_10_1",
-            "rover_forward_30_2",
-            "rover_forward_60_3",
-            "rover_backward_10_1",
-            "rover_backward_40_2",
-            "rover_backward_80_3",
-            "rover_right_30",
-            "rover_right_90",
-            "rover_left_30",
-            "rover_left_90",
-            "rover_left_180",
-            "rover_right_180",
-        ]
+        while True:
+            input("Press Enter to continue...")
 
-        # 1er envoi pour démarrer
-        first_key = random.choice(keys)
-        await client._send_json(key=first_key)
-        print(f"Sent: {first_key}")
+            d_h, d_s, d_sh, d_a = _ask_4_numbers()
+            client.set_emotion_levels(d_h, d_s, d_sh, d_a)
 
-        # Ensuite: à chaque Enter => prochaine key (en boucle)
-        for k in itertools.cycle(keys):
-            input("Press Enter to send next rover command...")
-            await client._send_json(key=k)
-            print(f"Sent: {k}")
+            await client._send_json(key="update_emotions")
+        
 
     client = WSClient(
             url="ws://192.168.10.34:8057/ws",

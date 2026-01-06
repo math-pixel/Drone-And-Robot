@@ -1,0 +1,7 @@
+#!/Users/thibaudevrard/Documents/dev/Gobelins/Mood/Drone-And-Robot/mom_activity/.venv/bin/python3.11
+import sys
+from moshi_mlx.local import main
+if __name__ == '__main__':
+    if sys.argv[0].endswith('.exe'):
+        sys.argv[0] = sys.argv[0][:-4]
+    sys.exit(main())

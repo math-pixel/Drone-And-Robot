@@ -1,0 +1,1 @@
+uvx --with moshi-mlx python keyword_listener_pty.py

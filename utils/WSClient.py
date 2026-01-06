@@ -274,6 +274,26 @@ class WSClient:
         json_data = json.dumps(data) 
         await self.ws.send(json_data)
 
+    def set_emotion_levels(self, happiness: float, stress: float, shame: float, angry: float) -> dict:
+        """
+        Set (overwrite) the 4 emotions levels in-place on self.data["emotions"].
+        Expects emotions types: happiness, stress, shame, angry.
+        """
+        levels = {
+            "happiness": float(happiness),
+            "stress": float(stress),
+            "shame": float(shame),
+            "angry": float(angry),
+        }
+
+        emotions = self.data.get("emotions", [])
+        for e in emotions:
+            t = e.get("type")
+            if t in levels:
+                e["level"] = levels[t]
+
+        return self.data
+
 
 # ======================================================
 # EXEMPLE D'UTILISATION
