@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-import numpy as np
+"""
+DepthDetector utilisant un subprocess C++ pour la Kinect v2
+Compatible Raspberry Pi 4
+"""
 
-try:
-    from pylibfreenect2 import Freenect2, SyncMultiFrameListener
-    from pylibfreenect2 import FrameType, CpuPacketPipeline
-    FREENECT2_AVAILABLE = True
-except ImportError:
-    FREENECT2_AVAILABLE = False
-    print("⚠️ pylibfreenect2 non installé")
+import subprocess
+import numpy as np
+import os
+import threading
+import time
 
 
 class DepthDetector:
@@ -17,111 +18,105 @@ class DepthDetector:
         self.grid_rows = grid_rows
         self.grid_cols = grid_cols
         self.running = False
+        self.process = None
         
-        # Kinect v2
-        self.fn = None
-        self.device = None
-        self.listener = None
+        # Chemin vers l'exécutable C++
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.capture_bin = os.path.join(current_dir, "depth_capture")
         
-    def _init_kinect(self):
-        """Initialise la Kinect v2 avec pipeline CPU"""
-        if not FREENECT2_AVAILABLE:
-            raise RuntimeError("pylibfreenect2 requis : pip3 install pylibfreenect2")
-        
-        self.fn = Freenect2()
-        
-        num_devices = self.fn.enumerateDevices()
-        if num_devices == 0:
-            raise RuntimeError("Aucune Kinect v2 détectée")
-        
-        serial = self.fn.getDeviceSerialNumber(0)
-        print(f"📷 Kinect v2 trouvée : {serial}")
-        
-        # Pipeline CPU (le plus compatible sur Pi)
-        pipeline = CpuPacketPipeline()
-        self.device = self.fn.openDevice(serial, pipeline=pipeline)
-        
-        # Écouter uniquement la profondeur (optimisation)
-        self.listener = SyncMultiFrameListener(FrameType.Depth)
-        self.device.setIrAndDepthFrameListener(self.listener)
-        
-        # Démarrer SANS RGB (rgb=False, depth=True)
-        self.device.start(False, True)
-        print("✅ Kinect v2 démarrée (profondeur uniquement)")
-        
-    def _compute_grid(self, depth_array):
-        """Divise l'image de profondeur en grille et calcule les moyennes"""
-        h, w = depth_array.shape
-        cell_h = h // self.grid_rows
-        cell_w = w // self.grid_cols
-        
-        grid_values = np.zeros((self.grid_rows, self.grid_cols))
-        
-        for i in range(self.grid_rows):
-            for j in range(self.grid_cols):
-                y1, y2 = i * cell_h, (i + 1) * cell_h
-                x1, x2 = j * cell_w, (j + 1) * cell_w
-                
-                cell = depth_array[y1:y2, x1:x2]
-                # Filtrer les valeurs invalides (0 = pas de données)
-                valid = cell[cell > 0]
-                
-                if len(valid) > 0:
-                    grid_values[i, j] = np.mean(valid)
-                else:
-                    grid_values[i, j] = 0
-                    
-        return grid_values
+        if not os.path.exists(self.capture_bin):
+            raise FileNotFoundError(
+                f"depth_capture non trouvé : {self.capture_bin}\n"
+                "Compile-le avec la commande g++ fournie."
+            )
+    
+    def _parse_grid_line(self, line):
+        """
+        Parse une ligne du format: "1234.5,2345.6,3456.7;1234.5,..."
+        Retourne un numpy array 3x3
+        """
+        try:
+            line = line.strip()
+            if not line:
+                return None
+            
+            rows = line.split(";")
+            grid = []
+            
+            for row in rows:
+                if row:
+                    values = [float(v) for v in row.split(",") if v]
+                    if values:
+                        grid.append(values)
+            
+            if len(grid) == self.grid_rows:
+                return np.array(grid)
+            return None
+            
+        except Exception as e:
+            print(f"⚠️ Erreur parsing: {e}")
+            return None
     
     def run(self):
         """Boucle principale - bloquante"""
         print("🚀 Démarrage DepthDetector...")
+        print(f"📍 Exécutable: {self.capture_bin}")
         
         try:
-            self._init_kinect()
+            # Lancer le programme C++ en subprocess
+            self.process = subprocess.Popen(
+                [self.capture_bin],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1  # Line buffered
+            )
+            
+            self.running = True
+            
+            # Lire stderr pour les messages de statut
+            def read_stderr():
+                for line in self.process.stderr:
+                    line = line.strip()
+                    if line == "READY":
+                        print("✅ Kinect v2 prête")
+                    elif line == "NO_DEVICE":
+                        print("❌ Aucune Kinect détectée")
+                    elif line == "OPEN_FAILED":
+                        print("❌ Impossible d'ouvrir la Kinect")
+                    else:
+                        print(f"[Kinect] {line}")
+            
+            stderr_thread = threading.Thread(target=read_stderr, daemon=True)
+            stderr_thread.start()
+            
+            # Lire stdout pour les données de profondeur
+            for line in self.process.stdout:
+                if not self.running:
+                    break
+                
+                grid = self._parse_grid_line(line)
+                
+                if grid is not None and self.delegate is not None:
+                    self.delegate.process(grid)
+                    
+        except FileNotFoundError:
+            print(f"❌ Exécutable non trouvé: {self.capture_bin}")
         except Exception as e:
-            print(f"❌ Erreur init Kinect : {e}")
-            return
-        
-        self.running = True
-        
-        try:
-            while self.running:
-                # Attendre une nouvelle frame (timeout 1 seconde)
-                frames = self.listener.waitForNewFrame(timeout=1000)
-                
-                if frames is None:
-                    print("⚠️ Timeout frame")
-                    continue
-                
-                try:
-                    # Récupérer la frame de profondeur
-                    depth_frame = frames[FrameType.Depth]
-                    depth_array = depth_frame.asarray(np.float32)
-                    
-                    # Calculer la grille
-                    grid_values = self._compute_grid(depth_array)
-                    
-                    # Envoyer au delegate
-                    if self.delegate is not None:
-                        self.delegate.process(grid_values)
-                        
-                finally:
-                    # Toujours libérer les frames
-                    self.listener.release(frames)
-                    
-        except KeyboardInterrupt:
-            print("\n⏹️ Arrêt demandé")
+            print(f"❌ Erreur: {e}")
         finally:
             self.stop()
     
     def stop(self):
-        """Arrête proprement la Kinect"""
+        """Arrête proprement"""
         self.running = False
         
-        if self.device is not None:
-            print("🛑 Arrêt Kinect...")
-            self.device.stop()
-            self.device.close()
-            self.device = None
-            print("✅ Kinect arrêtée")
+        if self.process is not None:
+            print("🛑 Arrêt du processus Kinect...")
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+            self.process = None
+            print("✅ Processus arrêté")
