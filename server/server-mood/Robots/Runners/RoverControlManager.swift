@@ -1,11 +1,3 @@
-//
-//  RoverControlManager.swift
-//  server-mood
-//
-//  Created by Thibaud Evrard on 19/12/2025.
-//
-
-// RoverControlManager.swift — NEW (simple, fixed name RV-4531, no LEDs, no sensors, no lever)
 import Foundation
 import Combine
 
@@ -17,6 +9,28 @@ final class RoverControlManager: ObservableObject {
     private var rover: Rover?
 
     private var pollTask: Task<Void, Never>?
+    private var roverObserver: Any?
+
+    private func startObservingWSCommands() {
+        stopObservingWSCommands()
+
+        roverObserver = NotificationCenter.default.addObserver(
+            forName: .roverWSCommand,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard let self else { return }
+            guard let key = note.userInfo?["key"] as? String else { return }
+            self.handleParsedWSKey(key)
+        }
+    }
+
+    private func stopObservingWSCommands() {
+        if let roverObserver {
+            NotificationCenter.default.removeObserver(roverObserver)
+            self.roverObserver = nil
+        }
+    }
 
     func toggleConnection() {
         if let rover, rover.isConnected {
@@ -24,30 +38,60 @@ final class RoverControlManager: ObservableObject {
             self.rover = nil
             isConnected = false
             stopPolling()
+            stopObservingWSCommands()
         } else {
             let r = Rover(bluetoothName: bluetoothName)
             rover = r
             r.connect()
             startPolling()
+            startObservingWSCommands()
         }
     }
-    
-    func spinWheelLeft()  { rover?.spinOneWheelLeft(durationS: 1) }
-    func spinWheelRight() { rover?.spinOneWheelRight(durationS: 1) }
-    
-    func spinLeftWheel() {
-        rover?.spinLeftWheel(durationS: 1)
-    }
 
-    func spinRightWheel() {
-        rover?.spinRightWheel(durationS: 1)
-    }
-
-    func forward()  { rover?.forward(speed: 100) }
+    // Public commands (UI can still call these)
+    func forward()  { rover?.forward(speed: 10) }
     func backward() { rover?.backward(speed: 80) }
-    func left()     { rover?.turn(degrees: -15) }
-    func right()    { rover?.turn(degrees: 15) }
+    func left()     { rover?.turn(degrees: -180) }
+    func right()    { rover?.turn(degrees: 30) }
     func stop()     { rover?.stop() }
+
+    private func handleParsedWSKey(_ key: String) {
+        // rover_stop
+        if key == "rover_stop" {
+            stop()
+            return
+        }
+
+        // rover_<forward|backward>_<speed>_<duration>
+        // rover_<right|left>_<degrees>
+        let parts = key.split(separator: "_").map(String.init)
+        guard parts.count >= 2, parts[0] == "rover" else { return }
+
+        let action = parts[1]
+
+        switch action {
+        case "forward", "backward":
+            guard parts.count >= 4,
+                  let speed = Int(parts[2]),
+                  let duration = Int(parts[3]) else { return }
+
+            if action == "forward" {
+                rover?.forward(speed: speed, durationS: duration)
+            } else {
+                rover?.backward(speed: speed, durationS: duration)
+            }
+
+        case "left", "right":
+            guard parts.count >= 3,
+                  let degrees = Int(parts[2]) else { return }
+
+            let signedDegrees = (action == "left") ? -abs(degrees) : abs(degrees)
+            rover?.turn(degrees: signedDegrees)
+
+        default:
+            return
+        }
+    }
 
     private func startPolling() {
         stopPolling()

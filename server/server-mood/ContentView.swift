@@ -539,11 +539,6 @@ struct RoverActivityPanel: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(!rover.isConnected)
-            
-            HStack(spacing: 10) {
-                Button("Wheel L") { rover.spinWheelLeft() }
-                Button("Wheel R") { rover.spinWheelRight() }
-            }
             .buttonStyle(.borderedProminent)
             .disabled(!rover.isConnected)
 

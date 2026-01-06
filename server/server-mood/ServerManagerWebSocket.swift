@@ -107,6 +107,9 @@ extension ServerManager {
         case let k where k.hasPrefix("identification_"):
             let activityName = String(k.dropFirst("identification_".count))
             handleIdentification(activityName: activityName, incoming: incoming, from: session)
+            
+        case let k where k.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("rover"):
+            handleRoverWSCommand(key: k)
 
         case let k where k.contains("_activity_finished_step_"):
             if let (activityName, stepId) = parseFinishedStepKey(k) {
@@ -128,6 +131,18 @@ extension ServerManager {
             } else {
                 log("❌ Invalid choice video finished key: \(k)")
             }
+        
+        case let k where k.hasPrefix("test_activity_step_1_action"):
+            forwardIncomingJSON(
+                incoming,
+                toActivities: [
+                    "answer_1_test_activity",
+                    "answer_2_test_activity",
+                    "answer_3_test_activity",
+                    "test_activity",
+                ],
+                reason: k
+            )
 
         case let k where k.hasPrefix("choice_activity_"):
             if let (stepId, actionId, selected) = parseChoiceSelectedKey(k) {
@@ -177,6 +192,7 @@ extension ServerManager {
     // MARK: - Case: identification
 
     func handleIdentification(activityName: String, incoming: [String: Any], from session: WebSocketSession) {
+        
         guard GlobalDataConfig.allowedActivities.contains(activityName) else {
             log("❌ identification for unknown activity: \(activityName)")
             return
@@ -194,4 +210,19 @@ extension ServerManager {
         log("✅ Identified: \(activityName) -> connected=true (session stored)")
         sendGlobalJSON(to: session, reason: "identification ack \(activityName)")
     }
+    
+    func handleRoverWSCommand(key: String) {
+        log("rover")
+        NotificationCenter.default.post(
+            name: .roverWSCommand,
+            object: nil,
+            userInfo: ["key": key]
+        )
+        log("🛰 rover -> \(key)")
+    }
+
+}
+
+extension Notification.Name {
+    static let roverWSCommand = Notification.Name("rover.ws.command")
 }
