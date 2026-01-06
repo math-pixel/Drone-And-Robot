@@ -1,5 +1,5 @@
 {
-  "name": "global_data_transfer",
+  "name": "update_jauge_score",
   "version": "1.0.0",
   "ws_server_address": "ws://xxx.xxx.xx.xxx:80xx",
   "key": "",
@@ -63,6 +63,7 @@
         "finished": false,
         "ws_session_id": "",
         "connected": false,
+        "score": 0,
         "step": [],
         "number_of_points_detected": 0
       }

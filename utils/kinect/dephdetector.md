@@ -25,3 +25,7 @@ depth_detector.run()
 
 # Après (pour mode sans affichage)
 depth_detector.run_headless()
+
+# vision kinect desktop
+export LIBGL_ALWAYS_SOFTWARE=1
+~/libfreenect2/build/bin/Protonect 
