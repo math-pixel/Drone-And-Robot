@@ -39,7 +39,8 @@ class DepthDetectorDelegate:
     def __init__(self, wsClient = None):
         self.points = 0
         self.authorized = False
-        self.maxPointsVictory = 20
+        self.pointsToAdd = 10
+        self.maxPointsVictory = 100
         self.wsClient = wsClient
         self.action = None
 
@@ -56,18 +57,25 @@ class DepthDetectorDelegate:
     def add_points(self, pts):
         self.points += pts
         print(f"Points: {self.points}")
+        self.wsClient.data["activity"][3]["score"] = self.points
+        print(self.wsClient.data)
+        asyncio.run(self.wsClient._send_json("update_jauge_score"))
 
     def turn_rover(self):
         if self.points >= 0 and self.points <= 10:
-            asyncio.run(self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15}))
+            asyncio.run(self.wsClient._send_json("rover_left_180"))
             time.sleep(1)
-            asyncio.run(self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15}))
+            asyncio.run(self.wsClient._send_json("rover_right_180"))
             #turn rover  
         if self.points >= 50 and self.points <= 60:
-            asyncio.run(self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15}))
+            asyncio.run(self.wsClient._send_json("rover_left_180"))
+            time.sleep(1)
+            asyncio.run(self.wsClient._send_json("rover_right_180"))
             #turn rover  
         if self.points >= 80 and self.points <= 90:
-            asyncio.run(self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15}))
+            asyncio.run(self.wsClient._send_json("rover_left_180"))
+            time.sleep(1)
+            asyncio.run(self.wsClient._send_json("rover_right_180"))
             #turn rover        
 
     def process(self, grid_values):
@@ -80,17 +88,14 @@ class DepthDetectorDelegate:
         print(grid_values)
 
         # Add points
-        self.add_points(10)
+        self.add_points(self.pointsToAdd)
         self.turn_rover()
 
         if self.points >= self.maxPointsVictory:
             print("Victoire atteinte!")
             self.stop_detection()
             self.action["finished"] = True
-            asyncio.run(self.wsClient.send_action_finished("1", self.action["id"]))
-
-        time.sleep(5)
-        
+            asyncio.run(self.wsClient.send_action_finished("1", self.action["id"]))        
 
 if __name__ == "__main__":
     config_path = os.path.join(parent_dir, "config.json")
