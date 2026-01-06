@@ -262,10 +262,11 @@ class WSClient:
         else:
             print(f"\n📥 Received: {key}")
 
-    async def _send_json(self):
+    async def _send_json(self, key: Optional[str] = None):
         """Envoie les données JSON actuelles."""
+        key = key or self.data.get("key", "unknown")
+        self.data["key"] = key
         payload = json.dumps(self.data)
-        key = self.data.get("key", "unknown")
         print(f"📤 Sending → {key}")
         await self.ws.send(payload)
 
