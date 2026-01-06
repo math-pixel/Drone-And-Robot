@@ -397,8 +397,8 @@ extension ServerManager {
     }
 
     func sendEmotionsUpdateToAtmosphere() {
-        guard let session = getSessionForActivity("atmosphere_activity") else {
-            log("🛑🛑🛑 ERROR: atmosphere_activity is NOT connected — cannot send update_emotions 🛑🛑🛑")
+        guard let session = getSessionForActivity("jauge_activity") else {
+            log("🛑🛑🛑 ERROR: jauge_activity is NOT connected — cannot send update_emotions 🛑🛑🛑")
             return
         }
 
@@ -410,7 +410,7 @@ extension ServerManager {
             return
         }
 
-        log("➡️ Sending update_emotions to atmosphere_activity")
+        log("➡️ Sending update_emotions to jauge_activity")
         session.writeText(text)
     }
     

@@ -70,10 +70,11 @@ enum Sequencing {
 
 enum EmotionRouting {
     static let deltasByKey: [String: [String: Double]] = [
-        "choice_activity_1_2_0": ["happiness": +8,  "stress": -4, "shame": -2, "angry": -1],
-        "choice_activity_1_2_1": ["happiness": -2,  "stress": +6, "shame": +3, "angry": +2],
-        "choice_activity_2_2_0": ["happiness": +3,  "stress": -2, "shame": -1, "angry": -2],
-        "choice_activity_2_2_1": ["happiness": -1,  "stress": +2, "shame": +5, "angry": +3],
+        "ouistiti": ["happiness": -10,  "stress": -10, "shame": -10, "angry": -10],
+        "rover_forward_10_1": ["happiness": -10,  "stress": -10, "shame": -10, "angry": -10],
+        "rover_forward_30_2": ["happiness": +10,  "stress": +10, "shame": +10, "angry": +10],
+        "rover_forward_60_3": ["happiness": +3,  "stress": -2, "shame": -1, "angry": -2],
+        "rover_left_90": ["happiness": -1,  "stress": +2, "shame": +5, "angry": +3],
         "test_activity_finished_step_1": ["happiness": +59,  "stress": +2, "shame": +5, "angry": +39],
         "presentation_sphero_activity_traveled": ["happiness": +0,  "stress": +40, "shame": +50, "angry": -12],
         
@@ -95,6 +96,7 @@ enum GlobalDataConfig {
         "answer_1_test_activity",
         "answer_2_test_activity",
         "answer_3_test_activity",
+        "jauge_activity",
     ]
 
     static func makeInitialGlobalJSON(wsServerAddress: String) -> [String: Any] {
@@ -106,10 +108,10 @@ enum GlobalDataConfig {
             "started": false,
             "message": "",
             "emotions": [
-                ["type": "happiness", "level": 7.0],
-                ["type": "stress",    "level": 4],
-                ["type": "shame",     "level": 3],
-                ["type": "angry",     "level": 2],
+                ["type": "happiness", "level": 0.2],
+                ["type": "stress",    "level": 0.7],
+                ["type": "shame",     "level": 0],
+                ["type": "angry",     "level": 1],
             ],
             "activity": [
                 [
@@ -217,6 +219,12 @@ enum GlobalDataConfig {
                         "steps": []
                     ]
                 ],
+                [
+                    "jauge_activity": [
+                        "ws_session_id": "",
+                        "connected": false
+                    ]
+                ]
             ]
         ]
     }

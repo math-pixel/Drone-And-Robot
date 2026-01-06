@@ -110,6 +110,26 @@ extension ServerManager {
             
         case let k where k.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("rover"):
             handleRoverWSCommand(key: k)
+            
+        case "update_emotions":
+            if let incomingEmotions = incoming["emotions"] as? [[String: Any]] {
+                globalJSON["emotions"] = incomingEmotions
+                emotions = extractEmotionsFromGlobalJSON() // @Published -> UI updates
+            }
+            
+            guard let session = getSessionForActivity("jauge_activity") else {
+                log("🛑🛑🛑 ERROR: jauge_activity is NOT connected — cannot forward update_emotions 🛑🛑🛑")
+                break
+            }
+
+            // forward EXACT incoming json, unchanged
+            guard let text = stringify(json: incoming) else {
+                log("❌ Failed to stringify incoming update_emotions payload")
+                break
+            }
+
+            log("➡️ Forward update_emotions -> jauge_activity")
+            session.writeText(text)
 
         case let k where k.contains("_activity_finished_step_"):
             if let (activityName, stepId) = parseFinishedStepKey(k) {
