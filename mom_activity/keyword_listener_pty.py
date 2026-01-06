@@ -28,18 +28,24 @@ class KeywordSTT:
         self._patterns = self._build_patterns(self.keywords)
         self._last_counts: Dict[str, int] = {kw: 0 for kw in self.keywords}
 
+    # ✅ MODIF 1: normalisation -> enlève les virgules (et ponctuation proche)
     @staticmethod
     def _normalize(s: str) -> str:
+        s = s.replace(",", "").replace("，", "")
+        s = s.replace(".", "").replace("…", "")
+        s = s.replace(";", "").replace(":", "").replace("!", "").replace("?", "")
         return " ".join(s.lower().split())
 
+    # ✅ MODIF 2: patterns compilés sur la version normalisée + mapping "pattern->keyword original"
     def _build_patterns(self, keywords: list[str]) -> Dict[str, re.Pattern]:
         patterns: Dict[str, re.Pattern] = {}
         for kw in keywords:
             kw_norm = self._normalize(kw)
-            if " " in kw_norm:
-                patterns[kw] = re.compile(re.escape(kw_norm), re.IGNORECASE)
-            else:
-                patterns[kw] = re.compile(rf"\b{re.escape(kw_norm)}\b", re.IGNORECASE)
+
+            # on compile TOUJOURS sur la forme normalisée
+            # (ça permet: "Je n'irai plus." == "Je n'irai plus")
+            patterns[kw] = re.compile(re.escape(kw_norm), re.IGNORECASE)
+
         return patterns
 
     def start(self):
@@ -102,7 +108,7 @@ class KeywordSTT:
         sys.stdout.flush()
 
         self._rolling = (self._rolling + text)[-self.rolling_max :]
-        n = self._normalize(self._rolling)
+        n = self._normalize(self._rolling)  # ✅ MODIF 3: rolling normalisé (virgules etc retirées)
 
         for kw, pat in self._patterns.items():
             c = len(pat.findall(n))
@@ -111,7 +117,7 @@ class KeywordSTT:
                 self._last_counts[kw] = c
                 if self.on_keyword:
                     try:
-                        self.on_keyword(kw)
+                        self.on_keyword(kw)  # renvoie le kw original (avec accents/ponctuation originale)
                     except Exception:
                         pass
             elif c < self._last_counts[kw]:
@@ -119,7 +125,6 @@ class KeywordSTT:
 
 
 if __name__ == "__main__":
-    # Standalone test
     async def _run():
         def on_kw(kw: str):
             print(f"\n✅ DETECTED: {kw}\n")
