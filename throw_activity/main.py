@@ -60,12 +60,14 @@ class DepthDetectorDelegate:
     def turn_rover(self):
         if self.points >= 0 and self.points <= 10:
             asyncio.run(self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15}))
+            time.sleep(1)
+            asyncio.run(self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15}))
             #turn rover  
         if self.points >= 50 and self.points <= 60:
-            self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15})
+            asyncio.run(self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15}))
             #turn rover  
         if self.points >= 80 and self.points <= 90:
-            self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15})
+            asyncio.run(self.wsClient.send_data({"key": "rover", "command": "turn_left", "angle": 15}))
             #turn rover        
 
     def process(self, grid_values):
@@ -114,7 +116,7 @@ if __name__ == "__main__":
             # await client.send_action_finished(step_id, action_id)
 
     client = WSClient(
-        url="ws://172.28.55.91:8057/ws",
+        url="ws://192.168.10.34:8057/ws",
         client_key="throw_activity",
         action_delegate=my_action_handler,
         steps=STEPS
