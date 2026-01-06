@@ -120,3 +120,16 @@ class DepthDetector:
                 self.process.kill()
             self.process = None
             print("✅ Processus arrêté")
+
+if __name__ == "__main__":
+    class TestDelegate:
+        def process(self, grid):
+            print("Grille reçue:")
+            print(grid)
+    
+    detector = DepthDetector(delegate=TestDelegate())
+    try:
+        detector.run()
+    except KeyboardInterrupt:
+        detector.stop()
+        print("Programme terminé.")
