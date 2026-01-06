@@ -21,7 +21,7 @@ if __name__ == "__main__":
         print("Custom action handler")
 
     client = WSClient(
-            url="ws://172.28.55.91:8057/ws",
+            url="ws://192.168.10.34:8057/ws",
             client_key="choice_activity",
             action_delegate=my_action_handler,
             steps=STEPS
