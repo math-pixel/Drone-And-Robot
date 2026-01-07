@@ -38,9 +38,14 @@ if __name__ == "__main__":
             input("Press Enter to continue...")
 
             d_h, d_s, d_sh, d_a = _ask_4_numbers()
-            client.set_emotion_levels(d_h, d_s, d_sh, d_a)
 
-            await client._send_json(key="update_emotions")
+            # k = "update_emotions"
+            # client.set_emotion_levels(d_h, d_s, d_sh, d_a)
+            
+            k = "update_jauge_score"
+            client.set_score_throw(d_h)
+
+            await client._send_json(key=k)
         
 
     client = WSClient(
