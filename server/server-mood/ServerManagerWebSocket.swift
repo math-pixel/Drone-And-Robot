@@ -228,7 +228,17 @@ extension ServerManager {
         syncActivityFromGlobalJSON(activityName)
 
         log("✅ Identified: \(activityName) -> connected=true (session stored)")
+        log("📦 Global JSON (after identification \(activityName)): \(pretty(globalJSON))")
         sendGlobalJSON(to: session, reason: "identification ack \(activityName)")
+    }
+    
+    private func pretty(_ value: Any) -> String {
+        guard JSONSerialization.isValidJSONObject(value),
+              let data = try? JSONSerialization.data(withJSONObject: value, options: [.prettyPrinted, .sortedKeys]),
+              let str = String(data: data, encoding: .utf8)
+        else { return String(describing: value) }
+
+        return str
     }
     
     func handleRoverWSCommand(key: String) {
