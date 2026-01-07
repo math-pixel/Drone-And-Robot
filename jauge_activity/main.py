@@ -4,7 +4,7 @@ import network
 import time
 from machine import Pin
 from neopixel import NeoPixel
-from WsClient_iot import WSClient  # ← Assure-toi que ws_client.py est sur l'ESP32
+from WsClient_iot import WSClient
 
 # ======================================================
 # CONFIG
@@ -23,21 +23,49 @@ NUM_LEDS = NUMBER_COLOMN * NUMBER_LEDS_BY_COLUMN
 # ======================================================
 
 class LEDController:
-    """Contrôleur NeoPixel pour MicroPython"""
+    """Contrôleur NeoPixel avec animation fluide"""
     
-    def __init__(self, pin_num, num_leds):
+    def __init__(self, pin_num, num_leds, num_columns, leds_by_column):
         self.num_leds = num_leds
+        self.num_columns = num_columns
+        self.leds_by_column = leds_by_column
         self.np = NeoPixel(Pin(pin_num), num_leds)
+        self.current_level = 0  # Niveau actuel (nombre de LEDs par colonne)
     
     def lights_off(self):
         for i in range(self.num_leds):
             self.np[i] = (0, 0, 0)
         self.np.write()
+        self.current_level = 0
     
-    def light_up(self, start, end, r, g, b):
-        for i in range(start, min(end + 1, self.num_leds)):
-            self.np[i] = (r, g, b)
+    def _set_row(self, row_index, r, g, b):
+        """Allume une rangée (même LED sur toutes les colonnes)."""
+        for col in range(self.num_columns):
+            led_index = col * self.leds_by_column + row_index
+            if led_index < self.num_leds:
+                self.np[led_index] = (r, g, b)
         self.np.write()
+    
+    def set_level(self, target, r, g, b, delay=0.03):
+        """
+        Anime les LEDs une par une jusqu'à la cible.
+        
+        target: nombre de LEDs à allumer par colonne
+        delay: temps entre chaque LED (en secondes)
+        """
+        target = max(0, min(self.leds_by_column, target))
+        
+        # Monte (allume une par une)
+        while self.current_level < target:
+            self._set_row(self.current_level, r, g, b)
+            self.current_level += 1
+            time.sleep(delay)
+        
+        # Descend (éteint une par une)
+        while self.current_level > target:
+            self.current_level -= 1
+            self._set_row(self.current_level, 0, 0, 0)
+            time.sleep(delay)
 
 
 # ======================================================
@@ -46,19 +74,39 @@ class LEDController:
 
 strips = {
     "happiness": {
-        "controller": LEDController(pin_num=18, num_leds=NUM_LEDS),
+        "controller": LEDController(
+            pin_num=18, 
+            num_leds=NUM_LEDS,
+            num_columns=NUMBER_COLOMN,
+            leds_by_column=NUMBER_LEDS_BY_COLUMN
+        ),
         "color": (255, 223, 0)     # Jaune
     },
     "stress": {
-        "controller": LEDController(pin_num=21, num_leds=NUM_LEDS),
+        "controller": LEDController(
+            pin_num=21, 
+            num_leds=NUM_LEDS,
+            num_columns=NUMBER_COLOMN,
+            leds_by_column=NUMBER_LEDS_BY_COLUMN
+        ),
         "color": (255, 100, 0)     # Orange
     },
     "shame": {
-        "controller": LEDController(pin_num=12, num_leds=NUM_LEDS),
+        "controller": LEDController(
+            pin_num=12, 
+            num_leds=NUM_LEDS,
+            num_columns=NUMBER_COLOMN,
+            leds_by_column=NUMBER_LEDS_BY_COLUMN
+        ),
         "color": (180, 0, 255)     # Violet
     },
     "angry": {
-        "controller": LEDController(pin_num=16, num_leds=NUM_LEDS),
+        "controller": LEDController(
+            pin_num=16, 
+            num_leds=NUM_LEDS,
+            num_columns=NUMBER_COLOMN,
+            leds_by_column=NUMBER_LEDS_BY_COLUMN
+        ),
         "color": (255, 0, 0)       # Rouge
     }
 }
@@ -73,8 +121,8 @@ def map_level_to_leds(level, num_leds):
     return round(level * num_leds)
 
 
-def update_emotion(emotions):
-    """Met à jour les LEDs selon les émotions"""
+def update_emotion(emotions, delay=0.03):
+    """Met à jour les LEDs selon les émotions avec animation fluide"""
     for emotion in emotions:
         emotion_type = emotion.get("type")
         level = emotion.get("level", 0)
@@ -86,14 +134,10 @@ def update_emotion(emotions):
         controller = strip["controller"]
         r, g, b = strip["color"]
         
-        num_leds_on = map_level_to_leds(level, NUMBER_LEDS_BY_COLUMN)#NUM_LEDS)
+        num_leds_on = map_level_to_leds(level, NUMBER_LEDS_BY_COLUMN)
         
-        controller.lights_off()
-        if num_leds_on > 0:
-            for i in range(NUMBER_COLOMN):
-                start = i * NUMBER_LEDS_BY_COLUMN
-                end = start + num_leds_on - 1
-                controller.light_up(start, end, r, g, b)
+        # Animation fluide
+        controller.set_level(num_leds_on, r, g, b, delay)
     
     print("💡 LEDs updated!")
 
@@ -121,16 +165,11 @@ def connect_wifi():
     return False
 
 # ======================================================
-# DELEGATES (pas async!)
+# DELEGATES
 # ======================================================
 
 def my_key_handler(data, client):
-    """
-    Delegate appelé à chaque réception de message.
-    ⚠️ Pas de 'async' - c'est une fonction normale!
-    """
     key = data.get("key", "")
-    
     print(f"🔑 [KEY DELEGATE] Received: {key}")
     
     if key == "update_emotions":
@@ -139,7 +178,6 @@ def my_key_handler(data, client):
 
 
 def my_action_handler(action, client, step_id):
-    """Gère les actions des steps"""
     action_type = action.get("type")
     print(f"🎬 Action: {action_type}")
 
@@ -179,8 +217,19 @@ def main():
         {"type": "shame", "level": 0.7},
         {"type": "angry", "level": 0.2}
     ]
-    update_emotion(test_emotions)
-    time.sleep(10)
+    update_emotion(test_emotions, delay=0.05)  # Animation lente pour le test
+    time.sleep(2)
+    
+    # Test descente
+    print("💡 Testing descent...")
+    test_emotions_low = [
+        {"type": "happiness", "level": 0.1},
+        {"type": "stress", "level": 0.1},
+        {"type": "shame", "level": 0.1},
+        {"type": "angry", "level": 0.1}
+    ]
+    update_emotion(test_emotions_low, delay=0.05)
+    time.sleep(2)
     
     # Éteindre les LEDs
     for strip in strips.values():
@@ -199,7 +248,6 @@ def main():
         steps=STEPS
     )
     
-    # ⚠️ Pas de asyncio.run() - juste .run()
     client.run()
 
 
