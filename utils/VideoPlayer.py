@@ -138,16 +138,16 @@ if __name__ == "__main__":
 
     import time
 
-def main():
-    # Créer le lecteur
-    player = VideoPlayer(fullscreen=True)
-    
-    # Charger les vidéos
-    player.load({
-        "intro": "/home/pi/videos/intro.mp4",
-        "presentation": "/home/pi/videos/presentation.mp4",
-        "credits": "/home/pi/videos/credits.mp4"
-    })
+    def main():
+        # Créer le lecteur
+        player = VideoPlayer(fullscreen=True)
+        
+        # Charger les vidéos
+        player.load({
+            "intro": "/home/pi/videos/intro.mp4",
+            "presentation": "/home/pi/videos/presentation.mp4",
+            "credits": "/home/pi/videos/credits.mp4"
+        })
     
     # Définir le callback de fin
     def on_video_end(video_id: str):
