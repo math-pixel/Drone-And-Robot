@@ -57,8 +57,9 @@ class DepthDetectorDelegate:
     def add_points(self, pts):
         self.points += pts
         print(f"Points: {self.points}")
-        self.wsClient.data["activity"][3]["score"] = self.points
+        self.set_score(self.points)
         print(self.wsClient.data)
+        # self.wsClient.data["activity"][3]["maxScore"] = self.maxPointsVictory
         asyncio.run(self.wsClient._send_json("update_jauge_score"))
 
     def turn_rover(self):
@@ -77,6 +78,19 @@ class DepthDetectorDelegate:
             time.sleep(1)
             asyncio.run(self.wsClient._send_json("rover_right_180"))
             #turn rover        
+
+    def get_score(self):
+        activity_list = self.wsClient.data.get("activity", [])
+        for item in activity_list:
+            if "throw_activity" in item:
+                return item["throw_activity"].get("score", 0)
+        return 0
+
+    def set_score(self, score):
+        activity_list = self.wsClient.data.get("activity", [])
+        for item in activity_list:
+            if "throw_activity" in item:
+                item["throw_activity"]["score"] = score
 
     def process(self, grid_values):
 

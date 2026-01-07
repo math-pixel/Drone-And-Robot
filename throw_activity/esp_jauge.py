@@ -47,7 +47,7 @@ class LEDController:
 strips = {
     "happiness": {
         "controller": LEDController(pin_num=18, num_leds=NUM_LEDS),
-        "color": (255, 223, 0)     # Jaune
+        "color": (255, 255, 255)     # Jaune
     }
 }
 
@@ -56,35 +56,20 @@ strips = {
 # ======================================================
 
 def map_level_to_leds(level, num_leds):
-    """Mappe un level (0-1) sur le nombre de LEDs à allumer"""
-    level = max(0, min(1, level))
-    return round(level * num_leds)
+    """Mappe un level (0-100) sur le nombre de LEDs."""
+    level = max(0, min(100, level))  # Clamp 0-100
+    return round((level / 100) * num_leds)  # Diviser par 100
 
-
-def update_emotion(emotions):
-    """Met à jour les LEDs selon les émotions"""
-    for emotion in emotions:
-        emotion_type = emotion.get("type")
-        level = emotion.get("level", 0)
-        
-        if emotion_type not in strips:
-            continue
-        
-        strip = strips[emotion_type]
-        controller = strip["controller"]
-        r, g, b = strip["color"]
-        
-        num_leds_on = map_level_to_leds(level, NUMBER_LEDS_BY_COLUMN)
-        
-        controller.lights_off()
-        if num_leds_on > 0:
-            for i in range(NUMBER_COLOMN):
-                start = i * NUMBER_LEDS_BY_COLUMN
-                end = start + num_leds_on - 1
-                controller.light_up(start, end, r, g, b)
+def update_leds(score):
+    controller = strips["happiness"]["controller"]  # ← Ajoute cette ligne
     
-    print("💡 LEDs updated!")
-
+    num_leds_on = map_level_to_leds(score, NUMBER_LEDS_BY_COLUMN)
+    controller.lights_off()
+    if num_leds_on > 0:
+        for i in range(NUMBER_COLOMN):
+            start = i * NUMBER_LEDS_BY_COLUMN
+            end = start + num_leds_on - 1
+            controller.light_up(start, end, 255, 223, 0)
 
 def connect_wifi():
     """Connexion WiFi"""
@@ -122,8 +107,20 @@ def my_key_handler(data, client):
     print(f"🔑 [KEY DELEGATE] Received: {key}")
     
     if key == "update_jauge_score":
-        score = data.get("activity").get("throw_activity").get("score", {})
-        update_emotion(emotions)
+        #score = data.get("activity").get("throw_activity").get("score", {})
+        #score = data.get("activity", [{}])[0].get("throw_activity", {}).get("score", {})
+        activity_list = data.get("activity", [])
+        score = 0
+        for item in activity_list:
+            if "throw_activity" in item:
+                score = item["throw_activity"].get("score", 0)
+                break
+        
+        print("score :")
+        print(score)
+        print("========== data ===========")
+        #print(data)
+        update_leds(score)
 
 
 def my_action_handler(action, client, step_id):
@@ -152,19 +149,14 @@ STEPS = [
 
 def main():
     print("\n" + "="*40)
-    print("🚀 ESP32 Jauge Activity")
+    print("🚀 ESP32 Throw Jauge Activity")
     print("="*40 + "\n")
     
     # Test LEDs au démarrage
-    print("💡 Testing LEDs...")
-    test_emotions = [
-        {"type": "happiness", "level": 0.5},
-        {"type": "stress", "level": 0.3},
-        {"type": "shame", "level": 0.7},
-        {"type": "angry", "level": 0.2}
-    ]
-    update_emotion(test_emotions)
-    time.sleep(10)
+    print("💡 Testing LEDs...")    
+
+    update_leds(50)
+    time.sleep(2)
     
     # Éteindre les LEDs
     for strip in strips.values():

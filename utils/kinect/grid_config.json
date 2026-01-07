@@ -1,26 +1,29 @@
 {
     "start_x": 240,
-    "start_y": 170,
-    "cols": 2,
-    "rows": 1,
-    "cell_w": 35,
-    "cell_h": 30,
-    "grid_color": [
+    "start_y": 190,
+    "cols": 5,
+    "rows": 5,
+    "cell_w": 30,
+    "cell_h": 20,
+    "threshold": 20,
+    "color_background": [
+        255,
+        100,
+        0
+    ],
+    "color_object": [
+        0,
+        0,
+        255
+    ],
+    "color_grid": [
         0,
         255,
         0
     ],
-    "text_color": [
+    "color_text": [
         255,
         255,
         255
-    ],
-    "bg_color": [
-        0,
-        0,
-        0
-    ],
-    "detection_enabled": true,
-    "detection_threshold": 4,
-    "alert_duration": 1.0
+    ]
 }
