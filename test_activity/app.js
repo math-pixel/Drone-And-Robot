@@ -18,10 +18,12 @@ const els = {
   optB: document.getElementById("optB"),
   optC: document.getElementById("optC"),
   feedback: document.getElementById("feedback"),
+  finalScore: document.getElementById("finalScore"),
 };
 
 let ws = null;
 let lastRoot = null;
+let score = 0;
 
 let TEST_ACTIVITY_STEPS = null;
 let QCM = null;
@@ -222,8 +224,11 @@ function onAnswerReceived(letterLower) {
   awaitingAnswer = false;
   stopAllTimers();
 
-  showFeedback();
-  showFeedback();
+  const picked = letterLower.toUpperCase(); // "A"|"B"|"C"
+  const correct = (correctById.get(currentActionId) || "").toUpperCase();
+  if (correct && picked === correct) score += 1;
+
+  showFeedback(true); // (ton UI colore déjà 1 vert / 2 rouge)
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 
@@ -233,6 +238,7 @@ function startQuiz() {
     showScreen("startPrompt");
     return;
   }
+  score = 0; // ✅ reset score
   currentIndex = -1;
   showScreen("quiz");
   nextQuestion();
@@ -244,8 +250,12 @@ function finishQuiz() {
   currentActionId = null;
 
   wsSendRootWithKey("test_activity_step_1_finished");
+
+  if (els.finalScore)
+    els.finalScore.textContent = `${score}/${actions.length || 20}`;
   showScreen("done");
 }
+
 
 function connect() {
   if (
