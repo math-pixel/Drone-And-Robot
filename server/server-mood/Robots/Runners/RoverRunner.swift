@@ -30,90 +30,92 @@ final class RoverRunner {
             }
         }
 
+        // ✅ Remplace UNIQUEMENT le builder de makeController par ça (plus de return/guard dans le result builder)
+
         self.config = cfg
 
-        controller = engine.makeController(for: cfg) { [weak self] names, ctx in
-            guard let self, let robot = self.robot else { return [] }
+        guard let robot = self.robot else { return } // ✅ hors du builder (ok)
 
-            return [
-                activity(names.Main, [
-                    "cmdSpeed","cmdHeading","cmdDir","doRoll","doStop","cmdDuration",
-                    "cmdLeftWheel","cmdRightWheel","doRaw",
-                ]) { val in
+        controller = engine.makeController(for: cfg) { [weak self, weak robot] names, ctx in
+            activity(names.Main, [
+                "cmdSpeed","cmdHeading","cmdDir","doRoll","doStop","cmdDuration",
+                "cmdLeftWheel","cmdRightWheel","doRaw",
+            ]) { val in
 
+                exec {
+                    val.cmdSpeed = SyncsSpeed(0)
+                    val.cmdHeading = SyncsHeading(0)
+                    val.cmdDir = SyncsDir.forward
+                    val.doRoll = false
+                    val.doStop = false
+                    val.cmdDuration = 1
+                    val.cmdLeftWheel = SyncsSpeed(0)
+                    val.cmdRightWheel = SyncsSpeed(0)
+                    val.doRaw = false
+                }
+
+                `repeat` {
                     exec {
-                        val.cmdSpeed = SyncsSpeed(0)
-                        val.cmdHeading = SyncsHeading(0)
-                        val.cmdDir = SyncsDir.forward
                         val.doRoll = false
                         val.doStop = false
-                        val.cmdDuration = 1
-                        val.cmdLeftWheel = SyncsSpeed(0)
-                        val.cmdRightWheel = SyncsSpeed(0)
                         val.doRaw = false
+
+                        guard let cmd = self?.pendingCommand else { return }
+
+                        switch cmd {
+                        case .forward(let speed, let durationS):
+                            val.cmdSpeed = SyncsSpeed(UInt16(speed))
+                            val.cmdHeading = SyncsHeading(0)
+                            val.cmdDir = SyncsDir.forward
+
+                            val.doRoll = true
+                            val.cmdDuration = durationS
+
+                        case .backward(let speed, let durationS):
+                            val.cmdSpeed = SyncsSpeed(UInt16(speed))
+                            val.cmdHeading = SyncsHeading(0)
+                            val.cmdDir = SyncsDir.backward
+                            val.doRoll = true
+                            val.cmdDuration = durationS
+
+                        case .turn(let heading, let durationS):
+                            val.cmdSpeed = SyncsSpeed(0)
+                            val.cmdHeading = SyncsHeading(UInt16(heading))
+                            val.cmdDir = SyncsDir.forward
+                            val.doRoll = true
+                            val.cmdDuration = durationS
+
+                        case .rawWheels(let left, let right, let durationS):
+                            val.cmdLeftWheel = SyncsSpeed(UInt16(max(0, left)))
+                            val.cmdRightWheel = SyncsSpeed(UInt16(max(0, right)))
+                            val.cmdDuration = durationS
+                            val.doRaw = true
+
+                        case .stop:
+                            val.cmdHeading = SyncsHeading(0)
+                            val.doStop = true
+                        }
+
+                        self?.pendingCommand = nil
                     }
 
-                    `repeat` {
-                        exec {
-                            val.doRoll = false
-                            val.doStop = false
-                            val.doRaw = false
+                    `if` { val.doRoll as Bool } then: {
+                        run(Syncs.ResetHeading, [])
+                        run(Syncs.RollForSeconds, [val.cmdSpeed, val.cmdHeading, val.cmdDir, val.cmdDuration])
+                    }
 
-                            guard let cmd = self.pendingCommand else { return }
+                    `if` { val.doStop as Bool } then: {
+                        run(Syncs.StopRoll, [val.cmdHeading])
+                    }
 
-                            switch cmd {
-                            case .forward(let speed, let durationS):
-                                val.cmdSpeed = SyncsSpeed(UInt16(speed))
-                                val.cmdHeading = SyncsHeading(UInt16(robot.heading))
-                                val.cmdDir = SyncsDir.forward
-                                val.doRoll = true
-                                val.cmdDuration = durationS
+                    run(Syncs.WaitMilliseconds, [10])
 
-                            case .backward(let speed, let durationS):
-                                val.cmdSpeed = SyncsSpeed(UInt16(speed))
-                                val.cmdHeading = SyncsHeading(UInt16(robot.heading))
-                                val.cmdDir = SyncsDir.backward
-                                val.doRoll = true
-                                val.cmdDuration = durationS
-
-                            case .turn(let heading, let durationS):
-                                val.cmdSpeed = SyncsSpeed(0)
-                                val.cmdHeading = SyncsHeading(UInt16(heading))
-                                val.cmdDir = SyncsDir.forward
-                                val.doRoll = true
-                                val.cmdDuration = durationS
-
-                            case .rawWheels(let left, let right, let durationS):
-                                val.cmdLeftWheel = SyncsSpeed(UInt16(max(0, left)))
-                                val.cmdRightWheel = SyncsSpeed(UInt16(max(0, right)))
-                                val.cmdDuration = durationS
-                                val.doRaw = true
-
-                            case .stop:
-                                val.cmdHeading = SyncsHeading(UInt16(robot.heading))
-                                val.doStop = true
-                            }
-
-                            self.pendingCommand = nil
-                        }
-
-                        `if` { val.doRoll as Bool } then: {
-                            run(Syncs.RollForSeconds, [val.cmdSpeed, val.cmdHeading, val.cmdDir, val.cmdDuration])
-                        }
-
-                        `if` { val.doStop as Bool } then: {
-                            run(Syncs.StopRoll, [val.cmdHeading])
-                        }
-
-                        // raw disabled for now
-                        run(Syncs.WaitMilliseconds, [10])
-
-                    } until: { false }
-                }
-            ]
+                } until: { false }
+            }
         }
 
         controller?.start()
+
     }
 
     func disconnect() {

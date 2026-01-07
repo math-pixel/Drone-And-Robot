@@ -12,7 +12,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 14) {
             
-            ///RoverActivityPanel()
+            RoverActivityPanel()
 
             // Top bar
             HStack(spacing: 12) {

@@ -3,7 +3,6 @@ import Foundation
 import Combine
 import CoreMotion
 
-
 @MainActor
 final class PresentationSpheroActivityViewModel: ObservableObject {
 
@@ -14,10 +13,14 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
     // Robot
     @Published var robot: Robot?
     @Published var spheroID: String = "SB-808F"
-    @Published var traveledDistance: Float = 0        // mètres (ou unité arbitraire)
-    @Published var traveledProgress: Float = 0        // 0 → 1
-    
-    @Published var useMotionControl = false
+    @Published var traveledDistance: Float = 0
+    @Published var traveledProgress: Float = 0
+
+    @Published var useMotionControl = true
+
+    // Calibration
+    @Published var isCalibrated = false
+    @Published var headingOffset: Int = 0
 
     private let motionManager = CMMotionManager()
 
@@ -31,8 +34,6 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
             finished: false
         )
     ]
-
-
 
     let clientKey = "presentation_sphero_activity"
 
@@ -48,7 +49,6 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
 
     func connect() {
         wsClient.connect()
-
     }
 
     // MARK: - Incoming WS
@@ -66,8 +66,7 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
 
         case "presentation_sphero_activity_step_1_authorization":
             authorized = true
-            connectToSphero()
-            print("✅ Authorized → Sphero enabled")
+            print("✅ Authorized → Sphero control enabled")
 
         default:
             break
@@ -82,7 +81,6 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
 
         if var activities = data["activity"] as? [[String: Any]] {
             for i in activities.indices {
-
                 if var activity = activities[i][clientKey] as? [String: Any] {
 
                     activity["connected"] = true
@@ -124,15 +122,33 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
         print("📤 identification_\(clientKey) sent with steps")
     }
 
-
-    // MARK: - Robot
+    // MARK: - Robot (Calibration)
 
     func connectToSphero() {
         let robot = Sphero(bluetoothName: spheroID)
         self.robot = robot
+
+        // reset calibration for this session
+        self.isCalibrated = false
+        self.headingOffset = 0
+        robot.heading = 0
+
         robot.connect()
     }
-    
+
+    func calibrationTurn(_ degrees: Int) {
+        guard let robot else { return }
+        robot.turn(degrees: degrees)
+        headingOffset = robot.heading
+    }
+
+    func confirmCalibration() {
+        isCalibrated = true
+        robot?.stop()
+    }
+
+    // MARK: - Motion Control
+
     func startMotionControl(onUpdate: @escaping (_ x: CGFloat, _ y: CGFloat) -> Void) {
         guard motionManager.isDeviceMotionAvailable else { return }
 
@@ -140,11 +156,9 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
         motionManager.startDeviceMotionUpdates(to: .main) { motion, _ in
             guard let motion else { return }
 
-            // Inclinaison naturelle
-            let roll = motion.attitude.roll      // gauche / droite
-            let pitch = motion.attitude.pitch    // avant / arrière
+            let roll = motion.attitude.roll
+            let pitch = motion.attitude.pitch
 
-            // Clamp entre -1 et 1
             let x = max(min(CGFloat(roll), 1), -1)
             let y = max(min(CGFloat(-pitch), 1), -1)
 
@@ -155,5 +169,4 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
     func stopMotionControl() {
         motionManager.stopDeviceMotionUpdates()
     }
-
 }

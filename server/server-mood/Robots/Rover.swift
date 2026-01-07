@@ -20,7 +20,7 @@ final class Rover: Robot {
 
     // Keep old overrides (used by UI manager etc.)
     override func forward(speed: Int) {
-        runner?.send(.forward(speed: speed, durationS: 3))
+        runner?.send(.forward(speed: speed, durationS: 1))
     }
 
     override func backward(speed: Int) {
@@ -39,6 +39,7 @@ final class Rover: Robot {
 
     // WS versions (speed + duration)
     func forward(speed: Int, durationS: Int) {
+        heading = 0
         runner?.send(.forward(speed: speed, durationS: durationS))
     }
 
