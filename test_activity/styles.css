@@ -206,7 +206,7 @@ body {
   top: 44%;
   left: 50%;
   transform: translate(-50%,-50%);
-  font-size: clamp(34px, 6vw, 84px);
+  font-size: clamp(34px, 30vh, 30vh);
   font-weight: 950;
   color: #1a2cff;
   mix-blend-mode: overlay;

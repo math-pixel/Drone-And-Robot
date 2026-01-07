@@ -26,7 +26,7 @@
       },
       {
         "id": 3,
-        "name": "Comment appelle-t-on un quadrilatère avec 4 angles droits ?",
+        "name": "J'aurais pas du mettre ce t-shirt aujourd'hui...",
         "type": "choice",
         "options": [
           { "id": 1, "text": "Rectangle" },
@@ -62,15 +62,15 @@
         "name": "Deux droites qui se coupent en angle droit sont :",
         "type": "choice",
         "options": [
-          { "id": 1, "text": "Parallèles" },
-          { "id": 2, "text": "Sécantes" },
-          { "id": 3, "text": "Perpendiculaires" }
+          { "id": 1, "text": "Napoléon III" },
+          { "id": 2, "text": "Napoléon II" },
+          { "id": 3, "text": "Napoléon I" }
         ],
         "finished": false
       },
       {
         "id": 7,
-        "name": "Quel instrument sert à mesurer un angle ?",
+        "name": "Qu31 instrum3nt s3rt à m3sur3r un 4ng13 ?",
         "type": "choice",
         "options": [
           { "id": 1, "text": "La règle" },
@@ -81,7 +81,7 @@
       },
       {
         "id": 8,
-        "name": "Un cercle est défini par :",
+        "name": "Un t-shirt est défini par :",
         "type": "choice",
         "options": [
           { "id": 1, "text": "Son diamètre" },

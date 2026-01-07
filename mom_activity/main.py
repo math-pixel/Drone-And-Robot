@@ -4,9 +4,14 @@ if __name__ == "__main__":
     from pathlib import Path
     from utils.WSClient import WSClient
     from mom_activity.keyword_listener_pty import KeywordSTT
+    from utils.rpi.StepperMotor import Stepper28BYJ48  
 
     def strip_commas(s: str) -> str:
         return s.replace(",", "").replace("，", "")
+
+    def score_to_angle(score: int, target: int = 100) -> float:
+        score = max(0, min(target, score))
+        return (score / target) * 180.0
 
     phrases_path = (Path(__file__).parent / "phrases.json").resolve()
     phrases = json.loads(phrases_path.read_text(encoding="utf-8"))
@@ -35,6 +40,16 @@ if __name__ == "__main__":
         },
     ]
 
+    # ✅ Motor: création ici (pin à adapter)
+    steperMoteur = Stepper28BYJ48(
+        in1=17,
+        in2=18,
+        in3=27,
+        in4=22,
+        mode='half'
+    )
+    motor.init_position(0)
+
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
         action_id = int(action.get("id", -1))
         action_type = action.get("type")
@@ -51,8 +66,10 @@ if __name__ == "__main__":
                 done = asyncio.Event()
                 loop = asyncio.get_running_loop()
 
-                stt_path = (Path(__file__).parent / "stt_from_mic_mlx.py").resolve()
+                # ✅ Position initiale du motor
+                motor.go_to(score_to_angle(action["score"], target))
 
+                stt_path = (Path(__file__).parent / "stt_from_mic_mlx.py").resolve()
                 keywords = list(positives) + list(negatives)
 
                 def on_kw(raw_kw: str):
@@ -68,9 +85,13 @@ if __name__ == "__main__":
 
                     action["score"] = new_score
 
+                    angle = score_to_angle(new_score, target)
+                    
+                    motor.go_to(angle)
+
                     sign = "+" if delta >= 0 else ""
                     label = "POSITIVE" if delta > 0 else "NEGATIVE"
-                    print(f"\n🎙️ {label} {sign}{delta} → {new_score}/{target}\n")
+                    print(f"\n🎙️ {label} {sign}{delta} → {new_score}/{target} | servo={angle:.1f}°\n")
 
                     loop.create_task(
                         client.send_data(
@@ -81,6 +102,7 @@ if __name__ == "__main__":
                                 "score": new_score,
                                 "target": target,
                                 "label": label,
+                                "servo_angle": angle,
                             }
                         )
                     )
@@ -117,4 +139,7 @@ if __name__ == "__main__":
         steps=STEPS,
     )
 
-    asyncio.run(client.run())
+    try:
+        asyncio.run(client.run())
+    finally:
+        motor.stop()

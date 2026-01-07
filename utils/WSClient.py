@@ -293,6 +293,23 @@ class WSClient:
                 e["level"] = levels[t]
 
         return self.data
+    
+    def set_score_throw(self, score: float) -> dict:
+        """
+        Update self.data so throw_activity.score = score (in-place).
+        """
+        if self.data is None:
+            raise RuntimeError("self.data is None (not initialized yet)")
+
+        target_key = "throw_activity"
+
+        for wrapper in self.data.get("activity", []):
+            if target_key in wrapper and isinstance(wrapper[target_key], dict):
+                wrapper[target_key]["score"] = float(score)
+                break
+
+        return self.data
+
 
 
 # ======================================================
