@@ -15,7 +15,7 @@ WIFI_PASS = "13022495"
 SERVER_URL = "ws://192.168.10.34:8057/ws"
 
 NUMBER_LEDS_BY_COLUMN = 37
-NUMBER_COLOMN = 3
+NUMBER_COLOMN = 1
 NUM_LEDS = NUMBER_COLOMN * NUMBER_LEDS_BY_COLUMN
 
 # ======================================================
@@ -48,18 +48,6 @@ strips = {
     "happiness": {
         "controller": LEDController(pin_num=18, num_leds=NUM_LEDS),
         "color": (255, 223, 0)     # Jaune
-    },
-    "stress": {
-        "controller": LEDController(pin_num=21, num_leds=NUM_LEDS),
-        "color": (255, 100, 0)     # Orange
-    },
-    "shame": {
-        "controller": LEDController(pin_num=12, num_leds=NUM_LEDS),
-        "color": (180, 0, 255)     # Violet
-    },
-    "angry": {
-        "controller": LEDController(pin_num=16, num_leds=NUM_LEDS),
-        "color": (255, 0, 0)       # Rouge
     }
 }
 
@@ -86,7 +74,7 @@ def update_emotion(emotions):
         controller = strip["controller"]
         r, g, b = strip["color"]
         
-        num_leds_on = map_level_to_leds(level, NUMBER_LEDS_BY_COLUMN)#NUM_LEDS)
+        num_leds_on = map_level_to_leds(level, NUMBER_LEDS_BY_COLUMN)
         
         controller.lights_off()
         if num_leds_on > 0:
@@ -133,8 +121,8 @@ def my_key_handler(data, client):
     
     print(f"🔑 [KEY DELEGATE] Received: {key}")
     
-    if key == "update_emotions":
-        emotions = data.get("emotions", [])
+    if key == "update_jauge_score":
+        score = data.get("activity").get("throw_activity").get("score", {})
         update_emotion(emotions)
 
 
@@ -151,11 +139,7 @@ STEPS = [
     {
         "id": 1, 
         "actions": [
-            {"id": 1, "type": "video", "file": "classe.mp4", "finished": False},
-            {"id": 2, "type": "choice", "options": [
-                {"id": 1, "text": "Passer plus tard"},
-                {"id": 2, "text": "Aller direct au tableau"}
-            ], "finished": False}
+            {"id": 1, "type": "Gauge_throwActivity", "finished": False},
         ], 
         "authorized": False, 
         "finished": False
@@ -193,7 +177,7 @@ def main():
     # Lancement WebSocket
     client = WSClient(
         url=SERVER_URL,
-        client_key="jauge_activity",
+        client_key="jauge_throw_activity",
         action_delegate=my_action_handler,
         key_delegate=my_key_handler,
         steps=STEPS
@@ -209,3 +193,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

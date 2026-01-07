@@ -1,6 +1,6 @@
 if __name__ == "__main__":
     import asyncio
-    from utils.WSClient import WSClient
+    from WSClient import WSClient
 
     STEPS = [
         {
@@ -17,19 +17,19 @@ if __name__ == "__main__":
         },
     ]
 
-    def _ask_4_numbers(
-        prompt: str = "Enter 4 levels (happiness stress shame angry): "
-    ) -> tuple[float, float, float, float]:
-        while True:
-            raw = input(prompt).strip().replace(",", ".")
-            parts = raw.split()
-            if len(parts) != 4:
-                print("Please enter exactly 4 numbers, e.g. -26.5 -3 4 9.5")
-                continue
-            try:
-                return tuple(float(x) for x in parts)  # type: ignore[return-value]
-            except ValueError:
-                print("Invalid input. Use numbers only, e.g. -26.5 -3 4 9.5")
+    # def _ask_4_numbers(
+    #     prompt: str = "Enter 4 levels (happiness stress shame angry): "
+    # ) -> tuple[float, float, float, float]:
+    #     while True:
+    #         raw = input(prompt).strip().replace(",", ".")
+    #         parts = raw.split()
+    #         if len(parts) != 4:
+    #             print("Please enter exactly 4 numbers, e.g. -26.5 -3 4 9.5")
+    #             continue
+    #         try:
+    #             return tuple(float(x) for x in parts)  # type: ignore[return-value]
+    #         except ValueError:
+    #             print("Invalid input. Use numbers only, e.g. -26.5 -3 4 9.5")
 
 
 
