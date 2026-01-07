@@ -1,6 +1,8 @@
 if __name__ == "__main__":
     import asyncio
-    from WSClient import WSClient
+    from utils.WSClient import WSClient
+
+
 
     STEPS = [
         {
@@ -17,19 +19,19 @@ if __name__ == "__main__":
         },
     ]
 
-    # def _ask_4_numbers(
-    #     prompt: str = "Enter 4 levels (happiness stress shame angry): "
-    # ) -> tuple[float, float, float, float]:
-    #     while True:
-    #         raw = input(prompt).strip().replace(",", ".")
-    #         parts = raw.split()
-    #         if len(parts) != 4:
-    #             print("Please enter exactly 4 numbers, e.g. -26.5 -3 4 9.5")
-    #             continue
-    #         try:
-    #             return tuple(float(x) for x in parts)  # type: ignore[return-value]
-    #         except ValueError:
-    #             print("Invalid input. Use numbers only, e.g. -26.5 -3 4 9.5")
+    def _ask_4_numbers(
+        prompt: str = "Enter 4 levels (happiness stress shame angry): "
+    ) -> tuple[float, float, float, float]:
+        while True:
+            raw = input(prompt).strip().replace(",", ".")
+            parts = raw.split()
+            if len(parts) != 4:
+                print("Please enter exactly 4 numbers, e.g. -26.5 -3 4 9.5")
+                continue
+            try:
+                return tuple(float(x) for x in parts)  # type: ignore[return-value]
+            except ValueError:
+                print("Invalid input. Use numbers only, e.g. -26.5 -3 4 9.5")
 
 
 
@@ -39,11 +41,11 @@ if __name__ == "__main__":
 
             d_h, d_s, d_sh, d_a = _ask_4_numbers()
 
-            # k = "update_emotions"
-            # client.set_emotion_levels(d_h, d_s, d_sh, d_a)
+            k = "update_emotions"
+            client.set_emotion_levels(d_h, d_s, d_sh, d_a)
             
-            k = "update_jauge_score"
-            client.set_score_throw(d_h)
+            # k = "update_jauge_score"
+            # client.set_score_throw(d_h)
 
             await client._send_json(key=k)
         
