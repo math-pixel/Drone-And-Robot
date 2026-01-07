@@ -65,17 +65,17 @@ class DepthDetectorDelegate:
     def turn_rover(self):
         if self.points >= 0 and self.points <= 10:
             asyncio.run(self.wsClient._send_json("rover_left_180"))
-            time.sleep(1)
+            time.sleep(5)
             asyncio.run(self.wsClient._send_json("rover_right_180"))
             #turn rover  
         if self.points >= 50 and self.points <= 60:
             asyncio.run(self.wsClient._send_json("rover_left_180"))
-            time.sleep(1)
+            time.sleep(5)
             asyncio.run(self.wsClient._send_json("rover_right_180"))
             #turn rover  
         if self.points >= 80 and self.points <= 90:
             asyncio.run(self.wsClient._send_json("rover_left_180"))
-            time.sleep(1)
+            time.sleep(5)
             asyncio.run(self.wsClient._send_json("rover_right_180"))
             #turn rover        
 
