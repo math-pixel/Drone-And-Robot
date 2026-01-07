@@ -63,6 +63,7 @@ enum Sequencing {
         "presentation_activity_finished": ("test_activity", "start_authorization"),
         "test_activity_finished": ("choice_activity", "choice_activity_step_4_authorization"),
         "test_activity_start": ("test_activity", "test_activity_start"),
+        "update_jauge_score": ("jauge_throw_activity", "update_jauge_score")
     ]
 
 }
@@ -93,6 +94,7 @@ enum GlobalDataConfig {
         "choice_activity",
         "main_activity",
         "throw_rover_actitvity",
+        "jauge_throw_activity",
         "answer_1_test_activity",
         "answer_2_test_activity",
         "answer_3_test_activity",
@@ -175,6 +177,15 @@ enum GlobalDataConfig {
                     ]
                 ],
                 [
+                    "jauge_throw_activity": [
+                        "authorized": false,
+                        "finished": false,
+                        "ws_session_id": "",
+                        "connected": false,
+                        "steps": []
+                    ]
+                ],
+                [
                     "presentation_sphero_activity": [
                         "authorized": false,
                         "finished": false,
@@ -190,7 +201,7 @@ enum GlobalDataConfig {
                         "ws_session_id": "",
                         "connected": false,
                         "steps": [],
-                        "number_of_points_detected": 0
+                        "score": 0
                     ]
                 ],
                 [

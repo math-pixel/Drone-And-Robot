@@ -433,7 +433,7 @@ extension ServerManager {
             return
         }
 
-        var payload = globalJSON
+        var payload = incomingJSON
         payload["key"] = route.outgoingKey
 
         guard let text = stringify(json: payload) else {
@@ -442,6 +442,7 @@ extension ServerManager {
         }
 
         log("➡️ Sequencing: '\(incomingKey)' -> send '\(route.outgoingKey)' to \(route.targetActivity) (authorized=true)")
+        log("📤 Sequencing payload JSON:\n\(pretty(payload))")
         targetSession.writeText(text)
     }
     
