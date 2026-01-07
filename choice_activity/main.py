@@ -70,15 +70,35 @@ if __name__ == "__main__":
         
         action_id = action.get("id")
         action_type = action.get("type")
+
+        player = VideoPlayer(fullscreen=True)
+
+        player.load(
+            {
+                "intro": "./utils/choix_tshirt.mp4",
+            }
+        )
+
+        def on_video_end(video_id: str):
+            print(f"✓ Vidéo '{video_id}' terminée!")
+            if video_id == "intro":
+                player.play("presentation")
+            elif video_id == "presentation":
+                player.play("credits")
+
+        player.on_finished(on_video_end)
+        player.set_volume(80)
+        player.play("intro")
         
         match action_type:
             case "video":
-                file = action.get("file")
+                file_name = action.get("file")
                 print(f"     🎥 Playing video: {file}")
                 
+                player.play(file_name)
                 # Simulation: attendre que la vidéo soit "jouée"
                 # input(f"     ⏸️  Press Enter when video '{file}' is finished...")
-                await asyncio.sleep(2) # Simulation auto pour l'exemple
+                #await asyncio.sleep(2) # Simulation auto pour l'exemple
                 
                 # Marquer comme terminé
                 action["finished"] = True
