@@ -50,3 +50,8 @@ class LEDController:
             self.current_level -= 1
             self._set_row(self.current_level, 0, 0, 0)
             time.sleep(delay)
+
+    def light_up(self, start, end, r, g, b):
+        for i in range(start, min(end + 1, self.num_leds)):
+            self.np[i] = (r, g, b)
+        self.np.write()

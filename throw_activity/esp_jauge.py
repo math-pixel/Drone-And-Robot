@@ -2,9 +2,8 @@
 
 import network
 import time
-from machine import Pin
-from neopixel import NeoPixel
-from WsClient_iot import WSClient  # ← Assure-toi que ws_client.py est sur l'ESP32
+from WsClient_iot import WSClient
+from ledController import LEDController
 
 # ======================================================
 # CONFIG
@@ -17,27 +16,6 @@ SERVER_URL = "ws://192.168.10.34:8057/ws"
 NUMBER_LEDS_BY_COLUMN = 37
 NUMBER_COLOMN = 1
 NUM_LEDS = NUMBER_COLOMN * NUMBER_LEDS_BY_COLUMN
-
-# ======================================================
-# LED CONTROLLER
-# ======================================================
-
-class LEDController:
-    """Contrôleur NeoPixel pour MicroPython"""
-    
-    def __init__(self, pin_num, num_leds):
-        self.num_leds = num_leds
-        self.np = NeoPixel(Pin(pin_num), num_leds)
-    
-    def lights_off(self):
-        for i in range(self.num_leds):
-            self.np[i] = (0, 0, 0)
-        self.np.write()
-    
-    def light_up(self, start, end, r, g, b):
-        for i in range(start, min(end + 1, self.num_leds)):
-            self.np[i] = (r, g, b)
-        self.np.write()
 
 
 # ======================================================
