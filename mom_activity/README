@@ -1,1 +1,3 @@
-uvx --with moshi-mlx python keyword_listener_pty.py
+(uvx --with moshi-mlx python keyword_listener_pty.py)
+
+python -m mom_activity.main
