@@ -4,7 +4,7 @@ if __name__ == "__main__":
     from pathlib import Path
     from utils.WSClient import WSClient
     from mom_activity.keyword_listener_pty import KeywordSTT
-    from utils.rpi.ServoMotor import Servo  
+    from utils.rpi.StepperMotor import Stepper28BYJ48  
 
     def strip_commas(s: str) -> str:
         return s.replace(",", "").replace("，", "")
@@ -40,8 +40,15 @@ if __name__ == "__main__":
         },
     ]
 
-    # ✅ Servo: création ici (pin à adapter)
-    servo = Servo(pin=17)
+    # ✅ Motor: création ici (pin à adapter)
+    steperMoteur = Stepper28BYJ48(
+        in1=17,
+        in2=18,
+        in3=27,
+        in4=22,
+        mode='half'
+    )
+    motor.init_position(0)
 
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
         action_id = int(action.get("id", -1))
@@ -59,8 +66,8 @@ if __name__ == "__main__":
                 done = asyncio.Event()
                 loop = asyncio.get_running_loop()
 
-                # ✅ Position initiale du servo
-                servo.set_angle(score_to_angle(action["score"], target))
+                # ✅ Position initiale du motor
+                motor.go_to(score_to_angle(action["score"], target))
 
                 stt_path = (Path(__file__).parent / "stt_from_mic_mlx.py").resolve()
                 keywords = list(positives) + list(negatives)
@@ -79,7 +86,8 @@ if __name__ == "__main__":
                     action["score"] = new_score
 
                     angle = score_to_angle(new_score, target)
-                    servo.set_angle(angle)
+                    
+                    motor.go_to(angle)
 
                     sign = "+" if delta >= 0 else ""
                     label = "POSITIVE" if delta > 0 else "NEGATIVE"
@@ -134,4 +142,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(client.run())
     finally:
-        servo.stop()
+        motor.stop()
