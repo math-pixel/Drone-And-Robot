@@ -89,8 +89,17 @@ if __name__ == "__main__":
         {
             "id": 4,
             "actions": [
-                {"id": 1, "type": "video", "file": "cine_4_1_loop.mp4", "finished": False},
-                {"id": 2, "type": "video", "file": "cine_4_2_choice_1.mp4", "finished": False},
+                {"id": 1, "type": "video", "file": "cine_4_1.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_4_2_loop.mp4", "finished": False},
+            ],
+            "authorized": False,
+            "finished": False
+        },
+        {
+            "id": 5,
+            "actions": [
+                {"id": 1, "type": "video", "file": "cine_5_1_loop.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_5_2_choice_1.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
