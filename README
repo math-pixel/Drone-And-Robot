@@ -1,4 +1,15 @@
 python3.11 -m venv venv 
 source venv/bin/activate
+
 python -m pip install websockets
+python3 -m pip install pygame
+python3 -m pip install mlx
+python -m pip install moshi-mlx
+
+
+
+
 python -m utils.test_websocket
+
+
+
