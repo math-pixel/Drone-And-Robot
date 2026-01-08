@@ -1,9 +1,12 @@
+# mom_activity/main.py
 if __name__ == "__main__":
     import asyncio
     import json
     from pathlib import Path
+
     from utils.WSClient import WSClient
     from mom_activity.keyword_listener_pty import KeywordSTT
+    from utils.AudioPlayer import AudioPlayer  # adapte si ton fichier est ailleurs
 
     def strip_commas(s: str) -> str:
         return s.replace(",", "").replace("，", "")
@@ -58,22 +61,49 @@ if __name__ == "__main__":
                 stt_path = (Path(__file__).parent / "stt_from_mic_mlx.py").resolve()
                 keywords = list(positives) + list(negatives)
 
-                # ✅ envoie une 1ère position au lancement de l’action
+                # ─────────────────────────────────────────────
+                # AUDIO
+                # ─────────────────────────────────────────────
+                player = AudioPlayer()
+                sounds_dir = "./audios/"
+
+                player.load_multiple(
+                    {
+                        "bg": f"{sounds_dir}/musique_de_fond.mp3",
+                        "pos": f"{sounds_dir}/curseur_positif.mp3",
+                        "neg": f"{sounds_dir}/curseur_negatif.mp3",
+                    }
+                )
+
+                # Start background music when recording starts
+                player.play("bg", volume=1.0, loop=True)
+
+                # ─────────────────────────────────────────────
+                # STEPPER KEY INIT
+                # ─────────────────────────────────────────────
                 initial_angle = score_to_angle(action["score"], target)
                 await client._send_json(key=f"{client.client_key}_stepper_{initial_angle}")
 
                 def on_kw(raw_kw: str):
                     kw = strip_commas(raw_kw)
 
-                    delta = pos_delta if kw in positives else neg_delta
+                    is_positive = kw in positives
+                    delta = pos_delta if is_positive else neg_delta
+
                     current = int(action.get("score", 50))
                     new_score = current + delta
 
-                    # ✅ score min = 0
+                    # score min = 0
                     if new_score < 0:
                         new_score = 0
 
                     action["score"] = new_score
+
+                    # play SFX
+                    if is_positive:
+                        player.play("pos", volume=1.0, loop=False)
+                    else:
+                        player.play("neg", volume=1.0, loop=False)
 
                     angle = score_to_angle(new_score, target)
                     loop.create_task(client._send_json(key=f"{client.client_key}_stepper_{angle}"))
@@ -83,6 +113,8 @@ if __name__ == "__main__":
                     print(f"\n🎙️ {label} {sign}{delta} → {new_score}/{target} | angle={angle}\n")
 
                     if new_score >= target:
+                        # stop background music when score reaches 100
+                        player.stop("bg")
                         done.set()
 
                 stt = KeywordSTT(
@@ -96,6 +128,8 @@ if __name__ == "__main__":
                     await done.wait()
                 finally:
                     stt.stop()
+                    player.stop_all()
+                    player.close()
 
                 action["finished"] = True
                 await client.send_action_finished(step_id, action_id)

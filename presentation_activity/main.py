@@ -15,6 +15,9 @@ current_dir = os.path.dirname(current_path)
 # 3. On remonte d'un cran pour avoir le dossier racine (PROJET/)
 parent_dir = os.path.dirname(current_dir)
 
+AUDIO_MOTS_EXPOSE = "./audios/mots_expose/"
+EXT_AUDIO = ".mp3"
+
 # 4. On ajoute la racine aux chemins de Python
 sys.path.append(parent_dir)
 
@@ -40,13 +43,13 @@ class DepthDetectorDelegate:
 
     def __init__(self, audio_grid=None, wsClient=None):
         self.player = AudioPlayer()
-        self.audio_grid = None
         self.wsClient = wsClient
         self.authorized = False
         self.action = None
 
         # Charger la config UNE SEULE FOIS au démarrage
         self.config = self.load_config(config_path) if config_path else {}
+        self.audio_grid = self.config["grid_path_sound"]
         
         # Récupérer la grille de validation depuis la config
         self.grid_validation = self.get_grid_validation()
@@ -92,10 +95,11 @@ class DepthDetectorDelegate:
             print("Using default 4x4 grid validation")
             # Grille par défaut si la config est manquante
             return np.array([
-                [1, 0, 0, 1],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
-                [1, 0, 0, 1]
+                [0, 1, 1, 0, 0],
+                [0, 0, 1, 0, 0],
+                [0, 1, 1, 0, 1],
+                [0, 1, 1, 1, 1],
+                [0, 0, 1, 1, 0]
             ])
 
     def start_detection(self, action: dict):
@@ -142,7 +146,7 @@ class DepthDetectorDelegate:
         for row in range(grid_values.shape[0]):
             for col in range(grid_values.shape[1]):
                 if grid_values[row, col] == 1:
-                    self.player.play(str(audio_grid[row, col]))
+                    self.player.play(AUDIO_MOTS_EXPOSE + str(self.audio_grid[row, col]) + EXT_AUDIO)
                     print(f"Jouer le son pour la cellule ({row}, {col})")
 
     def process(self, grid_values):

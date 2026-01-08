@@ -149,7 +149,7 @@ if __name__ == "__main__":
     })
     
     # Or load one by one
-    player.load("coin", "coin.wav")
+    player.load("faux", "./utils/faux.mp3")
     
     # Display loaded sounds
     player.list_sounds()
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     
     time.sleep(2)
     
-    player.play("explosion", volume=0.8)  # Sound effect at 80%
+    player.play("faux", volume=0.8)  # Sound effect at 80%
     
     time.sleep(1)
     
