@@ -37,17 +37,24 @@ if __name__ == "__main__":
 
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
         while True:
-            input("Press Enter to continue...")
+            # input("Press Enter to continue...")
 
-            d_h, d_s, d_sh, d_a = _ask_4_numbers()
-
-            k = "update_emotions"
-            client.set_emotion_levels(d_h, d_s, d_sh, d_a)
+            ### Emotion levels example
+            # d_h, d_s, d_sh, d_a = _ask_4_numbers()
+            # k = "update_emotions"
+            # client.set_emotion_levels(d_h, d_s, d_sh, d_a)
             
+            ### Jauge score example
             # k = "update_jauge_score"
             # client.set_score_throw(d_h)
+            
+            ### Rover control example
+            speed = input("Enter speed (0-100): ")
+            duration = input("Enter duration in seconds: ")
+            key = f"rover_forward_{speed}_{duration}"
+            await client._send_json(key=key)
 
-            await client._send_json(key=k)
+            # await client._send_json(key=k)
         
 
     client = WSClient(

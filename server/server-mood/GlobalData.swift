@@ -99,6 +99,7 @@ enum GlobalDataConfig {
         "answer_2_test_activity",
         "answer_3_test_activity",
         "jauge_activity",
+        "mom_stepper_activity",
     ]
 
     static func makeInitialGlobalJSON(wsServerAddress: String) -> [String: Any] {
@@ -169,6 +170,15 @@ enum GlobalDataConfig {
                 ],
                 [
                     "presentation_activity": [
+                        "authorized": false,
+                        "finished": false,
+                        "ws_session_id": "",
+                        "connected": false,
+                        "steps": []
+                    ]
+                ],
+                [
+                    "mom_stepper_activity": [
                         "authorized": false,
                         "finished": false,
                         "ws_session_id": "",

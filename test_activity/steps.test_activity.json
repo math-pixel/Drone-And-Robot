@@ -4,12 +4,12 @@
     "actions": [
       {
         "id": 1,
-        "name": "Combien de côtés possède un triangle ?",
+        "name": "Le diamètre d’un cercle est :",
         "type": "choice",
         "options": [
-          { "id": 1, "text": "2" },
-          { "id": 2, "text": "3" },
-          { "id": 3, "text": "4" }
+          { "id": 1, "text": "Deux fois le rayon" },
+          { "id": 2, "text": "La moitié du rayon" },
+          { "id": 3, "text": "Égal au rayon" }
         ],
         "finished": false
       },
