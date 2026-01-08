@@ -39,9 +39,9 @@ if __name__ == "__main__":
         x = 0
         while True:
             ### Emotion levels example
-            # d_h, d_s, d_sh, d_a = _ask_4_numbers()
-            # k = "update_emotions"
-            # client.set_emotion_levels(d_h, d_s, d_sh, d_a)
+            d_h, d_s, d_sh, d_a = _ask_4_numbers()
+            k = "update_emotions"
+            client.set_emotion_levels(d_h, d_s, d_sh, d_a)
             
             ### Jauge score example
             # k = "update_jauge_score"
@@ -54,11 +54,11 @@ if __name__ == "__main__":
             # await client._send_json(key=key)
 
             ### Stepper motor example
-            input("Press Enter to continue...")
-            # k = "mom_activity_stepper_control_turn_right_90"
-            # k = "mom_activity_stepper_control_init_position"
-            x += 90
-            k = f'mom_activity_stepper_{x}'
+            # input("Press Enter to continue...")
+            # # k = "mom_activity_stepper_control_turn_right_90"
+            # # k = "mom_activity_stepper_control_init_position"
+            # x += 90
+            # k = f'mom_activity_stepper_{x}'
 
             await client._send_json(key=k)
         

@@ -69,9 +69,9 @@ if __name__ == "__main__":
 
                 player.load_multiple(
                     {
-                        "bg": f"{sounds_dir}/musique_de_fond.mp3",
-                        "pos": f"{sounds_dir}/curseur_positif.mp3",
-                        "neg": f"{sounds_dir}/curseur_negatif.mp3",
+                        "bg": f"{sounds_dir}musique_de_fond.mp3",
+                        "pos": f"{sounds_dir}curseur_positif.mp3",
+                        "neg": f"{sounds_dir}curseur_negatif.mp3",
                     }
                 )
 
