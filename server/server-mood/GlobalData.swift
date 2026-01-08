@@ -72,7 +72,9 @@ enum Sequencing {
 enum EmotionRouting {
     static let deltasByKey: [String: [String: Double]] = [
         "ouistiti": ["happiness": -10,  "stress": -10, "shame": -10, "angry": -10],
-        "rover_forward_10_1": ["happiness": -10,  "stress": -10, "shame": -10, "angry": -10],
+        
+        "rover_forward_10_1": ["happiness": -0.1,  "stress": -10, "shame": -10, "angry": -10],
+        
         "rover_forward_30_2": ["happiness": +10,  "stress": +10, "shame": +10, "angry": +10],
         "rover_forward_60_3": ["happiness": +3,  "stress": -2, "shame": -1, "angry": -2],
         "rover_left_90": ["happiness": -1,  "stress": +2, "shame": +5, "angry": +3],

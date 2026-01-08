@@ -527,6 +527,7 @@ private struct StepAuthorizedDot: View {
     }
 }
 
+
 struct RoverActivityPanel: View {
     @EnvironmentObject var rover: RoverControlManager
 
@@ -537,7 +538,7 @@ struct RoverActivityPanel: View {
                     .font(.headline)
 
                 Spacer()
-                
+
                 Button {
                     rover.toggleConnection()
                 } label: {
@@ -557,8 +558,6 @@ struct RoverActivityPanel: View {
                 Button("Forward") { rover.forward() }
                 Button("Right") { rover.right() }
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(!rover.isConnected)
             .buttonStyle(.borderedProminent)
             .disabled(!rover.isConnected)
 
@@ -581,6 +580,8 @@ struct RoverActivityPanel: View {
         )
     }
 }
+
+
 
 // ✅ Nouveau rendu générique "steps -> actions" pour TOUTES les activities
 
