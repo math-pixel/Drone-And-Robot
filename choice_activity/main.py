@@ -47,21 +47,56 @@ if __name__ == "__main__":
     # Définition des steps
     STEPS = [
         {
-            "id": 1, 
+            "id": 1,
             "actions": [
-                {"id": 1, "type": "video", "file": [
-                    "classe_tshirt vert.mp4",
-                    "classe_tshirt rouge.mp4",
-                    ], "finished": False},
-                {"id": 2, "type": "choice", "options": [
-                    {"id": 1, "text": "Passer plus tard (Bouton Gauche)"},
-                    {"id": 2, "text": "Aller direct au tableau (Bouton Droite)"}
-                ], "finished": False}
-            ], 
-            "authorized": False, 
+                {"id": 1, "type": "video", "file": "cine_1_1.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_1_2_loop.mp4", "finished": False},
+                {"id": 4, "type": "video", "file": "cine_1_4_choice_1.mp4", "finished": False},
+                {"id": 4, "type": "video", "file": "cine_1_4_choice_2.mp4", "finished": False},
+                {"id": 5, "type": "video", "file": "cine_1_5.mp4", "finished": False},
+                {"id": 6, "type": "video", "file": "cine_1_6_loop.mp4", "finished": False},
+                {"id": 8, "type": "video", "file": "cine_1_8_choice_1.mp4", "finished": False},
+                {"id": 8, "type": "video", "file": "cine_1_8_choice_2.mp4", "finished": False},
+                {"id": 9, "type": "video", "file": "cine_1_9.mp4", "finished": False},
+                {"id": 10, "type": "video", "file": "cine_1_10_loop.mp4", "finished": False},
+                {"id": 12, "type": "video", "file": "cine_1_12_choice_2.mp4", "finished": False},
+                {"id": 12, "type": "video", "file": "vert_cine_1_12_choice_2.mp4", "finished": False},
+            ],
+            "authorized": False,
+            "finished": False
+        },
+        {
+            "id": 2,
+            "actions": [
+                {"id": 1, "type": "video", "file": "cine_2_1.mp4", "finished": False},
+            ],
+            "authorized": False,
+            "finished": False
+        },
+        {
+            "id": 3,
+            "actions": [
+                {"id": 1, "type": "video", "file": "cine_3_1.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_3_2_loop.mp4", "finished": False},
+                {"id": 4, "type": "video", "file": "cine_3_4_choice_1.mp4", "finished": False},
+                {"id": 4, "type": "video", "file": "cine_3_4_choice_2.mp4", "finished": False},
+                {"id": 5, "type": "video", "file": "cine_3_5.mp4", "finished": False},
+                {"id": 6, "type": "video", "file": "cine_3_6_loop.mp4", "finished": False},
+            ],
+            "authorized": False,
+            "finished": False
+        },
+        {
+            "id": 4,
+            "actions": [
+                {"id": 1, "type": "video", "file": "cine_4_1_loop.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_4_2_choice_1.mp4", "finished": False},
+            ],
+            "authorized": False,
             "finished": False
         },
     ]
+
 
     # ======================================================
     # DELEGATE
