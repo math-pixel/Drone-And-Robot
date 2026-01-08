@@ -60,6 +60,8 @@ if __name__ == "__main__":
             # x += 90
             # k = f'mom_activity_stepper_{x}'
 
+            k = "choice_activity_step_1_finished"
+
             await client._send_json(key=k)
         
 
