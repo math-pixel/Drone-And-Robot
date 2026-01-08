@@ -49,7 +49,10 @@ if __name__ == "__main__":
         {
             "id": 1, 
             "actions": [
-                {"id": 1, "type": "video", "file": "classe.mp4", "finished": False},
+                {"id": 1, "type": "video", "file": [
+                    "classe_tshirt vert.mp4",
+                    "classe_tshirt rouge.mp4",
+                    ], "finished": False},
                 {"id": 2, "type": "choice", "options": [
                     {"id": 1, "text": "Passer plus tard (Bouton Gauche)"},
                     {"id": 2, "text": "Aller direct au tableau (Bouton Droite)"}
