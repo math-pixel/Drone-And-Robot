@@ -58,12 +58,14 @@ enum Sequencing {
     typealias Route = (targetActivity: String, outgoingKey: String)
 
     static let routes: [String: Route] = [
-        "choice_activity_step_1_finished": ("throw_activity", "start_authorization"),
-        "rover": ("presentation_activity", "start_authorization"),
-        "presentation_activity_finished": ("test_activity", "start_authorization"),
-        "test_activity_finished": ("choice_activity", "choice_activity_step_4_authorization"),
-        "test_activity_start": ("test_activity", "test_activity_start"),
-        "update_jauge_score": ("jauge_throw_activity", "update_jauge_score")
+        "choice_activity_step_1_finished": ("presentation_activity", "presentation_activity_step_1_authorization"),
+        "presentation_activity_finished": ("choice_activity", "choice_activity_step_2_authorization"),
+        "choice_activity_step_2_finished": ("test_activity", "test_activity_step_1_authorization"),
+        "test_activity_finished": ("choice_activity", "choice_activity_step_3_authorization"),
+        "choice_activity_step_3_finished": ("throw_activity", "throw_activity_step_1_authorization"),
+        "throw_activity_finished": ("choice_activity", "choice_activity_step_4_authorization"),
+        "choice_activity_step_4_finished": ("mom_activity", "mom_activity_step_1_authorization"),
+        "mom_activity_finished": ("choice_activity", "choice_activity_step_5_authorization"),
     ]
 
 }
