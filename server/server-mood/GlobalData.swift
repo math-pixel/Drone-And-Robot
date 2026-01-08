@@ -57,18 +57,37 @@ enum Sequencing {
 
     typealias Route = (targetActivity: String, outgoingKey: String)
 
-    static let routes: [String: Route] = [
-        "choice_activity_step_1_finished": ("presentation_activity", "presentation_activity_step_1_authorization"),
-        "presentation_activity_finished": ("choice_activity", "choice_activity_step_2_authorization"),
-        "choice_activity_step_2_finished": ("test_activity", "test_activity_step_1_authorization"),
-        "test_activity_finished": ("choice_activity", "choice_activity_step_3_authorization"),
-        "choice_activity_step_3_finished": ("throw_activity", "throw_activity_step_1_authorization"),
-        "throw_activity_finished": ("choice_activity", "choice_activity_step_4_authorization"),
-        "choice_activity_step_4_finished": ("mom_activity", "mom_activity_step_1_authorization"),
-        "mom_activity_finished": ("choice_activity", "choice_activity_step_5_authorization"),
-    ]
+    // ✅ now a key can trigger multiple routes
+    static let routes: [String: [Route]] = [
+        "choice_activity_step_1_finished": [
+            ("presentation_activity", "presentation_activity_step_1_authorization"),
+            ("presentation_sphero_activity", "presentation_sphero_activity_step_1_authorization"),
+        ],
 
+        "presentation_activity_finished": [
+            ("choice_activity", "choice_activity_step_2_authorization"),
+        ],
+        "choice_activity_step_2_finished": [
+            ("test_activity", "test_activity_step_1_authorization"),
+        ],
+        "test_activity_finished": [
+            ("choice_activity", "choice_activity_step_3_authorization"),
+        ],
+        "choice_activity_step_3_finished": [
+            ("throw_activity", "throw_activity_step_1_authorization"),
+        ],
+        "throw_activity_finished": [
+            ("choice_activity", "choice_activity_step_4_authorization"),
+        ],
+        "choice_activity_step_4_finished": [
+            ("mom_activity", "mom_activity_step_1_authorization"),
+        ],
+        "mom_activity_finished": [
+            ("choice_activity", "choice_activity_step_5_authorization"),
+        ],
+    ]
 }
+
 
 
 enum EmotionRouting {
