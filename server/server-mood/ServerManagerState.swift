@@ -425,38 +425,43 @@ extension ServerManager {
         log("➡️ Sending update_emotions to jauge_activity")
         session.writeText(text)
     }
-    
+
     func handleSequencingIfNeeded(incomingKey: String, incomingJSON: [String: Any]) {
-        guard let route = Sequencing.routes[incomingKey] else { return }
-        if route.targetActivity == "choice_activity",
-           let choiceId = parseChoiceAuthorizationKey(route.outgoingKey) {
-            setChoiceAuthorizedInGlobal(choiceId: choiceId, value: true)
+        guard let routes = Sequencing.routes[incomingKey], !routes.isEmpty else { return }
+
+        for route in routes {
+
+            if route.targetActivity == "choice_activity",
+               let choiceId = parseChoiceAuthorizationKey(route.outgoingKey) {
+                setChoiceAuthorizedInGlobal(choiceId: choiceId, value: true)
+            }
+
+            if route.targetActivity == "choice_activity",
+               let stepId = parseChoiceStepAuthorizationKey(route.outgoingKey) {
+                setChoiceStepAuthorizedInGlobal(stepId: stepId, value: true)
+            }
+
+            setAuthorizedInGlobal(activityName: route.targetActivity, value: true)
+
+            guard let targetSession = getSessionForActivity(route.targetActivity) else {
+                log("🛑🛑🛑 ERROR: sequencing target '\(route.targetActivity)' is NOT connected — cannot send '\(route.outgoingKey)' 🛑🛑🛑")
+                continue
+            }
+
+            var payload = incomingJSON
+            payload["key"] = route.outgoingKey
+
+            guard let text = stringify(json: payload) else {
+                log("❌ Failed to stringify sequencing payload")
+                continue
+            }
+
+            log("➡️ Sequencing: '\(incomingKey)' -> send '\(route.outgoingKey)' to \(route.targetActivity) (authorized=true)")
+            log("📤 Sequencing payload JSON:\n\(pretty(payload))")
+            targetSession.writeText(text)
         }
-        
-        if route.targetActivity == "choice_activity",
-           let stepId = parseChoiceStepAuthorizationKey(route.outgoingKey) {
-            setChoiceStepAuthorizedInGlobal(stepId: stepId, value: true)
-        }
-
-        setAuthorizedInGlobal(activityName: route.targetActivity, value: true)
-
-        guard let targetSession = getSessionForActivity(route.targetActivity) else {
-            log("🛑🛑🛑 ERROR: sequencing target '\(route.targetActivity)' is NOT connected — cannot send '\(route.outgoingKey)' 🛑🛑🛑")
-            return
-        }
-
-        var payload = incomingJSON
-        payload["key"] = route.outgoingKey
-
-        guard let text = stringify(json: payload) else {
-            log("❌ Failed to stringify sequencing payload")
-            return
-        }
-
-        log("➡️ Sequencing: '\(incomingKey)' -> send '\(route.outgoingKey)' to \(route.targetActivity) (authorized=true)")
-        log("📤 Sequencing payload JSON:\n\(pretty(payload))")
-        targetSession.writeText(text)
     }
+
     
     func forwardIncomingJSON(_ incoming: [String: Any], toActivities: [String], reason: String) {
             forwardJSON(incoming, to: toActivities, context: "forwardIncomingJSON \(reason)")
