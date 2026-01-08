@@ -51,16 +51,18 @@ if __name__ == "__main__":
             "actions": [
                 {"id": 1, "type": "video", "file": "cine_1_1.mp4", "finished": False},
                 {"id": 2, "type": "video", "file": "cine_1_2_loop.mp4", "finished": False},
-                {"id": 4, "type": "video", "file": "cine_1_4_choice_1.mp4", "finished": False},
-                {"id": 4, "type": "video", "file": "cine_1_4_choice_2.mp4", "finished": False},
+                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 4, "type": "video", "file": ["cine_1_4_choice_1.mp4", "cine_1_4_choice_2.mp4"], "finished": False},
+
                 {"id": 5, "type": "video", "file": "cine_1_5.mp4", "finished": False},
                 {"id": 6, "type": "video", "file": "cine_1_6_loop.mp4", "finished": False},
-                {"id": 8, "type": "video", "file": "cine_1_8_choice_1.mp4", "finished": False},
-                {"id": 8, "type": "video", "file": "cine_1_8_choice_2.mp4", "finished": False},
+                {"id": 7, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 8, "type": "video", "file": ["cine_1_8_choice_1.mp4", "cine_1_8_choice_2.mp4"], "finished": False},
+
                 {"id": 9, "type": "video", "file": "cine_1_9.mp4", "finished": False},
                 {"id": 10, "type": "video", "file": "cine_1_10_loop.mp4", "finished": False},
-                {"id": 12, "type": "video", "file": "cine_1_12_choice_2.mp4", "finished": False},
-                {"id": 12, "type": "video", "file": "vert_cine_1_12_choice_2.mp4", "finished": False},
+                {"id": 11, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 12, "type": "video", "file": "cine_1_12_choice_2.mp4", "finished": False}, # pas de deuxieme choix
             ],
             "authorized": False,
             "finished": False
@@ -78,10 +80,12 @@ if __name__ == "__main__":
             "actions": [
                 {"id": 1, "type": "video", "file": "cine_3_1.mp4", "finished": False},
                 {"id": 2, "type": "video", "file": "cine_3_2_loop.mp4", "finished": False},
-                {"id": 4, "type": "video", "file": "cine_3_4_choice_1.mp4", "finished": False},
-                {"id": 4, "type": "video", "file": "cine_3_4_choice_2.mp4", "finished": False},
+                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 4, "type": "video", "file": ["cine_3_4_choice_1.mp4", "cine_3_4_choice_2.mp4"], "finished": False},
+
                 {"id": 5, "type": "video", "file": "cine_3_5.mp4", "finished": False},
                 {"id": 6, "type": "video", "file": "cine_3_6_loop.mp4", "finished": False},
+                {"id": 7, "type": "choice", "chosen": -1, "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -91,6 +95,7 @@ if __name__ == "__main__":
             "actions": [
                 {"id": 1, "type": "video", "file": "cine_4_1.mp4", "finished": False},
                 {"id": 2, "type": "video", "file": "cine_4_2_loop.mp4", "finished": False},
+                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -99,7 +104,8 @@ if __name__ == "__main__":
             "id": 5,
             "actions": [
                 {"id": 1, "type": "video", "file": "cine_5_1_loop.mp4", "finished": False},
-                {"id": 2, "type": "video", "file": "cine_5_2_choice_1.mp4", "finished": False},
+                {"id": 2, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 3, "type": "video", "file": "cine_5_3_choice_1.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
