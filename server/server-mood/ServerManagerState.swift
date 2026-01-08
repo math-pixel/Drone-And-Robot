@@ -358,62 +358,55 @@ extension ServerManager {
     }
     
     func sendKey(_ key: String, to activityName: String) {
-        guard let session = getSessionForActivity(activityName) else {
-            log("🛑🛑🛑 ERROR: \(activityName) is NOT connected — cannot send \(key) 🛑🛑🛑")
-            return
+            var payload = globalJSON
+            payload["key"] = key
+            if sendJSON(payload, to: activityName, context: "sendKey \(key)") {
+                log("➡️ Manual send -> \(key) to \(activityName)")
+            }
         }
-
-        var payload = globalJSON
-        payload["key"] = key
-
-        guard let text = stringify(json: payload) else {
-            log("❌ Failed to stringify payload for key=\(key)")
-            return
-        }
-
-        log("➡️ Manual send -> \(key) to \(activityName)")
-        session.writeText(text)
-    }
 
 
     // MARK: - Emotions
 
     func extractEmotionsFromGlobalJSON() -> [EmotionItem] {
-        guard let arr = globalJSON["emotions"] as? [[String: Any]] else { return [] }
-        return arr.compactMap { e in
-            let type = (e["type"] as? String) ?? ""
-            guard !type.isEmpty else { return nil }
+            guard let arr = globalJSON["emotions"] as? [[String: Any]] else { return [] }
 
-            let raw = e["level"]
-            let level: Double
-            if let d = raw as? Double { level = d }
-            else if let i = raw as? Int { level = Double(i) }
-            else { level = 0 }
+            return arr.compactMap { e in
+                let type = (e["type"] as? String) ?? ""
+                guard !type.isEmpty else { return nil }
 
-            return EmotionItem(type: type, level: min(100, max(0, level)))
+                let raw = e["level"]
+                let level: Double
+                if let d = raw as? Double { level = d }
+                else if let i = raw as? Int { level = Double(i) }
+                else if let s = raw as? String, let d = Double(s.replacingOccurrences(of: ",", with: ".")) { level = d }
+                else { level = 0 }
+
+                return EmotionItem(type: type, level: min(1, max(0, level)))
+            }
         }
-    }
 
     func applyEmotionDeltas(_ deltas: [String: Double]) {
-        guard var arr = globalJSON["emotions"] as? [[String: Any]] else { return }
+            guard var arr = globalJSON["emotions"] as? [[String: Any]] else { return }
 
-        for i in arr.indices {
-            let type = ((arr[i]["type"] as? String) ?? "").lowercased()
-            guard let delta = deltas[type] else { continue }
+            for i in arr.indices {
+                let type = ((arr[i]["type"] as? String) ?? "").lowercased()
+                guard let delta = deltas[type] else { continue }
 
-            let raw = arr[i]["level"]
-            let current: Double
-            if let d = raw as? Double { current = d }
-            else if let n = raw as? Int { current = Double(n) }
-            else { current = 0 }
+                let raw = arr[i]["level"]
+                let current: Double
+                if let d = raw as? Double { current = d }
+                else if let n = raw as? Int { current = Double(n) }
+                else if let s = raw as? String, let d = Double(s.replacingOccurrences(of: ",", with: ".")) { current = d }
+                else { current = 0 }
 
-            arr[i]["level"] = min(100, max(0, current + delta))
+                arr[i]["level"] = min(1, max(0, current + delta))
+            }
+
+            globalJSON["emotions"] = arr
+            emotions = extractEmotionsFromGlobalJSON()
+            sendEmotionsUpdateToAtmosphere()
         }
-
-        globalJSON["emotions"] = arr
-        emotions = extractEmotionsFromGlobalJSON()
-        sendEmotionsUpdateToAtmosphere()
-    }
 
     func sendEmotionsUpdateToAtmosphere() {
         guard let session = getSessionForActivity("jauge_activity") else {
@@ -466,21 +459,8 @@ extension ServerManager {
     }
     
     func forwardIncomingJSON(_ incoming: [String: Any], toActivities: [String], reason: String) {
-        guard let text = stringify(json: incoming) else {
-            log("❌ Failed to stringify incoming JSON for forward. reason=\(reason)")
-            return
+            forwardJSON(incoming, to: toActivities, context: "forwardIncomingJSON \(reason)")
         }
-
-        for activity in toActivities {
-            guard let session = getSessionForActivity(activity) else {
-                log("⚠️ Forward skipped: \(activity) not connected. reason=\(reason)")
-                continue
-            }
-            session.writeText(text)
-        }
-
-        log("➡️ Forwarded incoming JSON to \(toActivities.joined(separator: ", ")) reason=\(reason)")
-    }
     
     func extractFinished(activityName: String) -> Bool {
         guard let activities = globalJSON["activity"] as? [[String: Any]] else { return false }

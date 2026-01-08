@@ -99,130 +99,89 @@ extension ServerManager {
     // MARK: - Switch-case on key
 
     func handleIncomingJSON(_ incoming: [String: Any], from session: WebSocketSession) {
-        let key = (incoming["key"] as? String) ?? ""
-        log("🔑 key=\(key.isEmpty ? "(empty)" : key)")
+            let key = (incoming["key"] as? String) ?? ""
+            log("🔑 key=\(key.isEmpty ? "(empty)" : key)")
 
-        switch key {
+            switch key {
 
-        case let k where k.hasPrefix("identification_"):
-            let activityName = String(k.dropFirst("identification_".count))
-            handleIdentification(activityName: activityName, incoming: incoming, from: session)
-            
-        case let k where k.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("rover"):
-            handleRoverWSCommand(key: k)
-            
-        case "update_emotions":
-            if let incomingEmotions = incoming["emotions"] as? [[String: Any]] {
-                globalJSON["emotions"] = incomingEmotions
-                emotions = extractEmotionsFromGlobalJSON() // @Published -> UI updates
-            }
-            
-            guard let session = getSessionForActivity("jauge_activity") else {
-                log("🛑🛑🛑 ERROR: jauge_activity is NOT connected — cannot forward update_emotions 🛑🛑🛑")
-                break
-            }
+            case let k where k.hasPrefix("identification_"):
+                let activityName = String(k.dropFirst("identification_".count))
+                handleIdentification(activityName: activityName, incoming: incoming, from: session)
 
-            // forward EXACT incoming json, unchanged
-            guard let text = stringify(json: incoming) else {
-                log("❌ Failed to stringify incoming update_emotions payload")
-                break
-            }
+            case let k where k.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("rover"):
+                handleRoverWSCommand(key: k)
 
-            log("➡️ Forward update_emotions -> jauge_activity")
-            session.writeText(text)
-            
-        case let k where k.hasPrefix("mom_activity_stepper_"):
-            guard let targetSession = getSessionForActivity("mom_stepper_activity") else {
-                log("🛑🛑🛑 ERROR: mom_stepper_activity is NOT connected — cannot forward \(k) 🛑🛑🛑")
-                break
-            }
-
-            // forward EXACT incoming json, unchanged (including key)
-            guard let text = stringify(json: incoming) else {
-                log("❌ Failed to stringify incoming mom_activity_stepper payload")
-                break
-            }
-
-            log("➡️ Forward \(k) -> mom_stepper_activity")
-            targetSession.writeText(text)
-
-        case let k where k.contains("_activity_finished_step_"):
-            if let (activityName, stepId) = parseFinishedStepKey(k) {
-                handleFinishedStep(activityName: activityName, stepId: stepId, incoming: incoming, from: session)
-            } else {
-                log("❌ Invalid finished_step key format: \(k)")
-            }
-        
-        case let k where k.hasPrefix("choice_activity_step_") && k.hasSuffix("_finished") && !k.contains("_finished_"):
-            if let stepId = parseChoiceStepFinishedKey(k) {
-                handleChoiceStepFinished(stepId: stepId, incoming: incoming, from: session)
-            } else {
-                log("❌ Invalid choice step finished key: \(k)")
-            }
-            
-        case let k where k.hasPrefix("choice_activity_step_") && k.hasSuffix("_finished"):
-            if let (stepId, actionId) = parseChoiceVideoFinishedKey(k) {
-                handleChoiceVideoActionFinished(stepId: stepId, actionId: actionId, incoming: incoming, from: session)
-            } else {
-                log("❌ Invalid choice video finished key: \(k)")
-            }
-        
-        case let k where k.hasPrefix("test_activity_step_1_action"):
-            forwardIncomingJSON(
-                incoming,
-                toActivities: [
-                    "answer_1_test_activity",
-                    "answer_2_test_activity",
-                    "answer_3_test_activity",
-                    "test_activity",
-                ],
-                reason: k
-            )
-
-        case let k where k.hasPrefix("choice_activity_"):
-            if let (stepId, actionId, selected) = parseChoiceSelectedKey(k) {
-                handleChoiceSelected(stepId: stepId, actionId: actionId, selected: selected, incoming: incoming, from: session)
-            } else {
-                log("❌ Invalid choice selected key: \(k)")
-            }
-            
-        case let k where k.hasPrefix("test_activity_step_1_action_") && k.hasSuffix("_started"):
-            // Echo the exact same JSON to answer_1/2/3_test_activity
-            for target in ["answer_1_test_activity", "answer_2_test_activity", "answer_3_test_activity"] {
-                guard let targetSession = getSessionForActivity(target) else {
-                    log("🛑🛑🛑 ERROR: \(target) is NOT connected — cannot forward \(k) 🛑🛑🛑")
-                    continue
+            case "update_emotions":
+                if let incomingEmotions = incoming["emotions"] as? [[String: Any]] {
+                    globalJSON["emotions"] = incomingEmotions
+                    emotions = extractEmotionsFromGlobalJSON() // @Published -> UI updates
+                }
+                if sendJSON(incoming, to: "jauge_activity", context: "forward update_emotions") {
+                    log("➡️ Forward update_emotions -> jauge_activity")
                 }
 
-                guard let text = stringify(json: incoming) else {
-                    log("❌ Failed to stringify incoming JSON for forwarding \(k)")
-                    continue
+            case let k where k.hasPrefix("mom_activity_stepper_"):
+                if sendJSON(incoming, to: "mom_stepper_activity", context: "forward \(k)") {
+                    log("➡️ Forward \(k) -> mom_stepper_activity")
                 }
 
-                log("➡️ Forward \(k) -> \(target)")
-                targetSession.writeText(text)
+            case let k where k.contains("_activity_finished_step_"):
+                if let (activityName, stepId) = parseFinishedStepKey(k) {
+                    handleFinishedStep(activityName: activityName, stepId: stepId, incoming: incoming, from: session)
+                } else {
+                    log("❌ Invalid finished_step key format: \(k)")
+                }
+
+            case let k where k.hasPrefix("choice_activity_step_") && k.hasSuffix("_finished") && !k.contains("_finished_"):
+                if let stepId = parseChoiceStepFinishedKey(k) {
+                    handleChoiceStepFinished(stepId: stepId, incoming: incoming, from: session)
+                } else {
+                    log("❌ Invalid choice step finished key: \(k)")
+                }
+
+            case let k where k.hasPrefix("choice_activity_step_") && k.hasSuffix("_finished"):
+                if let (stepId, actionId) = parseChoiceVideoFinishedKey(k) {
+                    handleChoiceVideoActionFinished(stepId: stepId, actionId: actionId, incoming: incoming, from: session)
+                } else {
+                    log("❌ Invalid choice video finished key: \(k)")
+                }
+
+            case let k where k.hasPrefix("test_activity_step_1_action"):
+                forwardJSON(
+                    incoming,
+                    to: [
+                        "answer_1_test_activity",
+                        "answer_2_test_activity",
+                        "answer_3_test_activity",
+                        "test_activity",
+                    ],
+                    context: k
+                )
+
+            case let k where k.hasPrefix("choice_activity_"):
+                if let (stepId, actionId, selected) = parseChoiceSelectedKey(k) {
+                    handleChoiceSelected(stepId: stepId, actionId: actionId, selected: selected, incoming: incoming, from: session)
+                } else {
+                    log("❌ Invalid choice selected key: \(k)")
+                }
+
+            case let k where k.hasSuffix("_finished"):
+                let activityName = String(k.dropLast("_finished".count))
+                guard GlobalDataConfig.allowedActivities.contains(activityName) else {
+                    log("❌ finished for unknown activity: \(activityName)")
+                    break
+                }
+                mergeIncomingActivityIntoGlobal(activityName: activityName, incoming: incoming)
+                syncAllFromGlobalJSON()
+                log("✅ \(activityName) finished=true (UI updated)")
+
+            default:
+                log("⚠️ Unhandled key: \(key)")
             }
 
-
-        case let k where k.hasSuffix("_finished"):
-            let activityName = String(k.dropLast("_finished".count))
-            guard GlobalDataConfig.allowedActivities.contains(activityName) else {
-                log("❌ finished for unknown activity: \(activityName)")
-                break
-            }
-            // JSON already contains finished=true, just merge + refresh UI
-            mergeIncomingActivityIntoGlobal(activityName: activityName, incoming: incoming)
-            syncAllFromGlobalJSON()
-            log("✅ \(activityName) finished=true (UI updated)")
-
-        default:
-            log("⚠️ Unhandled key: \(key)")
+            handleSequencingIfNeeded(incomingKey: key, incomingJSON: incoming)
+            applyEmotionRoutingIfNeeded(incomingKey: key)
         }
-        
-        handleSequencingIfNeeded(incomingKey: key, incomingJSON: incoming)
-        applyEmotionRoutingIfNeeded(incomingKey: key)
-
-    }
 
     // MARK: - Case: identification
 
@@ -265,6 +224,42 @@ extension ServerManager {
         )
         log("🛰 rover -> \(key)")
     }
+    
+    @discardableResult
+        func sendJSON(_ json: [String: Any], to activityName: String, context: String) -> Bool {
+            guard let session = getSessionForActivity(activityName) else {
+                log("🛑🛑🛑 ERROR: \(activityName) is NOT connected — cannot send. context=\(context) 🛑🛑🛑")
+                return false
+            }
+            guard let text = stringify(json: json) else {
+                log("❌ Failed to stringify JSON. context=\(context)")
+                return false
+            }
+            session.writeText(text)
+            return true
+        }
+
+        func forwardJSON(_ json: [String: Any], to activities: [String], context: String) {
+            guard let text = stringify(json: json) else {
+                log("❌ Failed to stringify JSON for forward. context=\(context)")
+                return
+            }
+
+            var sent: [String] = []
+            for name in activities {
+                guard let session = getSessionForActivity(name) else {
+                    log("⚠️ Forward skipped: \(name) not connected. context=\(context)")
+                    continue
+                }
+                session.writeText(text)
+                sent.append(name)
+            }
+
+            if !sent.isEmpty {
+                log("➡️ Forwarded JSON -> \(sent.joined(separator: ", ")) context=\(context)")
+            }
+        }
+
 
 }
 
