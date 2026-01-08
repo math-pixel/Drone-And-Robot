@@ -37,28 +37,63 @@ if __name__ == "__main__":
     def my_action_handler(action: dict, client: WSClient, step_id: int):
         pass
     
-    def my_key_handler(data: dict, client: WSClient):
-        
-        key = data.get("key", "")
-        
-        print("key = " + key)
+    def my_key_handler(data_dict: dict, client: WSClient):
+        key = data_dict.get("key", "")
+        print("📥 Key reçue = " + key)
         
         prefix = "mom_activity_stepper_"
-        print(key.startswith(prefix))      
-        # Vérifie si c'est pour moi
-        if key.startswith(prefix):
-            # Extraire la valeur après le préfixe
-            angle_str = key[len(prefix):]
-            
+        command_prefix = "control_"
+        
+        # 1. Vérifie si c'est pour moi
+        if not key.startswith(prefix):
+            return # On quitte si ce n'est pas le bon préfixe
+
+        # On récupère ce qui suit "mom_activity_stepper_"
+        # Exemple: "90" ou "control_init_position"
+        content = key[len(prefix):]
+
+        # --- CAS 1 : C'est un chiffre (Angle direct) ---
+        if content.isdigit():
             try:
-                angle = int(angle_str)
+                angle = int(content)
                 angle = max(0, min(180, angle))
-                
-                print(f"🎯 Commande reçue: go_to({angle}°)")
+                print(f"🎯 Commande ANGLE: go_to({angle}°)")
                 steperMoteur.go_to(angle)
-            
             except ValueError:
-                print(f"⚠️ Valeur invalide: {angle_str}")
+                print(f"⚠️ Erreur conversion angle: {content}")
+
+        # --- CAS 2 : C'est une commande (commence par control_) ---
+        elif content.startswith(command_prefix):
+            # On récupère ce qui suit "control_"
+            # Exemple: "init_position" ou "turn_left_45"
+            command_body = content[len(command_prefix):]
+            print("🛠️ Command body = " + command_body)
+
+            if command_body == "init_position":
+                print("📍 Action: init_position(0°)")
+                steperMoteur.init_position(0)
+
+            elif command_body.startswith("turn_left_"):
+                # On récupère juste le chiffre après "turn_left_"
+                val_str = command_body.replace("turn_left_", "")
+                try:
+                    val = int(val_str)
+                    print(f"🔄 Action: ROTATE Gauche (-{val}°)")
+                    steperMoteur.rotate(-val)
+                except ValueError:
+                    print(f"⚠️ Valeur turn_left invalide: {val_str}")
+
+            elif command_body.startswith("turn_right_"):
+                # On récupère juste le chiffre après "turn_right_"
+                val_str = command_body.replace("turn_right_", "")
+                try:
+                    val = int(val_str)
+                    print(f"🔄 Action: ROTATE Droite (+{val}°)")
+                    steperMoteur.rotate(val)
+                except ValueError:
+                    print(f"⚠️ Valeur turn_right invalide: {val_str}")
+
+
     
     if not connect_wifi():
         pass

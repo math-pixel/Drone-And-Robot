@@ -25,6 +25,8 @@ class DepthDetector:
             
             # Détection
             "threshold": 10,          # Seuil en mm (1cm = 10mm)
+            "threshold_max": 500,     # Seuil max en mm
+            "threshold_min": 5,       # Seuil min en mm
             
             # Couleurs (BGR)
             "color_background": [255, 100, 0],    # Bleu pour le fond
@@ -322,10 +324,10 @@ class DepthDetector:
         
         # === SEUIL ===
         elif key == ord('['):
-            self.threshold = max(5, self.threshold - 5)
+            self.threshold = max(self.default_config["threshold_min"], self.threshold - self.default_config["threshold_min"])
             print(f"\n📏 Seuil: {self.threshold}mm ({self.threshold/10:.1f}cm)")
         elif key == ord(']'):
-            self.threshold = min(200, self.threshold + 5)
+            self.threshold = min(self.default_config["threshold_max"], self.threshold + self.default_config["threshold_min"])
             print(f"\n📏 Seuil: {self.threshold}mm ({self.threshold/10:.1f}cm)")
         
         # === RESET ===

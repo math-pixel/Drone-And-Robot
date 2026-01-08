@@ -1,11 +1,11 @@
 {
-    "start_x": 240,
-    "start_y": 190,
+    "start_x": 200,
+    "start_y": 180,
     "cols": 5,
     "rows": 5,
-    "cell_w": 30,
-    "cell_h": 20,
-    "threshold": 20,
+    "cell_w": 35,
+    "cell_h": 30,
+    "threshold": 500,
     "color_background": [
         255,
         100,
