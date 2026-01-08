@@ -130,6 +130,21 @@ extension ServerManager {
 
             log("➡️ Forward update_emotions -> jauge_activity")
             session.writeText(text)
+            
+        case let k where k.hasPrefix("mom_activity_stepper_"):
+            guard let targetSession = getSessionForActivity("mom_stepper_activity") else {
+                log("🛑🛑🛑 ERROR: mom_stepper_activity is NOT connected — cannot forward \(k) 🛑🛑🛑")
+                break
+            }
+
+            // forward EXACT incoming json, unchanged (including key)
+            guard let text = stringify(json: incoming) else {
+                log("❌ Failed to stringify incoming mom_activity_stepper payload")
+                break
+            }
+
+            log("➡️ Forward \(k) -> mom_stepper_activity")
+            targetSession.writeText(text)
 
         case let k where k.contains("_activity_finished_step_"):
             if let (activityName, stepId) = parseFinishedStepKey(k) {

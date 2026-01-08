@@ -7,12 +7,19 @@ struct ContentView: View {
     private let cols = [
         GridItem(.flexible(minimum: 260), spacing: 12),
         GridItem(.flexible(minimum: 260), spacing: 12),
+        GridItem(.flexible(minimum: 260), spacing: 12),
     ]
 
     var body: some View {
         VStack(spacing: 14) {
             
-            RoverActivityPanel()
+            HStack(alignment: .top, spacing: 12) {
+                        RoverActivityPanel()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        MomStepperControlPanel()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
 
             // Top bar
             HStack(spacing: 12) {
@@ -709,5 +716,51 @@ private struct DebugJSONPanel: View {
               let s = String(data: data, encoding: .utf8)
         else { return nil }
         return s
+    }
+}
+
+// ✅ ADD this new panel (same file as RoverActivityPanel is fine)
+
+struct MomStepperControlPanel: View {
+    @EnvironmentObject var server: ServerManager
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("mom_stepper_control")
+                .font(.headline)
+
+            Text((server.activityConnected["mom_stepper_activity"] ?? false) ? "mom_stepper_activity connected" : "mom_stepper_activity not connected")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 10) {
+                Button("Init position") {
+                    server.sendKey("mom_activity_stepper_control_init_position", to: "mom_stepper_activity")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!(server.activityConnected["mom_stepper_activity"] ?? false))
+            }
+
+            HStack(spacing: 10) {
+                Button("Left") {
+                    server.sendKey("mom_activity_stepper_control_turn_left_5", to: "mom_stepper_activity")
+                }
+                Button("Right") {
+                    server.sendKey("mom_activity_stepper_control_turn_right_5", to: "mom_stepper_activity")
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!(server.activityConnected["mom_stepper_activity"] ?? false))
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.gray.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+        )
     }
 }
