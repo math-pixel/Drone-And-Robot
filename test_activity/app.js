@@ -3,6 +3,52 @@ const WS_URL = window.APP_CONFIG.WS_URL;
 const STEPS_URL = "./steps.test_activity.json";
 const QCM_URL = "./qcm.geometry.json";
 
+// ✅ AJOUTE en haut (après les const)
+const audio = {
+  bg: new Audio("../audios/musique_de_fond.mp3"),
+  swipe: new Audio("../audios/swipe.mp3"),
+  vrai: new Audio("../audios/vrai.mp3"),
+  faux: new Audio("../audios/faux.mp3"),
+  countdown: new Audio("../audios/compte_a_rebour.mp3"),
+};
+audio.bg.loop = true;
+audio.bg.preload = "auto";
+audio.swipe.preload = "auto";
+audio.vrai.preload = "auto";
+audio.faux.preload = "auto";
+audio.countdown.preload = "auto";
+
+let bgStarted = false;
+let countdownPlayedForThisQuestion = false;
+
+function playOnce(a) {
+  try {
+    a.currentTime = 0;
+    a.play().catch(() => {});
+  } catch {}
+}
+function startBg() {
+  if (bgStarted) return;
+  bgStarted = true;
+  audio.bg.volume = 0.35;
+  audio.bg.play().catch(() => {});
+}
+function stopBg() {
+  bgStarted = false;
+  try {
+    audio.bg.pause();
+    audio.bg.currentTime = 0;
+  } catch {}
+}
+
+function stopCountdown() {
+  try {
+    audio.countdown.pause();
+    audio.countdown.currentTime = 0;
+  } catch {}
+}
+
+
 const els = {
   btnConnect: document.getElementById("btnConnect"),
   screenStartPrompt: document.getElementById("screenStartPrompt"),
@@ -148,7 +194,7 @@ function renderQuestion(action, index, total) {
     .querySelectorAll(".hl")
     .forEach((el) => el.classList.remove("ok", "ko"));
 
-
+  countdownPlayedForThisQuestion = false;
   els.feedback.textContent = "";
   els.feedback.classList.remove("show");
 }
@@ -193,6 +239,7 @@ function nextQuestion() {
   currentActionId = Number(action.id);
   awaitingAnswer = true;
 
+  playOnce(audio.swipe);
   renderQuestion(action, currentIndex, actions.length);
 
   wsSendRootWithKey(`test_activity_step_1_action_${currentActionId}_started`);
@@ -202,11 +249,20 @@ function nextQuestion() {
 
   countdownInterval = setInterval(() => {
     remaining -= 1;
+    if (remaining === 0) stopCountdown();
+
     if (remaining < 0) remaining = 0;
     els.timer.textContent = `${remaining}s`;
+
+    // play countdown sound once when entering last 3 seconds
+    if (!countdownPlayedForThisQuestion && remaining === 3) {
+      countdownPlayedForThisQuestion = true;
+      playOnce(audio.countdown);
+    }
   }, 1000);
 
   countdownTimeout = setTimeout(() => {
+    stopCountdown();    
     if (!awaitingAnswer) return;
 
     awaitingAnswer = false;
@@ -214,21 +270,27 @@ function nextQuestion() {
       `test_activity_step_1_action_${currentActionId}_finished`
     );
     stopAllTimers();
+    playOnce(audio.faux);
     showFeedback(false);
     nextQuestionTimeout = setTimeout(nextQuestion, 3000);
-  }, 30000);
+  }, 8000);
 }
 
 function onAnswerReceived(letterLower) {
   if (!awaitingAnswer) return;
   awaitingAnswer = false;
+  stopCountdown();
   stopAllTimers();
 
   const picked = letterLower.toUpperCase(); // "A"|"B"|"C"
   const correct = (correctById.get(currentActionId) || "").toUpperCase();
-  if (correct && picked === correct) score += 1;
+  const isCorrect = !!correct && picked === correct;
 
-  showFeedback(true); // (ton UI colore déjà 1 vert / 2 rouge)
+  if (isCorrect) score += 1;
+
+  playOnce(isCorrect ? audio.vrai : audio.faux);
+
+  showFeedback(true); // ton UI colore déjà 1 vert / 2 rouge
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 
@@ -253,6 +315,7 @@ function finishQuiz() {
 
   if (els.finalScore)
     els.finalScore.textContent = `${score}/${actions.length || 20}`;
+  stopBg();  
   showScreen("done");
 }
 
@@ -287,6 +350,7 @@ function connect() {
 
     if (key === "test_activity_step_1_authorization") {
       hasAuthorization = true;
+      startBg(); // 🔊 musique de fond dès authorize
       if (!hasStartSignal) showScreen("startPrompt");
       else startQuiz();
       return;
@@ -317,6 +381,7 @@ function connect() {
     hasAuthorization = false;
     hasStartSignal = false;
     stopAllTimers();
+    stopBg();
     showScreen("connect");
   };
 
@@ -327,6 +392,7 @@ function connect() {
     stopAllTimers();
     hasAuthorization = false;
     hasStartSignal = false;
+    stopBg();
     showScreen("connect");
   };
 }
