@@ -15,7 +15,7 @@ current_dir = os.path.dirname(current_path)
 # 3. On remonte d'un cran pour avoir le dossier racine (PROJET/)
 parent_dir = os.path.dirname(current_dir)
 
-AUDIO_MOTS_EXPOSE = "./audios/mots_expose/"
+AUDIO_MOTS_EXPOSE = "audios\mots_expose\\"
 EXT_AUDIO = ".mp3"
 
 # 4. On ajoute la racine aux chemins de Python
@@ -49,6 +49,7 @@ class DepthDetectorDelegate:
 
         # Charger la config UNE SEULE FOIS au démarrage
         self.config = self.load_config(config_path) if config_path else {}
+        print("Config loaded:", self.config)
         self.audio_grid = self.config["grid_path_sound"]
         
         # Récupérer la grille de validation depuis la config
@@ -59,11 +60,21 @@ class DepthDetectorDelegate:
         self.current_grid_completed = np.zeros(grid_shape, dtype=int)
 
         # Load multiple sounds at once
-        self.player.load_multiple({
-            "0": "music.wav",
-            "1": "explosion.wav",
-            "2": "jump.wav"
-        })
+        for row in range(len(self.audio_grid)):
+            for col in range(len(self.audio_grid[row])):
+                nom_fichier = self.audio_grid[row][col] + EXT_AUDIO
+                # os.path.join s'occupe de mettre les séparateurs entre les dossiers
+                chemin_complet = os.path.join(parent_dir, AUDIO_MOTS_EXPOSE, nom_fichier)
+
+                print(f"Loading sound for cell ({row}, {col}): {chemin_complet}")
+                self.player.load(self.audio_grid[row][col], chemin_complet)
+                
+                # self.audio_grid[row][col] = AUDIO_MOTS_EXPOSE + self.audio_grid[row][col] + EXT_AUDIO
+        # self.player.load_multiple({
+        #     "0": "music.wav",
+        #     "1": "explosion.wav",
+        #     "2": "jump.wav"
+        # })
 
     def start_detection(self, action: dict):
         self.action = action
@@ -146,7 +157,7 @@ class DepthDetectorDelegate:
         for row in range(grid_values.shape[0]):
             for col in range(grid_values.shape[1]):
                 if grid_values[row, col] == 1:
-                    self.player.play(AUDIO_MOTS_EXPOSE + str(self.audio_grid[row, col]) + EXT_AUDIO)
+                    self.player.play(str(self.audio_grid[row, col]))
                     print(f"Jouer le son pour la cellule ({row}, {col})")
 
     def process(self, grid_values):
@@ -169,7 +180,7 @@ if __name__ == "__main__":
 
     import pygame
 
-    config_path = os.path.join(parent_dir, "config.json")
+    config_path = os.path.join(parent_dir, "./presentation_activity/config.json")
     depth_detector_delegate = DepthDetectorDelegate()
     depth_detector = DepthDetector(delegate=depth_detector_delegate)
 
@@ -200,7 +211,7 @@ if __name__ == "__main__":
 
     client = WSClient(
         url="ws://192.168.10.34:8057/ws",
-        client_key="throw_activity",
+        client_key="presentation_activity",
         action_delegate=my_action_handler,
         steps=STEPS
     )

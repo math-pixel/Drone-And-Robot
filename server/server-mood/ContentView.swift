@@ -7,12 +7,19 @@ struct ContentView: View {
     private let cols = [
         GridItem(.flexible(minimum: 260), spacing: 12),
         GridItem(.flexible(minimum: 260), spacing: 12),
+        GridItem(.flexible(minimum: 260), spacing: 12),
     ]
 
     var body: some View {
         VStack(spacing: 14) {
             
-            RoverActivityPanel()
+            HStack(alignment: .top, spacing: 12) {
+                        RoverActivityPanel()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        MomStepperControlPanel()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
 
             // Top bar
             HStack(spacing: 12) {
@@ -367,7 +374,7 @@ private struct EmotionsPanel: View {
 
 private struct EmotionGauge: View {
     let type: String
-    let value: Double // 0...100
+    let value: Double // 0...1
 
     private var color: Color {
         switch type.lowercased() {
@@ -379,6 +386,8 @@ private struct EmotionGauge: View {
         }
     }
 
+    private var clamped: Double { min(1, max(0, value)) }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
@@ -388,7 +397,7 @@ private struct EmotionGauge: View {
 
                 Spacer()
 
-                Text(String(format: "%.0f", value))
+                Text(String(format: "%.2f", clamped))
                     .font(.caption)
                     .monospaced()
                     .foregroundStyle(.secondary)
@@ -396,7 +405,7 @@ private struct EmotionGauge: View {
 
             GeometryReader { geo in
                 let w = geo.size.width
-                let fill = w * CGFloat(min(100, max(0, value)) / 100.0)
+                let fill = w * CGFloat(clamped)
 
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.gray.opacity(0.18))
@@ -412,6 +421,7 @@ private struct EmotionGauge: View {
         )
     }
 }
+
 
 // MARK: - Logs
 
@@ -709,5 +719,51 @@ private struct DebugJSONPanel: View {
               let s = String(data: data, encoding: .utf8)
         else { return nil }
         return s
+    }
+}
+
+// ✅ ADD this new panel (same file as RoverActivityPanel is fine)
+
+struct MomStepperControlPanel: View {
+    @EnvironmentObject var server: ServerManager
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("mom_stepper_control")
+                .font(.headline)
+
+            Text((server.activityConnected["mom_stepper_activity"] ?? false) ? "mom_stepper_activity connected" : "mom_stepper_activity not connected")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 10) {
+                Button("Init position") {
+                    server.sendKey("mom_activity_stepper_control_init_position", to: "mom_stepper_activity")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!(server.activityConnected["mom_stepper_activity"] ?? false))
+            }
+
+            HStack(spacing: 10) {
+                Button("Left") {
+                    server.sendKey("mom_activity_stepper_control_turn_left_5", to: "mom_stepper_activity")
+                }
+                Button("Right") {
+                    server.sendKey("mom_activity_stepper_control_turn_right_5", to: "mom_stepper_activity")
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!(server.activityConnected["mom_stepper_activity"] ?? false))
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.gray.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+        )
     }
 }

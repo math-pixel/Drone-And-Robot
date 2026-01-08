@@ -356,6 +356,25 @@ extension ServerManager {
             }
         }
     }
+    
+    func sendKey(_ key: String, to activityName: String) {
+        guard let session = getSessionForActivity(activityName) else {
+            log("🛑🛑🛑 ERROR: \(activityName) is NOT connected — cannot send \(key) 🛑🛑🛑")
+            return
+        }
+
+        var payload = globalJSON
+        payload["key"] = key
+
+        guard let text = stringify(json: payload) else {
+            log("❌ Failed to stringify payload for key=\(key)")
+            return
+        }
+
+        log("➡️ Manual send -> \(key) to \(activityName)")
+        session.writeText(text)
+    }
+
 
     // MARK: - Emotions
 
