@@ -64,27 +64,27 @@ enum Sequencing {
             ("presentation_sphero_activity", "presentation_sphero_activity_step_1_authorization"),
         ],
 
-        "presentation_activity_finished": [
-            ("choice_activity", "choice_activity_step_2_authorization"),
-        ],
+        //"presentation_activity_finished": [
+        //    ("choice_activity", "choice_activity_step_2_authorization"),
+        //],
         "choice_activity_step_2_finished": [
             ("test_activity", "test_activity_step_1_authorization"),
         ],
-        "test_activity_finished": [
-            ("choice_activity", "choice_activity_step_3_authorization"),
-        ],
+        //"test_activity_finished": [
+        //  ("choice_activity", "choice_activity_step_3_authorization"),
+        //],
         "choice_activity_step_3_finished": [
             ("throw_activity", "throw_activity_step_1_authorization"),
         ],
-        "throw_activity_finished": [
-            ("choice_activity", "choice_activity_step_4_authorization"),
-        ],
+        //"throw_activity_finished": [
+        //  ("choice_activity", "choice_activity_step_4_authorization"),
+        //],
         "choice_activity_step_4_finished": [
             ("mom_activity", "mom_activity_step_1_authorization"),
         ],
-        "mom_activity_finished": [
-            ("choice_activity", "choice_activity_step_5_authorization"),
-        ],
+        //"mom_activity_finished": [
+        //    ("choice_activity", "choice_activity_step_5_authorization"),
+        //],
     ]
 }
 
@@ -92,15 +92,22 @@ enum Sequencing {
 
 enum EmotionRouting {
     static let deltasByKey: [String: [String: Double]] = [
-        "ouistiti": ["happiness": -10,  "stress": -10, "shame": -10, "angry": -10],
+        "choice_activity_step_1_action_3_choice_0": ["happiness": 5,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_1_action_3_choice_1": ["happiness": 10,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_1_action_7_choice_0": ["happiness": 7,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_1_action_7_choice_1": ["happiness": 0,  "stress": 3, "shame": 0, "angry": 0],
+        "choice_activity_step_1_action_11_choice_0": ["happiness": 0,  "stress": 10, "shame": 0, "angry": 0],
+        "choice_activity_step_1_action_11_choice_1": ["happiness": 10,  "stress": -18, "shame": 0, "angry": 0],
+        "choice_activity_step_3_action_3_choice_0": ["happiness": 18,  "stress": 0, "shame": 10, "angry": 0],
+        "choice_activity_step_3_action_3_choice_1": ["happiness": -10,  "stress": 0, "shame": 10, "angry": 0],
+        "choice_activity_step_4_action_3_choice_0": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_4_action_3_choice_1": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_5_action_3_choice_0": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_5_action_3_choice_1": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
         
-        "rover_forward_10_1": ["happiness": -0.1,  "stress": -10, "shame": -10, "angry": -10],
         
-        "rover_forward_30_2": ["happiness": +10,  "stress": +10, "shame": +10, "angry": +10],
-        "rover_forward_60_3": ["happiness": +3,  "stress": -2, "shame": -1, "angry": -2],
-        "rover_left_90": ["happiness": -1,  "stress": +2, "shame": +5, "angry": +3],
-        "test_activity_finished_step_1": ["happiness": +59,  "stress": +2, "shame": +5, "angry": +39],
-        "presentation_sphero_activity_traveled": ["happiness": +0,  "stress": +40, "shame": +50, "angry": -12],
+        "choice_activity_step_1_action_9_finished": ["happiness": 0,  "stress": 18, "shame": 0, "angry": 0],
+        
         
     ]
 }
@@ -134,9 +141,9 @@ enum GlobalDataConfig {
             "started": false,
             "message": "",
             "emotions": [
-                ["type": "happiness", "level": 0.2],
-                ["type": "stress",    "level": 0.7],
-                ["type": "shame",     "level": 0],
+                ["type": "happiness", "level": 12],
+                ["type": "stress",    "level": 7],
+                ["type": "shame",     "level": 1],
                 ["type": "angry",     "level": 1],
             ],
             "activity": [

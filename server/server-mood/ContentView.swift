@@ -374,7 +374,7 @@ private struct EmotionsPanel: View {
 
 private struct EmotionGauge: View {
     let type: String
-    let value: Double // 0...1
+    let value: Double // 0...37
 
     private var color: Color {
         switch type.lowercased() {
@@ -386,7 +386,9 @@ private struct EmotionGauge: View {
         }
     }
 
-    private var clamped: Double { min(1, max(0, value)) }
+    private let maxValue: Double = 37
+    private var clamped: Double { min(maxValue, max(0, value)) }
+    private var progress: Double { clamped / maxValue } // 0...1
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -397,7 +399,7 @@ private struct EmotionGauge: View {
 
                 Spacer()
 
-                Text(String(format: "%.2f", clamped))
+                Text(String(format: "%.1f", clamped))
                     .font(.caption)
                     .monospaced()
                     .foregroundStyle(.secondary)
@@ -405,7 +407,7 @@ private struct EmotionGauge: View {
 
             GeometryReader { geo in
                 let w = geo.size.width
-                let fill = w * CGFloat(clamped)
+                let fill = w * CGFloat(progress)
 
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.gray.opacity(0.18))
@@ -421,6 +423,7 @@ private struct EmotionGauge: View {
         )
     }
 }
+
 
 
 // MARK: - Logs

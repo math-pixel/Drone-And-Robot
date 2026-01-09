@@ -7,7 +7,8 @@ import CoreMotion
 final class PresentationSpheroActivityViewModel: ObservableObject {
 
     // UI state
-    @Published var connected = false
+    @Published var connected = false          // "setup connected" (stays true once identification is done)
+    @Published var serverOnline = false       // real-time WS state (can go false/true)
     @Published var authorized = false
 
     // Robot
@@ -43,6 +44,11 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
     init(wsURL: String) {
         self.wsClient = PresentationSpheroActivityClient(wsURL: wsURL)
         self.wsClient.onMessage = handleMessage
+        self.wsClient.onConnectionState = { [weak self] isOnline in
+            Task { @MainActor in
+                self?.serverOnline = isOnline
+            }
+        }
     }
 
     // MARK: - Public
@@ -117,6 +123,8 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
         }
 
         wsClient.send(json: data)
+
+        // IMPORTANT: keep the UI on "waiting for authorization" even if the WS drops later.
         connected = true
 
         print("📤 identification_\(clientKey) sent with steps")

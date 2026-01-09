@@ -186,7 +186,7 @@ extension ServerManager {
     // MARK: - Case: identification
 
     func handleIdentification(activityName: String, incoming: [String: Any], from session: WebSocketSession) {
-        
+
         guard GlobalDataConfig.allowedActivities.contains(activityName) else {
             log("❌ identification for unknown activity: \(activityName)")
             return
@@ -202,9 +202,19 @@ extension ServerManager {
         syncActivityFromGlobalJSON(activityName)
 
         log("✅ Identified: \(activityName) -> connected=true (session stored)")
-        //log("📦 Global JSON (after identification \(activityName)): \(pretty(globalJSON))")
         sendGlobalJSON(to: session, reason: "identification ack \(activityName)")
+
+        // ✅ If jauge_activity connects, push initial emotions once
+        if activityName == "jauge_activity" {
+            var payload = globalJSON
+            payload["key"] = "update_emotions"
+
+            if sendJSON(payload, to: "jauge_activity", context: "init emotions on identification") {
+                log("➡️ Init update_emotions -> jauge_activity (on identification)")
+            }
+        }
     }
+
     
     func pretty(_ value: Any) -> String {
         guard JSONSerialization.isValidJSONObject(value),

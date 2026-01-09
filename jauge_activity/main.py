@@ -83,7 +83,8 @@ def update_emotion(emotions, delay=0.03):
         controller = strip["controller"]
         r, g, b = strip["color"]
         
-        num_leds_on = map_level_to_leds(level, NUMBER_LEDS_BY_COLUMN)
+        # num_leds_on = map_level_to_leds(level, NUMBER_LEDS_BY_COLUMN)
+        num_leds_on = level
         
         # Animation fluide
         controller.set_level(num_leds_on, r, g, b, delay)
