@@ -49,6 +49,9 @@ class VideoPlayer:
         self._current_video_id = video_id
         self._player.play()
 
+        if self._fullscreen:
+            threading.Thread(target=self._set_fullscreen_delayed, daemon=True).start()
+
         print(f"▶ Lecture: {video_id}")
         return True
 
