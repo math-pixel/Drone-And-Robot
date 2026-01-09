@@ -369,44 +369,45 @@ extension ServerManager {
     // MARK: - Emotions
 
     func extractEmotionsFromGlobalJSON() -> [EmotionItem] {
-            guard let arr = globalJSON["emotions"] as? [[String: Any]] else { return [] }
+        guard let arr = globalJSON["emotions"] as? [[String: Any]] else { return [] }
 
-            return arr.compactMap { e in
-                let type = (e["type"] as? String) ?? ""
-                guard !type.isEmpty else { return nil }
+        return arr.compactMap { e in
+            let type = (e["type"] as? String) ?? ""
+            guard !type.isEmpty else { return nil }
 
-                let raw = e["level"]
-                let level: Double
-                if let d = raw as? Double { level = d }
-                else if let i = raw as? Int { level = Double(i) }
-                else if let s = raw as? String, let d = Double(s.replacingOccurrences(of: ",", with: ".")) { level = d }
-                else { level = 0 }
+            let raw = e["level"]
+            let level: Double
+            if let d = raw as? Double { level = d }
+            else if let i = raw as? Int { level = Double(i) }
+            else if let s = raw as? String, let d = Double(s.replacingOccurrences(of: ",", with: ".")) { level = d }
+            else { level = 0 }
 
-                return EmotionItem(type: type, level: min(1, max(0, level)))
-            }
+            return EmotionItem(type: type, level: min(37, max(0, level)))
         }
+    }
 
     func applyEmotionDeltas(_ deltas: [String: Double]) {
-            guard var arr = globalJSON["emotions"] as? [[String: Any]] else { return }
+        guard var arr = globalJSON["emotions"] as? [[String: Any]] else { return }
 
-            for i in arr.indices {
-                let type = ((arr[i]["type"] as? String) ?? "").lowercased()
-                guard let delta = deltas[type] else { continue }
+        for i in arr.indices {
+            let type = ((arr[i]["type"] as? String) ?? "").lowercased()
+            guard let delta = deltas[type] else { continue }
 
-                let raw = arr[i]["level"]
-                let current: Double
-                if let d = raw as? Double { current = d }
-                else if let n = raw as? Int { current = Double(n) }
-                else if let s = raw as? String, let d = Double(s.replacingOccurrences(of: ",", with: ".")) { current = d }
-                else { current = 0 }
+            let raw = arr[i]["level"]
+            let current: Double
+            if let d = raw as? Double { current = d }
+            else if let n = raw as? Int { current = Double(n) }
+            else if let s = raw as? String, let d = Double(s.replacingOccurrences(of: ",", with: ".")) { current = d }
+            else { current = 0 }
 
-                arr[i]["level"] = min(1, max(0, current + delta))
-            }
-
-            globalJSON["emotions"] = arr
-            emotions = extractEmotionsFromGlobalJSON()
-            sendEmotionsUpdateToAtmosphere()
+            arr[i]["level"] = min(37, max(0, current + delta))
         }
+
+        globalJSON["emotions"] = arr
+        emotions = extractEmotionsFromGlobalJSON()
+        sendEmotionsUpdateToAtmosphere()
+    }
+
 
     func sendEmotionsUpdateToAtmosphere() {
         guard let session = getSessionForActivity("jauge_activity") else {
