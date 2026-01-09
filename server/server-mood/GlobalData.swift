@@ -85,6 +85,10 @@ enum Sequencing {
         //"mom_activity_finished": [
         //    ("choice_activity", "choice_activity_step_5_authorization"),
         //],
+        "test_activity_start": [
+            ("test_activity", "test_activity_start"),
+        ],
+        
     ]
 }
 
