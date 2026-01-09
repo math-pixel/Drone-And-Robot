@@ -5,17 +5,17 @@
         "depth_threshold": 1000,
         "grid_validation": [
           [0, 1, 1, 0, 0],
-          [0, 0, 1, 0, 0],
+          [1, 1, 0, 0, 0],
+          [1, 1, 1, 1, 1],
           [0, 1, 1, 0, 1],
-          [0, 1, 1, 1, 1],
-          [0, 0, 1, 1, 0]
+          [0, 0, 0, 0, 0]
         ]
     },
     "grid_path_sound": [
-      ["DUCOUP", "EN", "1870", "EUX", "JE_SAIS_PLUS"],
-      ["ENFAITE", "EUH", "LA_FRANCE", "DUCOUP", "ENFAITE"],
-      ["EUX", "III", "DE_NAPOLÉON", "EUX", "1ER"],
-      ["DUCOUP", "ENTRE", "EN", "LA_PRUSSE", "DE_GUILLAUME"],
-      ["JE_SAIS_PLUS", "DUCOUP", "GUERRE", "CONTRE", "EUH"]
+      ["EUH", "DE_GUILLAUME", "1ER", "ENFAITE", "JE_SAIS_PLUS"],
+      ["CONTRE", "LA_PRUSSE", "EUH", "DUCOUP", "EUH"],
+      ["GUERRE", "EN", "DE_NAPOLÉON", "LA_FRANCE", "1870"],
+      ["DUCOUP", "ENTRE", "III", "EUH", "EN"],
+      ["JE_SAIS_PLUS", "DUCOUP", "EUH", "ENFAITE", "DUCOUP"]
     ]
 }

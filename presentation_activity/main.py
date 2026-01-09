@@ -187,8 +187,8 @@ class DepthDetectorDelegate:
 
     def process(self, grid_values):
     
-        if self.authorized == False:
-            return
+        # if self.authorized == False:
+        #     return
 
         # --- AJOUT ICI ---
         # 1. On cherche s'il y a un nouvel index activé par rapport à ce qu'on avait avant
