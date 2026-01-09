@@ -1,6 +1,5 @@
 import sys
 import os
-import threading
 import asyncio
 
 # --- BLOC MAGIQUE A METTRE TOUT EN HAUT ---
@@ -10,41 +9,34 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from utils.WSClient import WSClient
-from utils.rpi.Bouton import *
+from utils.rpi.Bouton import Bouton
+from utils.VideoPlayer import VideoPlayer
 
 # ======================================================
 # CONFIGURATION DES BOUTONS
 # ======================================================
 
-# Variable globale pour stocker quel bouton a été appuyé
-idButtonPressed = None
+idButtonPressed: str | None = None
 
-# Création des boutons (Attention: changer les pins selon ton câblage réel)
-# btnLeft sur GPIO 17, btnRight sur GPIO 27 (exemple)
 btnLeft = Bouton(pin=17, pull_up=True, long_press_time=2.0)
-btnRight = Bouton(pin=27, pull_up=True, long_press_time=2.0) 
+btnRight = Bouton(pin=27, pull_up=True, long_press_time=2.0)
 
-# Fonction de callback qui modifie la variable globale
-def signal_button_press(btn_id):
+def signal_button_press(btn_id: str):
     global idButtonPressed
     print(f"👉 Hardware: Bouton {btn_id} appuyé")
     idButtonPressed = btn_id
 
-# On utilise lambda pour passer l'ID ('left' ou 'right') quand le bouton est pressé
 btnLeft.on_press = lambda: signal_button_press("left")
 btnRight.on_press = lambda: signal_button_press("right")
 
-# Callbacks optionnels pour le feedback
-def on_release_feedback(duration):
+def on_release_feedback(duration: float):
     print(f"   (Relâché après {duration:.2f}s)")
 
 btnLeft.on_release = on_release_feedback
 btnRight.on_release = on_release_feedback
 
-
 if __name__ == "__main__":
-    
-    # Définition des steps
+
     STEPS = [
         {
             "id": 1,
@@ -62,7 +54,7 @@ if __name__ == "__main__":
                 {"id": 9, "type": "video", "file": "cine_1_9.mp4", "finished": False},
                 {"id": 10, "type": "video", "file": "cine_1_10_loop.mp4", "finished": False},
                 {"id": 11, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 12, "type": "video", "file": "cine_1_12_choice_2.mp4", "finished": False}, # pas de deuxieme choix
+                {"id": 12, "type": "video", "file": ["cine_1_12_choice_2.mp4","cine_1_12_choice_2.mp4"], "finished": False}, 
             ],
             "authorized": False,
             "finished": False
@@ -82,10 +74,6 @@ if __name__ == "__main__":
                 {"id": 2, "type": "video", "file": "cine_3_2_loop.mp4", "finished": False},
                 {"id": 3, "type": "choice", "chosen": -1, "finished": False},
                 {"id": 4, "type": "video", "file": ["cine_3_4_choice_1.mp4", "cine_3_4_choice_2.mp4"], "finished": False},
-
-                {"id": 5, "type": "video", "file": "cine_3_5.mp4", "finished": False},
-                {"id": 6, "type": "video", "file": "cine_3_6_loop.mp4", "finished": False},
-                {"id": 7, "type": "choice", "chosen": -1, "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -112,108 +100,144 @@ if __name__ == "__main__":
         },
     ]
 
+    # --- build videos dict once ---
+    videos: dict[str, str] = {}
+    for step in STEPS:
+        for a in step.get("actions", []):
+            if a.get("type") != "video":
+                continue
+            f = a.get("file")
+            files = f if isinstance(f, list) else [f]
+            for name in files:
+                if name:
+                    videos[name] = f"./videos/{name}"
+
+    # --- create player once ---
+    player = VideoPlayer(fullscreen=True)
+    player.load(videos)
+    player.set_volume(80)
+
+    # --- async wait helper using on_video_end ---
+    _current = {"name": None, "event": None, "loop": None}
+
+    def on_video_end(video_id: str):
+        ev = _current.get("event")
+        if ev is None:
+            return
+        if _current.get("name") != video_id:
+            return
+        loop = _current.get("loop")
+        if loop is None:
+            return
+        loop.call_soon_threadsafe(ev.set)
+
+    player.on_finished(on_video_end)
+
+    async def play_and_wait(video_name: str):
+        _current["loop"] = asyncio.get_running_loop()
+        ev = asyncio.Event()
+        _current["event"] = ev
+        _current["name"] = video_name
+
+        player.play(video_name)
+        await ev.wait()
+
+        _current["event"] = None
+        _current["name"] = None
+
+    def _get_step(step_id: int):
+        return next((s for s in STEPS if s.get("id") == step_id), None)
+
+    def _find_action_index(actions: list[dict], action: dict) -> int:
+        for i, a in enumerate(actions):
+            if a is action:
+                return i
+        aid = action.get("id")
+        atype = action.get("type")
+        for i, a in enumerate(actions):
+            if a.get("id") == aid and a.get("type") == atype:
+                return i
+        return -1
+
+    def pick_video_for_action(step_id: int, action: dict) -> str:
+        file_field = action.get("file")
+        if not isinstance(file_field, list):
+            return file_field
+
+        chosen = 0
+        step = _get_step(step_id)
+        if step:
+            actions = step.get("actions", [])
+            idx = _find_action_index(actions, action)
+            if idx != -1:
+                for prev in reversed(actions[:idx]):
+                    if prev.get("type") == "choice":
+                        c = prev.get("chosen", -1)
+                        if c in (0, 1):
+                            chosen = c
+                        break
+
+        return file_field[min(chosen, len(file_field) - 1)]
+
+    async def wait_for_button_choice() -> int:
+        global idButtonPressed
+        idButtonPressed = None
+        while idButtonPressed is None:
+            await asyncio.sleep(0.05)
+
+        if idButtonPressed == "left":
+            return 0
+        if idButtonPressed == "right":
+            return 1
+        return 0
 
     # ======================================================
     # DELEGATE
     # ======================================================
-    
+
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
-        # On déclare utiliser la variable globale définie plus haut
-        global idButtonPressed 
-        
         action_id = action.get("id")
         action_type = action.get("type")
 
-        player = VideoPlayer(fullscreen=True)
-
-        player.load(
-            {
-                "intro": "./utils/choix_tshirt.mp4",
-            }
-        )
-
-        def on_video_end(video_id: str):
-            print(f"✓ Vidéo '{video_id}' terminée!")
-            if video_id == "intro":
-                player.play("presentation")
-            elif video_id == "presentation":
-                player.play("credits")
-
-        player.on_finished(on_video_end)
-        player.set_volume(80)
-        player.play("intro")
-        
         match action_type:
             case "video":
-                file_name = action.get("file")
-                print(f"     🎥 Playing video: {file}")
-                
-                player.play(file_name)
-                # Simulation: attendre que la vidéo soit "jouée"
-                # input(f"     ⏸️  Press Enter when video '{file}' is finished...")
-                #await asyncio.sleep(2) # Simulation auto pour l'exemple
-                
-                # Marquer comme terminé
+                file_name = pick_video_for_action(step_id, action)
+                print(f"     🎥 Playing video: {file_name}")
+
+                await play_and_wait(file_name)
+
                 action["finished"] = True
                 await client.send_action_finished(step_id, action_id)
-                
-            case "choice":
-                name = action.get("name")
-                options = action.get("options", [])
-                
-                print(f"\n     ❓ CHOIX : {name}")
-                print(f"     👉 Appuyez sur GAUCHE pour '{options[0]['text']}'")
-                print(f"     👉 Appuyez sur DROITE pour '{options[1]['text']}'")
-                
-                # --- INTÉGRATION BOUTONS ICI ---
-                
-                # 1. On réinitialise l'état avant d'attendre
-                idButtonPressed = None
-                
-                # 2. Boucle d'attente non bloquante
-                # On boucle tant que idButtonPressed est None (personne n'a appuyé)
-                while idButtonPressed is None:
-                    # await asyncio.sleep est CRUCIAL ici. 
-                    # Il rend la main au processeur pour gérer le WebSocket et les callbacks GPIO
-                    await asyncio.sleep(0.1)
-                
-                # 3. Identification du choix basé sur le bouton
-                selected = -1
-                
-                if idButtonPressed == "left":
-                    selected = 0 # Premier élément de la liste options
-                    print("     ✅ Sélection : GAUCHE")
-                elif idButtonPressed == "right":
-                    if len(options) > 1:
-                        selected = 1 # Deuxième élément
-                        print("     ✅ Sélection : DROITE")
-                    else:
-                        selected = 0 # Fallback si une seule option
-                
-                # --- FIN INTÉGRATION ---
 
-                # Enregistrer le choix
-                if selected != -1:
-                    action["chosen"] = selected
-                    await client.send_choice_result(step_id, action_id, selected)
-                
+            case "choice":
+                print("\n     ❓ CHOIX")
+                print("     👉 Appuyez sur GAUCHE (left) ou DROITE (right)")
+
+                selected = await wait_for_button_choice()
+                action["chosen"] = selected
+                action["finished"] = True
+
+                print("     ✅ Sélection :", "GAUCHE" if selected == 0 else "DROITE")
+                await client.send_choice_result(step_id, action_id, selected)
+
             case _:
                 print(f"     ⚠️  Unknown action type: {action_type}")
 
     # ======================================================
     # RUN
     # ======================================================
-    
+
     client = WSClient(
         url="ws://192.168.10.182:8057/ws",
         client_key="choice_activity",
         action_delegate=my_action_handler,
         steps=STEPS
     )
-    
+
     try:
         asyncio.run(client.run())
     except KeyboardInterrupt:
         print("\nArrêt du programme...")
+    finally:
         btnLeft.cleanup()
         btnRight.cleanup()
