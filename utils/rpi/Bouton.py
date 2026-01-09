@@ -229,3 +229,40 @@ class Bouton:
     def __repr__(self):
         state = "appuyé" if self.is_pressed else "relâché"
         return f"Bouton(pin={self.pin}, état={state})"
+
+
+
+if __name__ == "__main__":
+    
+    def main():
+        print("=== TEST DES BOUTONS (GPIO 17 & 27) ===")
+        print("Appuyez sur Ctrl+C pour quitter.")
+        
+        try:
+            # 1. Instanciation des boutons
+            btn17 = Bouton(17)
+            btn27 = Bouton(27)
+            
+            # 2. Assignation des callbacks (ce qui se passe quand on appuie)
+            btn17.on_press = action_bouton_17
+            btn27.on_press = action_bouton_27
+            
+            # (Optionnel) Ajout d'une action au relâchement pour tester
+            btn17.on_release = action_relache
+            btn27.on_release = action_relache
+            
+            # 3. Boucle infinie pour garder le programme en vie
+            while True:
+                time.sleep(0.1)
+                
+        except KeyboardInterrupt:
+            print("\nArrêt du programme...")
+            
+        finally:
+            # Nettoyage propre des GPIO à la sortie
+            if 'btn17' in locals(): btn17.cleanup()
+            if 'btn27' in locals(): btn27.cleanup()
+            GPIO.cleanup()
+            print("GPIO nettoyés.")
+    
+    main()
