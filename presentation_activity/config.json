@@ -13,7 +13,7 @@
     },
     "grid_path_sound": [
       ["DUCOUP", "EN", "1870", "EUX", "JE_SAIS_PLUS"],
-      ["ENFAITE", "EUX", "LA_FRANCE", "DUCOUP", "ENFAITE"],
+      ["ENFAITE", "EUH", "LA_FRANCE", "DUCOUP", "ENFAITE"],
       ["EUX", "III", "DE_NAPOLÉON", "EUX", "1ER"],
       ["DUCOUP", "ENTRE", "EN", "LA_PRUSSE", "DE_GUILLAUME"],
       ["JE_SAIS_PLUS", "DUCOUP", "GUERRE", "CONTRE", "EUH"]

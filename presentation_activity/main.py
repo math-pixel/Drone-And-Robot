@@ -3,6 +3,7 @@ import os
 import numpy as np
 import threading
 import asyncio
+import time
 
 # --- BLOC MAGIQUE A METTRE TOUT EN HAUT ---
 
@@ -16,7 +17,7 @@ current_dir = os.path.dirname(current_path)
 parent_dir = os.path.dirname(current_dir)
 
 AUDIO_MOTS_EXPOSE = "audios\mots_expose\\"
-EXT_AUDIO = ".mp3"
+EXT_AUDIO = ".wav"
 
 # 4. On ajoute la racine aux chemins de Python
 sys.path.append(parent_dir)
@@ -148,20 +149,21 @@ class DepthDetectorDelegate:
             print(f"⚠️ Shape mismatch: {self.current_grid_completed.shape} vs {self.grid_validation.shape}")
             return False
 
-        print("Vérification de la complétion de la grille...")
-        print(self.current_grid_completed   )
+        # print("Vérification de la complétion de la grille...")
+        # print(self.current_grid_completed   )
         
         return np.all(self.current_grid_completed >= self.grid_validation)
         
-    def playSound(self, grid_values):
-        for row in range(grid_values.shape[0]):
-            for col in range(grid_values.shape[1]):
-                if grid_values[row, col] == 1:
-                    self.player.play(str(self.audio_grid[row, col]))
+    def playSound(self, grid_values_data):
+        for row in range(grid_values_data.shape[0]):
+            for col in range(grid_values_data.shape[1]):
+                if grid_values_data[row, col] == 1:
+                    self.player.play(str(self.audio_grid[row][col]))
                     print(f"Jouer le son pour la cellule ({row}, {col})")
 
     def process(self, grid_values):
 
+        self.playSound(grid_values)
         if self.authorized == False:
             return
 
@@ -169,6 +171,7 @@ class DepthDetectorDelegate:
         print("Grille de profondeur mise à jour:")
         #print(grid_values)
         self.joinGrid(grid_values)
+        
         if self.isActivityFinish():
             print("Envoie Activité terminée !")
             self.authorized = False
