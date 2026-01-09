@@ -161,15 +161,54 @@ class DepthDetectorDelegate:
                     self.player.play(str(self.audio_grid[row][col]))
                     print(f"Jouer le son pour la cellule ({row}, {col})")
 
-    def process(self, grid_values):
+    def find_new_activated_index(self, new_grid):
+        """
+        Compare la grille actuelle (stockée) avec la nouvelle grille reçue.
+        Retourne un tuple (row, col) si une nouvelle case est activée (0 -> 1).
+        Sinon retourne None.
+        """
+        # Sécurité : si les dimensions ne correspondent pas, on ignore pour éviter un crash
+        if self.current_grid_completed.shape != new_grid.shape:
+            return None
 
-        self.playSound(grid_values)
+        # Logique booléenne :
+        # On cherche les cases où : (Nouvelle est True) ET (Ancienne est False)
+        new_activations = (new_grid == 1) & (self.current_grid_completed == 0)
+
+        # np.argwhere renvoie une liste des coordonnées [row, col] où la condition est Vraie
+        indices = np.argwhere(new_activations)
+
+        if indices.size > 0:
+            # On prend le premier index trouvé (même s'il y en a plusieurs)
+            # On le convertit en tuple pour le retour (ex: (1, 2))
+            return tuple(indices[0])
+        
+        return None
+
+    def process(self, grid_values):
+    
         if self.authorized == False:
             return
 
+        # --- AJOUT ICI ---
+        # 1. On cherche s'il y a un nouvel index activé par rapport à ce qu'on avait avant
+        new_index = self.find_new_activated_index(grid_values)
+
+        if new_index is not None:
+            print(f"!!! NOUVELLE ACTIVATION DÉTECTÉE À L'INDEX : {new_index} !!!")
+            
+            # Optionnel : Jouer le son spécifique à cet index immédiatement
+            row, col = new_index
+            if 0 <= row < len(self.audio_grid) and 0 <= col < len(self.audio_grid[row]):
+                nom_son = self.audio_grid[row][col]
+                print(f"Joue le son : {nom_son}")
+                self.player.play(str(nom_son))
+        # -----------------
+
         # Traiter les valeurs de la grille reçues du DepthDetector
         print("Grille de profondeur mise à jour:")
-        #print(grid_values)
+        
+        # 2. On met à jour la variable de stockage (l'ancienne grille devient la fusionnée)
         self.joinGrid(grid_values)
         
         if self.isActivityFinish():
@@ -177,7 +216,7 @@ class DepthDetectorDelegate:
             self.authorized = False
             asyncio.run(self.wsClient.send_action_finished("1", self.action["id"]))
         else:
-            print("envoie Nouvelle donner recu sur la grille de profondeur.")
+            print("Envoie Nouvelle donnée reçue sur la grille de profondeur.")
 
 if __name__ == "__main__":
 

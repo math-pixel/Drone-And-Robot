@@ -169,6 +169,7 @@ class DepthDetector:
                     # Si au moins un pixel est détecté → valeur = 1
                     if np.any(cell_mask):
                         self.grid_values[row, col] = 1
+                        print(f"   Cellule ({row}, {col}): OBJET détecté")
                         self.delegate and self.delegate.process(self.grid_values)
         
         return self.grid_values
