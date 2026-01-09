@@ -233,6 +233,16 @@ class Bouton:
 
 
 if __name__ == "__main__":
+
+    def action_bouton_17():
+    print("--> Le bouton sur PIN 17 a été appuyé !")
+
+    def action_bouton_27():
+        print("--> Le bouton sur PIN 27 a été appuyé !")
+
+    # Optionnel : afficher quand on relâche pour vérifier le rebond
+    def action_relache(duree):
+        print(f"    (Bouton relâché après {duree:.2f} secondes)")
     
     def main():
         print("=== TEST DES BOUTONS (GPIO 17 & 27) ===")
