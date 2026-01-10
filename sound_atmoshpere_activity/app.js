@@ -2,12 +2,8 @@
 const WS_URL = window.APP_CONFIG.WS_URL;
 const RECONNECT_MS = 5000;
 
-// Map key -> audio file
-const SOUND_BY_KEY = {
-  // examples (modifie selon tes keys)
-  global_sound_: "./vrai.mp3",
-  // "some_key": "./sounds/some.mp3",
-};
+const SOUND_PATH = "../audios/";
+const SOUND_EXT = ".mp3";
 
 const els = {
   dot: document.getElementById("dot"),
@@ -21,7 +17,7 @@ els.wsUrl.textContent = WS_URL;
 
 let ws = null;
 let reconnectTimer = null;
-let audioEnabled = false;
+let audioEnabled = true;
 let lastRoot = null;
 
 // one Audio element per file (cache)
@@ -83,13 +79,21 @@ async function playSound(file) {
 function handleKey(key) {
   if (!key) return;
 
-  const file = SOUND_BY_KEY[key];
-  if (file) {
-    log(`key=${key}`);
-    playSound(file);
-  } else {
+  const prefix = "global_sound_";
+  if (!key.startsWith(prefix)) {
     log(`key=${key} (unknown)`);
+    return;
   }
+
+  const name = key.slice(prefix.length).trim();
+  if (!name) {
+    log(`key=${key} (invalid)`);
+    return;
+  }
+
+  const file = `${SOUND_PATH}${name}${SOUND_EXT}`;
+  log(`key=${key} -> ${file}`);
+  playSound(file);
 }
 
 function scheduleReconnect() {
@@ -111,7 +115,6 @@ function sendIdentificationSoundAtmosphere() {
 
   let found = false;
   for (const entry of out.activity) {
-    console.log(entry);
     if (entry && typeof entry === "object" && entry.sound_atmosphere_activity) {
       entry.sound_atmosphere_activity.connected = true;
       found = true;
@@ -189,21 +192,6 @@ function connect() {
     scheduleReconnect();
   };
 }
-
-// iOS/Safari: need a user gesture once
-els.btnEnableAudio.addEventListener("click", async () => {
-  try {
-    audioEnabled = true;
-    // warmup: play a silent-ish attempt by creating an Audio and calling play/pause quickly
-    // (some browsers still require a real file; we just mark enabled)
-    els.btnEnableAudio.disabled = true;
-    els.btnEnableAudio.textContent = "Audio enabled";
-    log("Audio enabled by user");
-  } catch {
-    audioEnabled = false;
-    log("Failed to enable audio");
-  }
-});
 
 // auto connect loop
 setConnected(false);

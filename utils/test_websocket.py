@@ -61,7 +61,8 @@ if __name__ == "__main__":
             # k = f'mom_activity_stepper_{x}'
 
             # k = "choice_activity_step_1_finished"
-            k = "global_sound_"
+            son = input("son")
+            k = f"global_sound_{son}"
             await client._send_json(key=k)
         
 
