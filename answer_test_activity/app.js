@@ -325,10 +325,15 @@ function onActionFinished(actionId) {
   currentLetter = null;
 }
 
+function onTap(e) {
+  e.preventDefault(); // évite les doubles events / délai
+  sendAnswer();
+}
 
 els.btnConnect.addEventListener("click", connect);
 els.btnStart.addEventListener("click", sendStart);
-els.btnLetter.addEventListener("click", sendAnswer);
+els.btnLetter.addEventListener("touchstart", onTap, { passive: false });
+els.btnLetter.addEventListener("click", () => sendAnswer());
 
 loadMapping();
 document.querySelectorAll(".btnPick").forEach((btn) => {
