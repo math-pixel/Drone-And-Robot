@@ -39,9 +39,9 @@ if __name__ == "__main__":
         x = 0
         while True:
             ### Emotion levels example
-            # d_h, d_s, d_sh, d_a = _ask_4_numbers()
-            # k = "update_emotions"
-            # client.set_emotion_levels(d_h, d_s, d_sh, d_a)
+            d_h, d_s, d_sh, d_a = _ask_4_numbers()
+            k = "update_emotions"
+            client.set_emotion_levels(d_h, d_s, d_sh, d_a)
             
             ### Jauge score example
             # k = "update_jauge_score"
@@ -56,9 +56,9 @@ if __name__ == "__main__":
             ### Stepper motor example
             # # k = "mom_activity_stepper_control_turn_right_90"
             # # k = "mom_activity_stepper_control_init_position"
-            input("Press Enter to continue...")
-            x += 90
-            k = f'mom_activity_stepper_{x}'
+            # input("Press Enter to continue...")
+            # x += 90
+            # k = f'mom_activity_stepper_{x}'
 
             # k = "choice_activity_step_1_finished"
 
