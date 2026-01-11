@@ -123,7 +123,7 @@ extension ServerManager {
         guard let obj = activities.first(where: { $0[activityName] != nil }),
               let payload = obj[activityName] as? [String: Any]
         else { return nil }
-        return payload["connected"] as? Bool
+        return boolValue(payload["connected"])
     }
 
     func syncActivityFromGlobalJSON(_ activityName: String) {
@@ -141,7 +141,6 @@ extension ServerManager {
             return
         }
     }
-
     
     private func extractActionSteps(activityName: String) -> [ActivityActionStep] {
         guard let activities = globalJSON["activity"] as? [[String: Any]] else { return [] }
@@ -164,15 +163,14 @@ extension ServerManager {
             let actionsRaw = rawActionsAny.compactMap { $0 as? [String: Any] }
 
             let stepId = idString(s["id"])
-            let authorized = (s["authorized"] as? Bool) ?? false
-            let finished = (s["finished"] as? Bool) ?? false
+            let authorized = boolValue(s["authorized"])
+            let finished = boolValue(s["finished"])
 
             let actions: [ActivityAction] = actionsRaw.map { a in
                 let actionId = idString(a["id"])
                 let type = (a["type"] as? String) ?? ""
-
                 let file = a["file"] as? String
-                let aFinished = a["finished"] as? Bool
+                let aFinished = boolValue(a["finished"])
                 let name = a["name"] as? String
                 let chosen = a["chosen"] as? Int
 
@@ -205,10 +203,19 @@ extension ServerManager {
             )
         }
     }
-
-
-
     
+    private func boolValue(_ any: Any?) -> Bool {
+        if let b = any as? Bool { return b }
+        if let i = any as? Int { return i != 0 }
+        if let d = any as? Double { return d != 0 }
+        if let s = any as? String {
+            let v = s.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            if ["true", "1", "yes", "y", "on"].contains(v) { return true }
+            if ["false", "0", "no", "n", "off"].contains(v) { return false }
+        }
+        return false
+    }
+
     func extractChoiceSteps(activityName: String) -> [ChoiceStep] {
         guard let activities = globalJSON["activity"] as? [[String: Any]] else { return [] }
         guard let obj = activities.first(where: { $0[activityName] != nil }),
@@ -473,7 +480,7 @@ extension ServerManager {
         guard let obj = activities.first(where: { $0[activityName] != nil }),
               let payload = obj[activityName] as? [String: Any]
         else { return false }
-        return (payload["finished"] as? Bool) ?? false
+        return boolValue(payload["finished"])
     }
     
     func setAuthorizedInGlobal(activityName: String, value: Bool) {
@@ -494,7 +501,7 @@ extension ServerManager {
         guard let obj = activities.first(where: { $0[activityName] != nil }),
               let payload = obj[activityName] as? [String: Any]
         else { return false }
-        return (payload["authorized"] as? Bool) ?? false
+        return boolValue(payload["authorized"])
     }
     
     func setChoiceAuthorizedInGlobal(choiceId: String, value: Bool) {

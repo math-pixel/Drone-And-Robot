@@ -177,6 +177,7 @@ private struct HeaderView: View {
 }
 
 private struct CardContentView: View {
+    @EnvironmentObject var server: ServerManager
     let activityName: String
     let isConnected: Bool
     let actionSteps: [ActivityActionStep]
@@ -187,12 +188,52 @@ private struct CardContentView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         } else {
-            ActionStepsView(
-                activityName: activityName,
-                isConnected: isConnected,
-                steps: actionSteps
-            )
+            StepsOnlyView(activityName: activityName, isConnected: isConnected, steps: actionSteps)
         }
+    }
+}
+
+private struct StepsOnlyView: View {
+    @EnvironmentObject var server: ServerManager
+    let activityName: String
+    let isConnected: Bool
+    let steps: [ActivityActionStep]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(steps) { s in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        StepAuthorizedDot(authorized: s.authorized, finished: s.finished)
+
+                        Text("Step \(s.id)")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+
+                        Spacer()
+
+                        if !s.authorized {
+                            Button("Authorize") {
+                                if activityName == "choice_activity" {
+                                    server.authorizeChoiceStep(stepId: s.id)
+                                } else {
+                                    server.authorizeStep(activityName: activityName, stepId: s.id)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                            .disabled(!isConnected)
+                        }
+                    }
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.gray.opacity(0.10))
+                )
+            }
+        }
+        .padding(.top, 2)
     }
 }
 
