@@ -3,6 +3,17 @@ const WS_URL = window.APP_CONFIG.WS_URL;
 const MAPPING_URL = "./answer.mapping.json";
 const QCM_URL = "../test_activity/qcm.geometry.json"; // ajuste si besoin (même fichier que test_activity)
 
+const RECONNECT_MS = 5000;
+let reconnectTimer = null;
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connect();
+  }, RECONNECT_MS);
+}
+
 const els = {
   btnConnect: document.getElementById("btnConnect"),
   btnStart: document.getElementById("btnStart"),
@@ -114,6 +125,7 @@ function resetUI() {
   els.btnLetter.classList.remove("good", "bad");
 }
 
+// ✅ REMPLACE ta fonction connect() par celle-ci
 function connect() {
   if (
     ws &&
@@ -121,12 +133,18 @@ function connect() {
   )
     return;
 
-  els.btnConnect.disabled = true;
-  showScreen("start");
-  els.btnStart.disabled = true;
+  // reset UI côté réseau
   canStart = false;
+  els.btnStart.disabled = true;
+
+  // si tu veux garder le bouton CONNECT utilisable après un drop, ne le lock pas définitivement
+  els.btnConnect.disabled = true;
 
   ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    // connecté -> on attend identification_request
+  };
 
   ws.onmessage = (evt) => {
     const raw = typeof evt.data === "string" ? evt.data : "";
@@ -143,6 +161,7 @@ function connect() {
       sendIdentificationAnswer2();
       canStart = true;
       els.btnStart.disabled = false;
+      showScreen("start");
       return;
     }
 
@@ -160,25 +179,28 @@ function connect() {
 
     const mEcho = key.match(/^test_activity_step_1_action_(\d+)_(a|b|c)$/);
     if (mEcho) {
-      onAnswerEcho(Number(mEcho[1]), mEcho[2]);
+      onAnswerEcho(Number(mEcho[1]));
       return;
     }
   };
 
   ws.onerror = () => {
-    els.btnConnect.disabled = false;
-    ws = null;
-    lastRoot = null;
-    resetUI();
-    showScreen("connect");
+    // on laisse onclose gérer la reconnexion
   };
 
   ws.onclose = () => {
-    els.btnConnect.disabled = false;
     ws = null;
     lastRoot = null;
+
+    // UI: retour écran connect + bouton réactivé
+    els.btnConnect.disabled = false;
+    els.btnStart.disabled = true;
+    canStart = false;
+
     resetUI();
     showScreen("connect");
+
+    scheduleReconnect();
   };
 }
 
@@ -303,10 +325,15 @@ function onActionFinished(actionId) {
   currentLetter = null;
 }
 
+function onTap(e) {
+  e.preventDefault(); // évite les doubles events / délai
+  sendAnswer();
+}
 
 els.btnConnect.addEventListener("click", connect);
 els.btnStart.addEventListener("click", sendStart);
-els.btnLetter.addEventListener("click", sendAnswer);
+els.btnLetter.addEventListener("touchstart", onTap, { passive: false });
+els.btnLetter.addEventListener("click", () => sendAnswer());
 
 loadMapping();
 document.querySelectorAll(".btnPick").forEach((btn) => {
@@ -318,4 +345,5 @@ document.querySelectorAll(".btnPick").forEach((btn) => {
 });
 loadQcm();
 showScreen("pick");
+scheduleReconnect();
 resetUI();

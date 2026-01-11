@@ -111,8 +111,8 @@ if __name__ == "__main__":
                 # ─────────────────────────────────────────────
                 # STEPPER KEY INIT
                 # ─────────────────────────────────────────────
-                initial_angle = score_to_angle(action["score"], target)
-                await client._send_json(key=f"{client.client_key}_stepper_{initial_angle}")
+                # initial_angle = score_to_angle(action["score"], target)
+                # await client._send_json(key=f"{client.client_key}_stepper_{initial_angle}")
 
                 last_sign: str | None = None  # "pos" or "neg"
 

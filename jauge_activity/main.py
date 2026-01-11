@@ -27,7 +27,8 @@ strips = {
             pin_num=18, 
             num_leds=NUM_LEDS,
             num_columns=NUMBER_COLOMN,
-            leds_by_column=NUMBER_LEDS_BY_COLUMN
+            leds_by_column=NUMBER_LEDS_BY_COLUMN,
+            flip_vertical=True
         ),
         "color": (255, 223, 0)     # Jaune
     },
@@ -36,7 +37,8 @@ strips = {
             pin_num=21, 
             num_leds=NUM_LEDS,
             num_columns=NUMBER_COLOMN,
-            leds_by_column=NUMBER_LEDS_BY_COLUMN
+            leds_by_column=NUMBER_LEDS_BY_COLUMN,
+            flip_vertical=True
         ),
         "color": (255, 100, 0)     # Orange
     },
@@ -45,7 +47,8 @@ strips = {
             pin_num=12, 
             num_leds=NUM_LEDS,
             num_columns=NUMBER_COLOMN,
-            leds_by_column=NUMBER_LEDS_BY_COLUMN
+            leds_by_column=NUMBER_LEDS_BY_COLUMN,
+            flip_vertical=True
         ),
         "color": (180, 0, 255)     # Violet
     },
@@ -54,7 +57,8 @@ strips = {
             pin_num=16, 
             num_leds=NUM_LEDS,
             num_columns=NUMBER_COLOMN,
-            leds_by_column=NUMBER_LEDS_BY_COLUMN
+            leds_by_column=NUMBER_LEDS_BY_COLUMN,
+            flip_vertical=True
         ),
         "color": (255, 0, 0)       # Rouge
     }
