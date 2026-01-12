@@ -60,6 +60,8 @@ class DepthDetectorDelegate:
         grid_shape = self.grid_validation.shape if self.grid_validation is not None else (4, 4)
         self.current_grid_completed = np.zeros(grid_shape, dtype=int)
 
+        self.last_grid = np.zeros(grid_shape, dtype=int)
+        
         # Load multiple sounds at once
         for row in range(len(self.audio_grid)):
             for col in range(len(self.audio_grid[row])):
@@ -173,7 +175,7 @@ class DepthDetectorDelegate:
 
         # Logique booléenne :
         # On cherche les cases où : (Nouvelle est True) ET (Ancienne est False)
-        new_activations = (new_grid == 1) & (self.current_grid_completed == 0)
+        new_activations = (new_grid == 1) & (self.last_grid == 0)
 
         # np.argwhere renvoie une liste des coordonnées [row, col] où la condition est Vraie
         indices = np.argwhere(new_activations)
@@ -208,6 +210,9 @@ class DepthDetectorDelegate:
         # Traiter les valeurs de la grille reçues du DepthDetector
         print("Grille de profondeur mise à jour:")
         
+        # 2. Mettre à jour last_grid APRÈS la comparaison
+        self.last_grid = grid_values.copy()
+
         # 2. On met à jour la variable de stockage (l'ancienne grille devient la fusionnée)
         self.joinGrid(grid_values)
         
@@ -260,4 +265,8 @@ if __name__ == "__main__":
     depth_detector_delegate.wsClient = client
     depth_detector_delegate.loop = asyncio.get_event_loop()
 
+    async def main():
+        while True:
+            time.sleep(1)
+    #asyncio.run(main())
     asyncio.run(client.run())
