@@ -1,4 +1,5 @@
 import pygame
+import threading
 
 
 class AudioPlayer:
@@ -13,6 +14,52 @@ class AudioPlayer:
         pygame.mixer.init()
         self.sounds = {}    # Dictionary to store sounds
         self.channels = {}  # Channels to control each sound
+        
+        # NOUVEAU : Callback système
+        self.on_sound_finished = None  # Callback quand un son finit
+        self._current_sound_name = None
+        self._monitoring = False
+        self._monitor_thread = None
+    
+    def set_on_finished_callback(self, callback):
+        """Définit la callback appelée quand un son finit.
+        
+        Args:
+            callback: Fonction qui reçoit le nom du son terminé
+        """
+        self.on_sound_finished = callback
+    
+    def _start_monitoring(self, name: str):
+        """Lance la surveillance de fin de son"""
+        self._current_sound_name = name
+        
+        if self._monitoring:
+            return
+        
+        self._monitoring = True
+        self._monitor_thread = threading.Thread(target=self._monitor_sound, daemon=True)
+        self._monitor_thread.start()
+    
+    def _monitor_sound(self):
+        """Surveille si le son est terminé et appelle la callback"""
+        import time
+        while self._monitoring:
+            if self._current_sound_name:
+                if not self.is_playing(self._current_sound_name):
+                    # Son terminé
+                    finished_name = self._current_sound_name
+                    self._current_sound_name = None
+                    
+                    # Appeler la callback
+                    if self.on_sound_finished:
+                        self.on_sound_finished(finished_name)
+                    
+                    # Arrêter la surveillance si plus de son
+                    if not self._current_sound_name:
+                        self._monitoring = False
+                        return
+            
+            time.sleep(0.05)  # Vérifier toutes les 50ms
     
     def load(self, name: str, path: str):
         """Load an audio file and assign it a name."""
@@ -23,21 +70,18 @@ class AudioPlayer:
             print(f"✗ Error loading '{name}': {e}")
     
     def load_multiple(self, files: dict):
-        """Load multiple audio files.
-        
-        Args:
-            files: {"name": "path/to/file.wav", ...}
-        """
+        """Load multiple audio files."""
         for name, path in files.items():
             self.load(name, path)
     
-    def play(self, name: str, volume: float = 1.0, loop: bool = False):
+    def play(self, name: str, volume: float = 1.0, loop: bool = False, notify_on_finish: bool = True):
         """Play a sound with specified volume.
         
         Args:
             name: Name of the sound to play
             volume: Volume between 0.0 and 1.0
             loop: True to loop indefinitely
+            notify_on_finish: True to trigger callback when finished
         
         Returns:
             The channel playing the sound, or None if error
@@ -47,11 +91,15 @@ class AudioPlayer:
             return None
         
         sound = self.sounds[name]
-        sound.set_volume(max(0.0, min(1.0, volume)))  # Clamp between 0 and 1
+        sound.set_volume(max(0.0, min(1.0, volume)))
         
         loops = -1 if loop else 0
         channel = sound.play(loops=loops)
         self.channels[name] = channel
+        
+        # NOUVEAU : Démarrer la surveillance si callback demandée
+        if notify_on_finish and not loop and self.on_sound_finished:
+            self._start_monitoring(name)
         
         return channel
     
@@ -90,6 +138,10 @@ class AudioPlayer:
             return self.channels[name].get_busy()
         return False
     
+    def is_any_playing(self) -> bool:
+        """Check if any sound is currently playing."""
+        return pygame.mixer.get_busy()
+    
     def get_volume(self, name: str) -> float:
         """Get current volume of a sound."""
         if name in self.sounds:
@@ -127,58 +179,6 @@ class AudioPlayer:
     
     def close(self):
         """Release audio resources."""
+        self._monitoring = False
         self.unload_all()
         pygame.mixer.quit()
-
-
-# ============================================================
-# USAGE EXAMPLE
-# ============================================================
-
-if __name__ == "__main__":
-    import time
-    
-    # Create player
-    player = AudioPlayer()
-    
-    # Load multiple sounds at once
-    player.load_multiple({
-        "music": "music.wav",
-        "explosion": "explosion.wav",
-        "jump": "jump.wav"
-    })
-    
-    # Or load one by one
-    player.load("faux", "./utils/faux.mp3")
-    
-    # Display loaded sounds
-    player.list_sounds()
-    
-    # Play with different volumes
-    player.play("music", volume=0.3, loop=True)  # Background music at 30%
-    
-    time.sleep(2)
-    
-    player.play("faux", volume=0.8)  # Sound effect at 80%
-    
-    time.sleep(1)
-    
-    # Change volume while playing
-    player.set_volume("music", 0.5)
-    print(f"Music volume: {player.get_volume('music'):.0%}")
-    
-    # Check if playing
-    print(f"Music is playing: {player.is_playing('music')}")
-    
-    time.sleep(2)
-    
-    # Pause and resume
-    player.pause("music")
-    time.sleep(1)
-    player.resume("music")
-    
-    time.sleep(2)
-    
-    # Stop and cleanup
-    player.stop_all()
-    player.close()

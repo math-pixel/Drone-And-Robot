@@ -4,6 +4,7 @@ import numpy as np
 import threading
 import asyncio
 import time
+from collections import deque
 
 # --- BLOC MAGIQUE A METTRE TOUT EN HAUT ---
 
@@ -78,6 +79,46 @@ class DepthDetectorDelegate:
         #     "1": "explosion.wav",
         #     "2": "jump.wav"
         # })
+        
+        # NOUVEAU : Système de queue audio
+        self.sound_queue = deque()  # Queue de tuples (row, col, sound_name)
+    
+        # Configurer la callback
+        self.player.set_on_finished_callback(self._on_sound_finished)
+
+    def _on_sound_finished(self, finished_sound_name):
+        """Callback appelée quand un son est terminé"""
+        print(f"✅ Son terminé: {finished_sound_name}")
+        self._play_next_in_queue()
+
+    def _play_next_in_queue(self):
+        """Joue le prochain son valide de la queue"""
+        while self.sound_queue:
+            row, col, sound_name = self.sound_queue.popleft()
+            
+            # Vérifier si la cellule est TOUJOURS active
+            if row < self.last_grid.shape[0] and col < self.last_grid.shape[1]:
+                if self.last_grid[row, col] == 1:
+                    # Cellule encore active → Jouer le son
+                    print(f"🔊 Joue depuis queue: {sound_name} ({row}, {col})")
+                    self.player.play(sound_name)
+                    return
+                else:
+                    # Cellule inactive → Ignorer
+                    print(f"⏭️ Ignoré (cellule inactive): {sound_name} ({row}, {col})")
+        
+        print("📭 Queue audio vide")
+
+    def queue_sound(self, row, col, sound_name):
+        """Ajoute un son à la queue ou le joue directement"""
+        # Si aucun son ne joue, jouer directement
+        if not self.player.is_any_playing():
+            print(f"🔊 Joue directement: {sound_name} ({row}, {col})")
+            self.player.play(sound_name)
+        else:
+            # Sinon, ajouter à la queue
+            self.sound_queue.append((row, col, sound_name))
+            print(f"📝 Ajouté à la queue: {sound_name} ({row}, {col})")
 
     def start_detection(self, action: dict):
         self.action = action
@@ -188,40 +229,32 @@ class DepthDetectorDelegate:
         return None
 
     def process(self, grid_values):
-    
-        # if self.authorized == False:
-        #     return
-
-        # --- AJOUT ICI ---
-        # 1. On cherche s'il y a un nouvel index activé par rapport à ce qu'on avait avant
+        # DEBUG : Afficher les grilles pour comprendre
+        print(f"last_grid:\n{self.last_grid}")
+        print(f"grid_values:\n{grid_values}")
+        
+        # 1. Chercher les nouvelles activations AVANT de mettre à jour last_grid
         new_index = self.find_new_activated_index(grid_values)
 
         if new_index is not None:
             print(f"!!! NOUVELLE ACTIVATION DÉTECTÉE À L'INDEX : {new_index} !!!")
-            
-            # Optionnel : Jouer le son spécifique à cet index immédiatement
             row, col = new_index
             if 0 <= row < len(self.audio_grid) and 0 <= col < len(self.audio_grid[row]):
                 nom_son = self.audio_grid[row][col]
-                print(f"Joue le son : {nom_son}")
-                self.player.play(str(nom_son))
-        # -----------------
+                self.queue_sound(row, col, str(nom_son))
+        else:
+            print("Pas de nouvelle activation")
 
-        # Traiter les valeurs de la grille reçues du DepthDetector
-        print("Grille de profondeur mise à jour:")
-        
         # 2. Mettre à jour last_grid APRÈS la comparaison
         self.last_grid = grid_values.copy()
 
-        # 2. On met à jour la variable de stockage (l'ancienne grille devient la fusionnée)
+        # 3. Mettre à jour current_grid_completed
         self.joinGrid(grid_values)
         
         if self.isActivityFinish():
             print("Envoie Activité terminée !")
             self.authorized = False
             asyncio.run(self.wsClient.send_action_finished("1", self.action["id"]))
-        else:
-            print("Envoie Nouvelle donnée reçue sur la grille de profondeur.")
 
 if __name__ == "__main__":
 
