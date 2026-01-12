@@ -124,6 +124,11 @@ extension ServerManager {
                 if sendJSON(incoming, to: "mom_stepper_activity", context: "forward \(k)") {
                     log("➡️ Forward \(k) -> mom_stepper_activity")
                 }
+                
+            case let k where k.hasPrefix("global_sound_"):
+                if sendJSON(incoming, to: "sound_atmosphere_activity", context: "forward \(k)") {
+                    log("➡️ Forward \(k) -> sound_atmosphere_activity")
+                }
 
             case let k where k.contains("_activity_finished_step_"):
                 if let (activityName, stepId) = parseFinishedStepKey(k) {

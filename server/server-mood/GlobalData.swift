@@ -62,29 +62,37 @@ enum Sequencing {
         "choice_activity_step_1_finished": [
             ("presentation_activity", "presentation_activity_step_1_authorization"),
             ("presentation_sphero_activity", "presentation_sphero_activity_step_1_authorization"),
+            ("sound_atmosphere_activity", "global_sound_sonnerie"),
         ],
-
-        //"presentation_activity_finished": [
-        //    ("choice_activity", "choice_activity_step_2_authorization"),
-        //],
+        "presentation_activity_finished": [
+            ("choice_activity", "choice_activity_step_2_authorization"),
+            ("sound_atmosphere_activity", "global_sound_sonnerie"),
+        ],
         "choice_activity_step_2_finished": [
             ("test_activity", "test_activity_step_1_authorization"),
+            ("sound_atmosphere_activity", "global_sound_sonnerie"),
         ],
-        //"test_activity_finished": [
-        //  ("choice_activity", "choice_activity_step_3_authorization"),
-        //],
+        "test_activity_finished": [
+          ("choice_activity", "choice_activity_step_3_authorization"),
+          ("sound_atmosphere_activity", "global_sound_sonnerie"),
+        ],
         "choice_activity_step_3_finished": [
             ("throw_activity", "throw_activity_step_1_authorization"),
+            ("sound_atmosphere_activity", "global_sound_sonnerie"),
         ],
-        //"throw_activity_finished": [
-        //  ("choice_activity", "choice_activity_step_4_authorization"),
-        //],
+        "throw_activity_finished": [
+          ("choice_activity", "choice_activity_step_4_authorization"),
+          ("sound_atmosphere_activity", "global_sound_sonnerie"),
+        ],
         "choice_activity_step_4_finished": [
             ("mom_activity", "mom_activity_step_1_authorization"),
+            ("sound_atmosphere_activity", "global_sound_sonnerie"),
         ],
-        //"mom_activity_finished": [
-        //    ("choice_activity", "choice_activity_step_5_authorization"),
-        //],
+        "mom_activity_finished": [
+            ("choice_activity", "choice_activity_step_5_authorization"),
+            ("sound_atmosphere_activity", "global_sound_sonnerie"),
+        ],
+        
         "test_activity_start": [
             ("test_activity", "test_activity_start"),
         ],
@@ -134,6 +142,7 @@ enum GlobalDataConfig {
         "answer_3_test_activity",
         "jauge_activity",
         "mom_stepper_activity",
+        "sound_atmosphere_activity"
     ]
 
     static func makeInitialGlobalJSON(wsServerAddress: String) -> [String: Any] {
@@ -164,6 +173,15 @@ enum GlobalDataConfig {
                             "volume": 0.8,
                             "loop": true
                         ]
+                    ]
+                ],
+                [
+                    "sound_atmosphere_activity": [
+                        "authorized": false,
+                        "finished": false,
+                        "ws_session_id": "",
+                        "connected": false,
+                        "steps": []
                     ]
                 ],
                 [

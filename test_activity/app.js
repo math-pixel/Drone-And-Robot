@@ -2,6 +2,16 @@
 const WS_URL = window.APP_CONFIG.WS_URL;
 const STEPS_URL = "./steps.test_activity.json";
 const QCM_URL = "./qcm.geometry.json";
+const RECONNECT_MS = 5000;
+let reconnectTimer = null;
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connect();
+  }, RECONNECT_MS);
+}
 
 // ✅ AJOUTE en haut (après les const)
 const audio = {
@@ -332,6 +342,13 @@ function connect() {
 
   ws = new WebSocket(WS_URL);
 
+  ws.onopen = () => {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+  };
+
   ws.onmessage = (evt) => {
     const raw = typeof evt.data === "string" ? evt.data : "";
     const parsed = safeJsonParse(raw);
@@ -375,25 +392,26 @@ function connect() {
   };
 
   ws.onerror = () => {
-    ws = null;
-    lastRoot = null;
-    els.btnConnect.disabled = false;
-    hasAuthorization = false;
-    hasStartSignal = false;
-    stopAllTimers();
-    stopBg();
-    showScreen("connect");
+    // force un onclose derrière dans pas mal de cas, sinon on planifie quand même
+    try {
+      ws?.close();
+    } catch {}
+    scheduleReconnect();
   };
 
   ws.onclose = () => {
     ws = null;
     lastRoot = null;
     els.btnConnect.disabled = false;
+
     stopAllTimers();
+    stopCountdown();
     hasAuthorization = false;
     hasStartSignal = false;
     stopBg();
+
     showScreen("connect");
+    scheduleReconnect();
   };
 }
 

@@ -1,0 +1,32 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WS Audio Listener</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="status">
+      <span class="dot" id="dot"></span>
+      <span id="statusText">DISCONNECTED</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="card">
+      <div class="label">WebSocket</div>
+      <div class="mono" id="wsUrl">—</div>
+
+      <div class="label mt">Logs</div>
+      <textarea id="log" readonly></textarea>
+      <div class="hint">⚠️ Sur iOS/Safari, clique “Enable audio” une fois pour autoriser le son.</div>
+    </div>
+  </main>
+
+  <script src="../test_activity/config.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
