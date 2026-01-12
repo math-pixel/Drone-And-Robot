@@ -16,9 +16,18 @@ class VideoPlayer:
         options = [
             "--no-xlib",
             "--aout=alsa",
+            "--video-on-top",
+            "--mouse-hide-timeout=0",
+            "--autoscale",
+            #"--scale=1",
+            #"--zoom=1",
+            "--aspect-ratio=16:9",
+            "--width=1920",
+            "--height=1080"
         ]
+
         if fullscreen:
-            options.append("--fullscreen")
+            #options.append("--fullscreen")
 
         self._instance = vlc.Instance(" ".join(options))
         self._player = self._instance.media_player_new()
@@ -49,8 +58,8 @@ class VideoPlayer:
         self._current_video_id = video_id
         self._player.play()
 
-        if self._fullscreen:
-            threading.Thread(target=self._set_fullscreen_delayed, daemon=True).start()
+        # if self._fullscreen:
+        #     threading.Thread(target=self._set_fullscreen_delayed, daemon=True).start()
 
         print(f"▶ Lecture: {video_id}")
         return True

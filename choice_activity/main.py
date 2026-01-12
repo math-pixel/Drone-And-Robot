@@ -233,7 +233,7 @@ if __name__ == "__main__":
         action_delegate=my_action_handler,
         steps=STEPS
     )
-
+    
     try:
         asyncio.run(client.run())
     except KeyboardInterrupt:
