@@ -1,14 +1,13 @@
 from stupidArtnet import StupidArtnet
 
 class DMXController:
-    def __init__(self, target_ip="127.0.0.1", packet_rate=30):
-        """
-        target_ip: L'adresse IP du nœud DMX ou du logiciel de lumière (ex: Resolume, GrandMA, ou localhost).
-        packet_rate: Nombre de paquets par seconde (Hz).
-        """
+    def __init__(self, target_ip="127.0.0.1", packet_rate=30, universe=0):
         self.target_ip = target_ip
         self.packet_rate = packet_rate
-        self.universes = {} # Dictionnaire pour stocker les objets ArtNet par univers
+        self.default_universe = universe
+        self.node = None
+        self._init_artnet()
+        self.universes = universe
 
     def _get_or_create_universe(self, universe_id):
         """Initialise un nouvel univers s'il n'existe pas encore."""
@@ -51,6 +50,31 @@ class DMXController:
             print(f"[DMX] U:{universe} | Ch:{channel} -> {value}")
         except Exception as e:
             print(f"[ERREUR DMX] {e}")
+    
+    def set_rgb(self, start_channel, color_tuple):
+        """Helper pour définir R, G, B de manière sécurisée"""
+        # Vérification de sécurité
+        if not isinstance(color_tuple, (list, tuple)):
+            print(f"❌ ERREUR: color_tuple n'est pas une liste/tuple mais {type(color_tuple)} -> {color_tuple}")
+            return
+
+        try:
+            r, g, b = color_tuple
+            self.set(start_channel + 1, r)
+            self.set(start_channel + 2, g)
+            self.set(start_channel + 3, b)
+        except Exception as e:
+            print(f"❌ ERREUR dans set_rgb: {e}")
+
+    def _init_artnet(self):
+        # On s'assure que tout est du bon type
+        target = str(self.target_ip)
+        universe = int(self.default_universe)
+        
+        # StupidArtnet(ip, universe, packet_size, frame_rate, is_broadcast, enable_loop)
+        self.node = StupidArtnet(target, universe, 512, 30, True, True)
+        self.node.start()
+        print(f"[DMX] Univers {universe} démarré vers {target}")
 
     def blackout(self, universe=1):
         """Met tout l'univers à 0."""
@@ -78,7 +102,7 @@ if __name__ == "__main__":
         dmx.set(channel=1, value=255, universe=0)
         
         # Mettre le canal 10 à 50% sur l'univers 2
-        dmx.set(channel=10, value=127, universe=2)
+        dmx.set(channel=2, value=127, universe=0)
         
         # Petit effet chenillard simple pour tester
         # for i in range(1, 10):
@@ -93,4 +117,10 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
+        dmx.blackout(universe=1) 
+        
+        # Petit délai pour être sûr que QLC+ reçoive bien le 0
+        time.sleep(0.1) 
+        
+        # 2. Ensuite on coupe le thread
         dmx.stop()
