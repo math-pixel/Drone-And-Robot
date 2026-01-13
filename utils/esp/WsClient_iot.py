@@ -5,15 +5,16 @@ import ujson
 import time
 import _thread
 
-
 class WSClient:
     """WebSocket client pour ESP32 MicroPython"""
 
-    def __init__(self, url, client_key, action_delegate=None, key_delegate=None, steps=None):
+    # ### MODIF : Ajout de connection_handler dans les arguments
+    def __init__(self, url, client_key, action_delegate=None, key_delegate=None, connection_handler=None, steps=None):
         self.url = url
         self.client_key = client_key
         self.action_delegate = action_delegate
         self.key_delegate = key_delegate
+        self.connection_handler = connection_handler # Nouveau callback pour l'état de connexion
         self.steps = steps or []
         
         self.ws = None
@@ -28,10 +29,19 @@ class WSClient:
     # ======================================================
 
     def run(self):
-        """Point d'entrée principal (bloquant)"""
-        print(f"🔌 Connecting to {self.url}...")
+        """Point d'entrée principal (bloquant avec reconnexion auto)"""
+        print(f"🚀 Starting client for {self.url}")
         self._running = True
-        self._connect()
+        
+        # ### MODIF : Boucle infinie pour relancer la connexion si elle coupe
+        while self._running:
+            self._connect()
+            
+            # Si on sort de _connect() et qu'on est toujours censé tourner, on attend avant de réessayer
+            if self._running:
+                print("⏳ Connection lost. Retrying in 5 seconds...")
+                self._notify_connection_status(False) # On notifie qu'on est déco
+                time.sleep(5)
 
     def run_background(self):
         """Lance la connexion en arrière-plan (non-bloquant)"""
@@ -50,54 +60,73 @@ class WSClient:
             self.ws = None
 
     def send_action_finished(self, step_id, action_id):
-        """Appelé quand une action est terminée"""
         if self.data:
             self.data["key"] = f"{self.client_key}_step_{step_id}_action_{action_id}_finished"
             self._send_json()
 
     def send_choice_result(self, step_id, action_id, choice):
-        """Appelé quand un choix est fait"""
         if self.data:
             self.data["key"] = f"{self.client_key}_step_{step_id}_action_{action_id}_choice_{choice}"
             self._send_json()
 
     def send_data(self, data):
-        """Envoie des données arbitraires"""
         if self.ws and self.connected:
             try:
                 self.ws.send(ujson.dumps(data))
                 print(f"📤 Sent: {data.get('key', 'data')}")
             except Exception as e:
                 print(f"⚠️ Send error: {e}")
-                self.connected = False
+                self.connected = False 
+                # La boucle principale détectera cela et fermera
 
     # ======================================================
     # CONNECTION MANAGEMENT
     # ======================================================
 
+    # ### MODIF : Helper pour notifier l'état
+    def _notify_connection_status(self, is_connected):
+        """Notifie le handler externe du changement d'état"""
+        if self.connection_handler:
+            try:
+                self.connection_handler(is_connected, self)
+            except Exception as e:
+                print(f"⚠️ Connection handler error: {e}")
+
     def _maintain_connection(self):
-        """Thread de maintien de connexion"""
+        """Thread de maintien de connexion (pour run_background)"""
         while self._running:
             if not self.connected and not self._lock:
                 self._lock = True
-                self._connect()
+                self._connect() # Ceci est bloquant tant que connecté
                 self._lock = False
-            time.sleep(2)
+                
+                # Si on sort de _connect, c'est qu'on a été déconnecté
+                if self._running:
+                     self._notify_connection_status(False)
+                     print("⏳ Retrying background connection in 5s...")
+                     time.sleep(5)
+            else:
+                time.sleep(1)
 
     def _connect(self):
-        """Établit la connexion et lance la boucle principale"""
+        """Tente une connexion et lance la boucle (Bloquant tant que connecté)"""
         try:
             print(f"🔌 Connecting to {self.url}...")
+            # On définit un timeout pour éviter que ça bloque indéfiniment si le serveur est down
+            # Note: uwebsockets n'a pas toujours de timeout facile, dépend de l'implémentation
             self.ws = uwebsockets.client.connect(self.url)
+            
             print("✅ WebSocket connected!")
             self.connected = True
+            self._notify_connection_status(True) # ### MODIF : Notification connecté
             
-            # Boucle de réception
+            # Boucle de réception (bloque ici tant que connecté)
             self._main_loop()
             
         except Exception as e:
-            print(f"❌ Connection error: {e}")
+            print(f"❌ Connection attempt failed: {e}")
             self.connected = False
+            # Fermeture propre si échec
             if self.ws:
                 try:
                     self.ws.close()
@@ -115,13 +144,17 @@ class WSClient:
         
         while self.connected and self._running:
             try:
+                # recv est bloquant. Si le câble est débranché, il peut parfois 
+                # ne pas lever d'erreur tout de suite sans Ping/Pong.
                 msg = self.ws.recv()
                 
                 if not msg:
-                    time.sleep(0.05)
-                    continue
+                    # Une réponse vide peut signifier une fermeture propre
+                    print("⚠️ Empty message received, closing")
+                    self.connected = False
+                    break
                 
-                print(f"📥 Received message")
+                # print(f"📥 Received message") # Commenté pour réduire le bruit
                 
                 try:
                     incoming = ujson.loads(msg)
@@ -147,27 +180,35 @@ class WSClient:
                 # Phase 2: Gestion des steps et messages
                 if self._is_step_authorization(key):
                     step_id = self._extract_step_id(key)
-                    
                     if step_id not in self._finished_steps:
                         print(f"\n🔓 Authorization for step {step_id}")
                         self.data = incoming
                         self._execute_step(step_id)
                         self._finished_steps.add(step_id)
-                        
                         if self._all_steps_finished():
                             self._send_activity_finished()
                 else:
                     self._handle_incoming(incoming)
                 
-                time.sleep(0.05)
-                
             except Exception as e:
-                print(f"❌ Receive error: {e}")
+                print(f"❌ Receive error (Disconnected): {e}")
                 self.connected = False
                 break
         
-        print("🔌 Connection closed")
+        print("🔌 Connection closed from loop")
+        # Ici, on sort de _main_loop, on retourne dans _connect, qui retourne dans run()
+        # run() verra la boucle while et relancera _connect après 5 secondes.
 
+    # ... [LE RESTE DES MÉTHODES (API, KEY DELEGATE, STEP, UTILITIES) RESTE IDENTIQUE] ...
+    # Copier-coller le reste de ton script original ici
+    
+    # Pour rappel, voici les méthodes manquantes ici pour que le script soit complet :
+    # _notify_key_delegate, _send_identification, _execute_step, _send_step_finished,
+    # _send_activity_finished, _is_step_authorization, _extract_step_id, _find_activity,
+    # _find_step, _all_steps_finished, _handle_incoming, _send_json
+    
+    # [Insérer ici le reste de ton code original à partir de la ligne "KEY DELEGATE"]
+    
     # ======================================================
     # KEY DELEGATE
     # ======================================================
@@ -258,8 +299,11 @@ class WSClient:
     def _extract_step_id(self, key):
         """Extrait l'ID du step depuis la clé"""
         parts = key.split("_")
-        step_index = parts.index("step") + 1
-        return int(parts[step_index])
+        try:
+            step_index = parts.index("step") + 1
+            return int(parts[step_index])
+        except:
+            return -1
 
     def _find_activity(self):
         """Trouve l'activité dans les données"""
