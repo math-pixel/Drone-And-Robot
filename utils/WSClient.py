@@ -21,56 +21,121 @@ class KeyDelegate(Protocol):
 # WS CLIENT
 # ======================================================
 
+import asyncio
+import json
+import websockets
+from typing import Optional, List, Dict, Set, Callable, Any
+
+# Définition de types pour la clarté
+ActionDelegate = Callable[[Dict, Any, int], Any]
+KeyDelegate = Callable[[Dict, Any], Any]
+ConnectionHandler = Callable[[bool, Any], Any]
+
 class WSClient:
-    """WebSocket client for activity management."""
+    """WebSocket client for activity management with Auto-Reconnection."""
 
     def __init__(
         self,
         url: str,
         client_key: str,
         action_delegate: ActionDelegate,
-        key_delegate: Optional[KeyDelegate] = None,  # ← Nouveau paramètre
+        key_delegate: Optional[KeyDelegate] = None,
+        connection_handler: Optional[ConnectionHandler] = None, # ### MODIF : Nouveau paramètre
         steps: Optional[List[Dict]] = None
     ):
         self.url = url
         self.client_key = client_key
         self.action_delegate = action_delegate
-        self.key_delegate = key_delegate  # ← Stockage du delegate
+        self.key_delegate = key_delegate
+        self.connection_handler = connection_handler # ### MODIF : Stockage du handler
         self.steps = steps or []
         
         self.ws = None
         self.data = None
         self._finished_steps: Set[int] = set()
+        self._running = False # ### MODIF : Pour contrôler la boucle de reconnexion
 
     # ======================================================
     # PUBLIC API
     # ======================================================
 
     async def run(self):
-        """Point d'entrée principal."""
-        print(f"🔌 Connecting to {self.url}...")
+        """Point d'entrée principal avec reconnexion automatique."""
+        self._running = True
+        print(f"🚀 Starting client for {self.url}")
 
-        async with websockets.connect(self.url) as ws:
-            self.ws = ws
+        while self._running:
+            try:
+                print(f"🔌 Connecting to {self.url}...")
+                
+                # ### MODIF : Gestion de la connexion et du cycle de vie
+                async with websockets.connect(self.url) as ws:
+                    self.ws = ws
+                    print("✅ WebSocket connected!")
+                    self._notify_connection_status(True) # Notifier connexion
+                    
+                    try:
+                        # 1. Attente identification_request
+                        await self._wait_for_identification()
+                        
+                        # 2. Envoi identification avec steps
+                        await self._send_identification()
+                        
+                        # 3. Boucle principale: gestion des steps
+                        await self._main_loop()
+                        
+                    except websockets.ConnectionClosed:
+                        print("⚠️ Connection lost inside main loop")
+                        # L'exception remonte pour déclencher le finally du bloc async with
+                    except Exception as e:
+                        print(f"❌ Error during execution: {e}")
             
-            # 1. Attente identification_request
-            await self._wait_for_identification()
+            except (OSError, ConnectionRefusedError, websockets.InvalidURI, websockets.InvalidHandshake) as e:
+                print(f"❌ Connection attempt failed: {e}")
             
-            # 2. Envoi identification avec steps
-            await self._send_identification()
-            
-            # 3. Boucle principale: gestion des steps
-            await self._main_loop()
+            # Une fois sorti du bloc 'async with', on est déconnecté
+            self.ws = None
+            if self._running:
+                self._notify_connection_status(False) # Notifier déconnexion
+                print("⏳ Retrying in 5 seconds...")
+                await asyncio.sleep(5)
+            else:
+                print("🛑 Client stopped gracefully")
+
+    def stop(self):
+        """Arrête la boucle de reconnexion."""
+        self._running = False
+        # Si connecté, on pourrait fermer le socket, mais asyncio gère bien ça via la tâche
+        print("🛑 Stop requested")
 
     async def send_action_finished(self, step_id: int, action_id: int):
         """Appelé par le delegate quand une action est terminée."""
-        self.data["key"] = f"{self.client_key}_step_{step_id}_action_{action_id}_finished"
-        await self._send_json()
+        if self.data:
+            self.data["key"] = f"{self.client_key}_step_{step_id}_action_{action_id}_finished"
+            await self._send_json()
 
     async def send_choice_result(self, step_id: int, action_id: int, choice: int):
         """Appelé par le delegate quand un choix est fait."""
-        self.data["key"] = f"{self.client_key}_step_{step_id}_action_{action_id}_choice_{choice}"
-        await self._send_json()
+        if self.data:
+            self.data["key"] = f"{self.client_key}_step_{step_id}_action_{action_id}_choice_{choice}"
+            await self._send_json()
+
+    # ======================================================
+    # CONNECTION HANDLER
+    # ======================================================
+    
+    # ### MODIF : Helper pour notifier l'état
+    def _notify_connection_status(self, is_connected: bool):
+        if self.connection_handler:
+            try:
+                # On peut utiliser asyncio.create_task si le handler est async, 
+                # ou l'appeler direct s'il est synchrone. Ici on suppose synchrone ou rapide.
+                if asyncio.iscoroutinefunction(self.connection_handler):
+                    asyncio.create_task(self.connection_handler(is_connected, self))
+                else:
+                    self.connection_handler(is_connected, self)
+            except Exception as e:
+                print(f"⚠️ Connection handler error: {e}")
 
     # ======================================================
     # IDENTIFICATION
@@ -84,7 +149,6 @@ class WSClient:
         key = self.data.get("key")
         print(f"📥 Received: {key}")
         
-        # Appel du key_delegate si défini
         await self._notify_key_delegate(self.data)
         
         if key != "identification_request":
@@ -92,10 +156,8 @@ class WSClient:
 
     async def _send_identification(self):
         """Envoie l'identification avec les steps."""
-        # Mise à jour des données
         self.data["key"] = f"identification_{self.client_key}"
         
-        # Trouver et configurer l'activité
         activity = self._find_activity()
         if activity:
             activity["connected"] = True
@@ -114,48 +176,40 @@ class WSClient:
         """Boucle principale: écoute et traite les messages."""
         print("\n🎯 Waiting for step authorizations...")
         
-        try:
-            while True:
-                msg = await self.ws.recv()
-                incoming = json.loads(msg)
-                key = incoming.get("key", "")
+        # Pas de try/except ici pour ConnectionClosed, on laisse remonter à run()
+        while True:
+            msg = await self.ws.recv()
+            incoming = json.loads(msg)
+            key = incoming.get("key", "")
+            
+            await self._notify_key_delegate(incoming)
+            
+            if self._is_step_authorization(key):
+                step_id = self._extract_step_id(key)
                 
-                # ════════════════════════════════════════════
-                # APPEL DU KEY DELEGATE À CHAQUE MESSAGE REÇU
-                # ════════════════════════════════════════════
-                await self._notify_key_delegate(incoming)
-                
-                # Vérifier si c'est une autorisation de step
-                if self._is_step_authorization(key):
-                    step_id = self._extract_step_id(key)
+                if step_id not in self._finished_steps:
+                    print(f"\n🔓 Authorization received for step {step_id}")
+                    self.data = incoming
+                    await self._execute_step(step_id)
+                    self._finished_steps.add(step_id)
                     
-                    if step_id not in self._finished_steps:
-                        print(f"\n🔓 Authorization received for step {step_id}")
-                        self.data = incoming  # ⚠️ Mise à jour data avec le nouveau message
-                        await self._execute_step(step_id)
-                        self._finished_steps.add(step_id)
-                        
-                        # Vérifier si tous les steps sont terminés
-                        if self._all_steps_finished():
-                            await self._send_activity_finished()
-                else:
-                    # Autres messages (emotions, etc.)
-                    self._handle_incoming(incoming)
-                    
-        except websockets.ConnectionClosed:
-            print("\n🔌 Connection closed")
-        except KeyboardInterrupt:
-            print("\n🛑 Client stopped by user")
+                    if self._all_steps_finished():
+                        await self._send_activity_finished()
+            else:
+                self._handle_incoming(incoming)
 
     # ======================================================
     # KEY DELEGATE
     # ======================================================
 
     async def _notify_key_delegate(self, data: dict):
-        """Notifie le key_delegate si défini."""
         if self.key_delegate is not None:
             try:
-                await self.key_delegate(data, self)
+                # Supporte async ou sync delegate
+                if asyncio.iscoroutinefunction(self.key_delegate):
+                    await self.key_delegate(data, self)
+                else:
+                    self.key_delegate(data, self)
             except Exception as e:
                 print(f"⚠️ Key delegate error: {e}")
 
@@ -164,44 +218,37 @@ class WSClient:
     # ======================================================
 
     async def _execute_step(self, step_id: int):
-        """Exécute toutes les actions d'un step via le delegate."""
         step = self._find_step(step_id)
-        
         if not step:
             print(f"❌ Step {step_id} not found")
             return
         
         print(f"\n▶️ Executing step {step_id}...")
-        
-        # Marquer le step comme autorisé
         step["authorized"] = True
         
-        # Exécuter chaque action via le delegate
         for action in step.get("actions", []):
             action_id = action.get("id")
             action_type = action.get("type")
-            
             print(f"\n  🎬 Action {action_id} ({action_type})")
             
-            # Appel du delegate (l'utilisateur gère le match case)
-            await self.action_delegate(action, self, step_id)
+            # Supporte async ou sync delegate
+            if asyncio.iscoroutinefunction(self.action_delegate):
+                await self.action_delegate(action, self, step_id)
+            else:
+                self.action_delegate(action, self, step_id)
         
-        # Marquer le step comme terminé
         step["finished"] = True
         await self._send_step_finished(step_id)
 
     async def _send_step_finished(self, step_id: int):
-        """Envoie la notification de fin de step."""
         self.data["key"] = f"{self.client_key}_step_{step_id}_finished"
         print(f"🏁 Step {step_id} finished")
         await self._send_json()
 
     async def _send_activity_finished(self):
-        """Envoie la notification de fin d'activité."""
         activity = self._find_activity()
         if activity:
             activity["finished"] = True
-        
         self.data["key"] = f"{self.client_key}_finished"
         print(f"\n🎉 Activity '{self.client_key}' completed!")
         await self._send_json()
@@ -211,50 +258,39 @@ class WSClient:
     # ======================================================
 
     def _is_step_authorization(self, key: str) -> bool:
-        """Vérifie si la clé est une autorisation de step."""
-        return (
-            key.startswith(f"{self.client_key}_step_") 
-            and key.endswith("_authorization")
-        )
+        return (key.startswith(f"{self.client_key}_step_") and key.endswith("_authorization"))
 
     def _extract_step_id(self, key: str) -> int:
-        """Extrait l'ID du step depuis la clé d'autorisation."""
-        # Format: "{client_key}_step_{id}_authorization"
-        parts = key.split("_")
-        step_index = parts.index("step") + 1
-        return int(parts[step_index])
+        try:
+            parts = key.split("_")
+            step_index = parts.index("step") + 1
+            return int(parts[step_index])
+        except:
+            return -1
 
     def _find_activity(self) -> Optional[Dict]:
-        """Trouve l'activité dans les données."""
+        if not self.data: return None
         for wrapper in self.data.get("activity", []):
             if self.client_key in wrapper:
                 return wrapper[self.client_key]
         return None
 
     def _find_step(self, step_id: int) -> Optional[Dict]:
-        """Trouve un step par son ID."""
-        # Chercher dans les steps locaux
         for step in self.steps:
             if step.get("id") == step_id:
                 return step
-        
-        # Chercher dans les données serveur
         activity = self._find_activity()
         if activity:
             for step in activity.get("steps", []):
                 if step.get("id") == step_id:
                     return step
-        
         return None
 
     def _all_steps_finished(self) -> bool:
-        """Vérifie si tous les steps sont terminés."""
         return len(self._finished_steps) >= len(self.steps)
 
     def _handle_incoming(self, data: dict):
-        """Gère les messages entrants non-authorization."""
         key = data.get("key")
-        
         if key == "update_emotions":
             print("\n🎭 Emotions update:")
             for emo in data.get("emotions", []):
@@ -263,7 +299,7 @@ class WSClient:
             print(f"\n📥 Received: {key}")
 
     async def _send_json(self, key: Optional[str] = None):
-        """Envoie les données JSON actuelles."""
+        if not self.ws: return
         key = key or self.data.get("key", "unknown")
         self.data["key"] = key
         payload = json.dumps(self.data)
@@ -271,43 +307,27 @@ class WSClient:
         await self.ws.send(payload)
 
     async def send_data(self, data: dict):
-        json_data = json.dumps(data) 
-        await self.ws.send(json_data)
+        if self.ws:
+            json_data = json.dumps(data) 
+            await self.ws.send(json_data)
 
     def set_emotion_levels(self, happiness: float, stress: float, shame: float, angry: float) -> dict:
-        """
-        Set (overwrite) the 4 emotions levels in-place on self.data["emotions"].
-        Expects emotions types: happiness, stress, shame, angry.
-        """
-        levels = {
-            "happiness": float(happiness),
-            "stress": float(stress),
-            "shame": float(shame),
-            "angry": float(angry),
-        }
-
+        if not self.data: return {}
+        levels = {"happiness": float(happiness), "stress": float(stress), "shame": float(shame), "angry": float(angry)}
         emotions = self.data.get("emotions", [])
         for e in emotions:
             t = e.get("type")
             if t in levels:
                 e["level"] = levels[t]
-
         return self.data
     
     def set_score_throw(self, score: float) -> dict:
-        """
-        Update self.data so throw_activity.score = score (in-place).
-        """
-        if self.data is None:
-            raise RuntimeError("self.data is None (not initialized yet)")
-
+        if self.data is None: return {}
         target_key = "throw_activity"
-
         for wrapper in self.data.get("activity", []):
             if target_key in wrapper and isinstance(wrapper[target_key], dict):
                 wrapper[target_key]["score"] = float(score)
                 break
-
         return self.data
 
 
