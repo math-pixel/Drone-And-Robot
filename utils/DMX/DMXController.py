@@ -22,35 +22,24 @@ class DMXController:
         
         return self.universes[universe_id]
 
-    def set(self, channel, value, universe=1):
-        """
-        Définit la valeur DMX pour un canal spécifique.
-        
-        :param channel: Canal DMX (1 à 512)
-        :param value: Valeur DMX (0 à 255)
-        :param universe: L'univers DMX (défaut 1)
-        """
-        # 1. Validation des entrées
-        if not (1 <= channel <= 512):
-            print(f"[ERREUR] Le canal {channel} est invalide (doit être entre 1 et 512).")
-            return
-        if not (0 <= value <= 255):
-            print(f"[ERREUR] La valeur {value} est invalide (doit être entre 0 et 255).")
-            return
 
-        # 2. Récupération de l'univers
-        node = self._get_or_create_universe(universe)
-
-        # 3. Application de la valeur
-        # Note: StupidArtnet utilise des index commençant à 1 pour set_single_value, 
-        # donc ça correspond parfaitement à ta demande.
+    def set(self, channel, value):
+        """Définit la valeur d'un canal (1-512) en forçant les types en entier"""
         try:
-            node.set_single_value(channel, value)
-            # Optionnel : log pour debug
-            print(f"[DMX] U:{universe} | Ch:{channel} -> {value}")
+            # Conversion explicite en entier pour éviter tout problème de type
+            c = int(channel)
+            v = int(value)
+
+            # Vérification de sécurité
+            if 1 <= c <= 512:
+                # set_single_value attend (adresse, valeur)
+                self.node.set_single_value(c, v)
+            else:
+                print(f"⚠️ Canal hors limite: {c}")
         except Exception as e:
-            print(f"[ERREUR DMX] {e}")
-    
+            print(f"❌ ERREUR dans set: {e}")
+
+
     def set_rgb(self, start_channel, color_tuple):
         """Helper pour définir R, G, B de manière sécurisée"""
         # Vérification de sécurité
