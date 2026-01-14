@@ -27,6 +27,7 @@ class VideoPlayer:
         ]
 
         if fullscreen:
+            pass
             #options.append("--fullscreen")
 
         self._instance = vlc.Instance(" ".join(options))
