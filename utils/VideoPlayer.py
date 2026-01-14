@@ -1,6 +1,7 @@
 import vlc
 import threading
 from typing import Dict, Callable, Optional
+import time
 
 
 class VideoPlayer:
