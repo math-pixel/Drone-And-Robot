@@ -51,7 +51,7 @@ class VideoPlayer:
                 return False
             path = self._videos[video_id]
 
-        self.stop()
+        #self.stop()
 
         media = self._instance.media_new(path)
         self._player.set_media(media)
