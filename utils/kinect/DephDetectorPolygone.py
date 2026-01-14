@@ -17,17 +17,17 @@ class DepthDetector:
         
         # Valeurs par défaut
         self.default_config = {
-            # Les 4 coins de la grille (Haut-Gauche, Haut-Droite, Bas-Droite, Bas-Gauche)
+            # Les 4 coins (Haut-Gauche, Haut-Droite, Bas-Droite, Bas-Gauche)
             "corners": [
-                [100, 100],  # TL
-                [400, 100],  # TR
-                [450, 350],  # BR
-                [50, 350]    # BL
+                [100, 100],  # TL (Top-Left)
+                [400, 100],  # TR (Top-Right)
+                [400, 350],  # BR (Bottom-Right)
+                [100, 350]   # BL (Bottom-Left)
             ],
             
             # Dimensions de la grille
             "cols": 5,
-            "rows": 5,
+            "rows": 4,
             
             # Détection
             "threshold": 10,          # Seuil en mm
@@ -53,7 +53,7 @@ class DepthDetector:
         self.delegate = delegate
         
         # === SOURIS ===
-        self.selected_corner_index = -1  # Aucun coin sélectionné
+        self.selected_corner_index = -1
         self.mouse_pos = (0, 0)
 
         # Kinect
@@ -65,14 +65,14 @@ class DepthDetector:
         cv2.setMouseCallback('Detection Binaire', self.mouse_callback)
     
     def load_config(self):
-        """Charge la configuration"""
         if os.path.exists(CONFIG_FILE):
             try:
                 with open(CONFIG_FILE, 'r') as f:
                     config = json.load(f)
                 self.apply_config(config)
-                print(f"✅ Config chargée")
-            except:
+                print(f"✅ Configuration chargée")
+            except Exception as e:
+                print(f"⚠️ Erreur JSON: {e}")
                 self.apply_default_config()
         else:
             self.apply_default_config()
@@ -82,7 +82,6 @@ class DepthDetector:
         self.cols = config.get("cols", self.default_config["cols"])
         self.rows = config.get("rows", self.default_config["rows"])
         self.threshold = config.get("threshold", self.default_config["threshold"])
-        # Conversion couleurs
         self.color_background = tuple(config.get("color_background", self.default_config["color_background"]))
         self.color_object = tuple(config.get("color_object", self.default_config["color_object"]))
         self.color_grid = tuple(config.get("color_grid", self.default_config["color_grid"]))
@@ -105,35 +104,28 @@ class DepthDetector:
         try:
             with open(CONFIG_FILE, 'w') as f:
                 json.dump(config, f, indent=4)
-            print(f"✅ Sauvegardé dans {CONFIG_FILE}")
+            print(f"\n✅ Sauvegardé dans {CONFIG_FILE}")
         except Exception as e:
-            print(f"❌ Erreur sauvegarde: {e}")
+            print(f"\n❌ Erreur sauvegarde: {e}")
 
+    # === GESTION SOURIS ===
     def mouse_callback(self, event, x, y, flags, param):
-        """Gère le clic et le déplacement des coins"""
         self.mouse_pos = (x, y)
-        
-        # Rayon de détection du clic
         radius = 20
         
         if event == cv2.EVENT_LBUTTONDOWN:
-            # Chercher si on a cliqué proche d'un coin
             best_dist = float('inf')
             best_idx = -1
-            
             for i, corner in enumerate(self.corners):
                 dist = np.sqrt((corner[0]-x)**2 + (corner[1]-y)**2)
                 if dist < radius and dist < best_dist:
                     best_dist = dist
                     best_idx = i
-            
             if best_idx != -1:
                 self.selected_corner_index = best_idx
                 
         elif event == cv2.EVENT_MOUSEMOVE:
             if self.selected_corner_index != -1:
-                # Mettre à jour la position du coin
-                # On clamp pour rester dans l'image
                 cx = max(0, min(self.img_w, x))
                 cy = max(0, min(self.img_h, y))
                 self.corners[self.selected_corner_index] = [cx, cy]
@@ -141,10 +133,32 @@ class DepthDetector:
         elif event == cv2.EVENT_LBUTTONUP:
             self.selected_corner_index = -1
 
+    # === MATHÉMATIQUES GRILLE ===
+    def get_interpolated_point(self, r, c):
+        """Interpolation bilinéaire pour trouver un point dans le trapèze"""
+        tl, tr, br, bl = [np.array(p) for p in self.corners]
+        top_pt = tl + (tr - tl) * c
+        bot_pt = bl + (br - bl) * c
+        final_pt = top_pt + (bot_pt - top_pt) * r
+        return final_pt.astype(int)
+
+    def get_cell_polygon(self, row, col):
+        """Retourne les 4 coordonnées d'une cellule"""
+        r0, r1 = row / self.rows, (row + 1) / self.rows
+        c0, c1 = col / self.cols, (col + 1) / self.cols
+        
+        return np.array([
+            self.get_interpolated_point(r0, c0), # TL
+            self.get_interpolated_point(r0, c1), # TR
+            self.get_interpolated_point(r1, c1), # BR
+            self.get_interpolated_point(r1, c0)  # BL
+        ], dtype=np.int32)
+
+    # === LOGIQUE MÉTIER ===
     def set_reference(self, depth_array):
         self.reference_depth = depth_array.copy().astype(np.float32)
         self.reference_set = True
-        print("✅ Référence définie!")
+        print("\n✅ Référence de profondeur définie!")
 
     def detect_objects(self, depth_array):
         if not self.reference_set:
@@ -152,82 +166,37 @@ class DepthDetector:
         
         current = depth_array.astype(np.float32)
         reference = self.reference_depth
-        
-        valid_current = current > 0
-        valid_reference = reference > 0
-        closer = current < (reference - self.threshold)
-        
-        return valid_current & valid_reference & closer
-
-    def get_interpolated_point(self, r, c):
-        """
-        Calcule la position (x,y) d'un point de la grille (row, col)
-        en utilisant l'interpolation bilinéaire dans le quadrangle.
-        r et c sont des floats entre 0.0 et 1.0
-        """
-        tl, tr, br, bl = [np.array(p) for p in self.corners]
-        
-        # Interpolation sur l'axe horizontal (haut et bas)
-        top_pt = tl + (tr - tl) * c
-        bot_pt = bl + (br - bl) * c
-        
-        # Interpolation sur l'axe vertical entre les points trouvés
-        final_pt = top_pt + (bot_pt - top_pt) * r
-        
-        return final_pt.astype(int)
-
-    def get_cell_polygon(self, row, col):
-        """Retourne les 4 coordonnées d'une cellule spécifique"""
-        # Ratios (0.0 à 1.0)
-        r0 = row / self.rows
-        r1 = (row + 1) / self.rows
-        c0 = col / self.cols
-        c1 = (col + 1) / self.cols
-        
-        p1 = self.get_interpolated_point(r0, c0) # TL
-        p2 = self.get_interpolated_point(r0, c1) # TR
-        p3 = self.get_interpolated_point(r1, c1) # BR
-        p4 = self.get_interpolated_point(r1, c0) # BL
-        
-        return np.array([p1, p2, p3, p4], dtype=np.int32)
+        return (current > 0) & (reference > 0) & (current < (reference - self.threshold))
 
     def calculate_grid_values(self, object_mask):
-        """Vérifie chaque cellule trapézoïdale"""
         self.grid_values = np.zeros((self.rows, self.cols), dtype=np.int32)
         
-        # Optimisation: ne pas recréer l'image noire à chaque cellule si possible
-        # Mais pour la clarté, on fait un masque par cellule
         for row in range(self.rows):
             for col in range(self.cols):
-                # Obtenir le polygone de la cellule
                 pts = self.get_cell_polygon(row, col)
                 
-                # Créer un masque pour cette cellule unique
+                # Masque local pour la forme de la cellule
                 mask = np.zeros((self.img_h, self.img_w), dtype=np.uint8)
                 cv2.fillConvexPoly(mask, pts, 255)
                 
-                # Vérifier intersection avec objets détectés
-                # mask > 0 est la zone de la cellule
-                # object_mask est True là où il y a un objet
+                # Intersection
                 cell_hits = np.logical_and(mask > 0, object_mask)
                 
-                if np.count_nonzero(cell_hits) > 5: # Seuil de bruit (pixels min)
+                # Seuil de pixels pour éviter le bruit
+                if np.count_nonzero(cell_hits) > 5:
                     self.grid_values[row, col] = 1
-        
-        if self.delegate and self.grid_values is not None:
-             self.delegate.process(self.grid_values)
-        
+                    if self.delegate: self.delegate.process(self.grid_values)
         return self.grid_values
 
+    # === AFFICHAGE ===
     def create_visualization(self, depth_array, object_mask):
-        """Crée l'image finale"""
         image = np.zeros((self.img_h, self.img_w, 3), dtype=np.uint8)
         
-        # Fond
+        # Fond et Objets
         image[depth_array > 0] = self.color_background
         image[object_mask] = self.color_object
         
-        # Dessiner la grille
+        # Grille
         for row in range(self.rows):
             for col in range(self.cols):
                 pts = self.get_cell_polygon(row, col)
@@ -236,78 +205,143 @@ class DepthDetector:
                 color = self.color_object if val == 1 else self.color_grid
                 thickness = 2 if val == 1 else 1
                 
-                # Dessiner le contour de la cellule
                 cv2.polylines(image, [pts], True, color, thickness)
                 
-                # Texte au centre (Moyenne des 4 points)
+                # Texte
                 center = np.mean(pts, axis=0).astype(int)
-                
-                # Si activé, on remplit un peu pour voir mieux
-                if val == 1:
-                    overlay = image.copy()
-                    cv2.fillConvexPoly(overlay, pts, self.color_object)
-                    cv2.addWeighted(overlay, 0.3, image, 0.7, 0, image)
-                
-                # Afficher 1 ou 0
                 label = str(val)
-                cv2.putText(image, label, tuple(center), cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.color_text, 1)
+                text_color = self.color_text if val == 0 else self.color_object
+                cv2.putText(image, label, tuple(center), cv2.FONT_HERSHEY_SIMPLEX, 0.6, text_color, 2)
 
-        # Dessiner les coins (poignées) pour l'édition
+        # Coins (Poignées)
         for i, corner in enumerate(self.corners):
             c = tuple(corner)
             color = (0, 255, 255) if i == self.selected_corner_index else (255, 255, 0)
-            cv2.circle(image, c, 8, color, -1)
-            cv2.putText(image, str(i+1), (c[0]-5, c[1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0,0,0), 1)
-
+            cv2.circle(image, c, 6, color, -1)
+            
         return image
 
     def draw_help(self, image):
-        # Affiche infos rapides
-        cv2.putText(image, f"Grille: {self.cols}x{self.rows}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
-        cv2.putText(image, "SOURIS: Glisser les coins jaunes", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 1)
-        cv2.putText(image, "ESPACE: Sauvegarder | Q: Quitter", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+        ref_status = "OK" if self.reference_set else "NON"
+        ref_color = (0, 255, 0) if self.reference_set else (0, 0, 255)
+        
+        texts = [
+            f"REF: {ref_status} | Seuil: {self.threshold}mm",
+            f"Grille: {self.cols}x{self.rows}",
+            "",
+            "[SOURIS]: Deplacer coins",
+            "[FLECHES]: Bouger tout",
+            "[I/K]: Hauteur | [L/J]: Largeur",
+            "[+/-]: Cols | [*//]: Lignes",
+            "[ESPACE]: Sauver | [C]: Photo",
+            "[ENTREE]: Definir Reference"
+        ]
+        
+        y = 20
+        for i, t in enumerate(texts):
+            c = ref_color if i == 0 else (255, 255, 255)
+            cv2.putText(image, t, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, c, 1)
+            y += 15
         return image
 
+    # === GESTION CLAVIER ===
+    def handle_key(self, key):
+        step = 5 # Pas de déplacement en pixels
+        
+        # --- DEPLACEMENT GLOBAL (FLECHES) ---
+        dx, dy = 0, 0
+        if key == 0 or key == ord('z'): dy = -step    # Haut
+        elif key == 1 or key == ord('s'): dy = step   # Bas
+        elif key == 2 or key == ord('q'): dx = -step  # Gauche
+        elif key == 3 or key == ord('d'): dx = step   # Droite
+        
+        if dx != 0 or dy != 0:
+            for i in range(4):
+                self.corners[i][0] = max(0, min(self.img_w, self.corners[i][0] + dx))
+                self.corners[i][1] = max(0, min(self.img_h, self.corners[i][1] + dy))
+
+        # --- REDIMENSIONNEMENT (I/K/L/J) ---
+        # I/K : Étire ou contracte verticalement
+        elif key == ord('i'): # Plus grand en Y
+            self.corners[0][1] -= step; self.corners[1][1] -= step # Haut monte
+            self.corners[2][1] += step; self.corners[3][1] += step # Bas descend
+        elif key == ord('k'): # Plus petit en Y
+            self.corners[0][1] += step; self.corners[1][1] += step
+            self.corners[2][1] -= step; self.corners[3][1] -= step
+        
+        # L/J : Étire ou contracte horizontalement
+        elif key == ord('l'): # Plus grand en X
+            self.corners[0][0] -= step; self.corners[3][0] -= step # Gauche -> gauche
+            self.corners[1][0] += step; self.corners[2][0] += step # Droite -> droite
+        elif key == ord('j'): # Plus petit en X
+            self.corners[0][0] += step; self.corners[3][0] += step
+            self.corners[1][0] -= step; self.corners[2][0] -= step
+
+        # --- NOMBRE DE CELLULES ---
+        elif key == ord('+') or key == ord('='): self.cols = min(20, self.cols + 1)
+        elif key == ord('-'): self.cols = max(1, self.cols - 1)
+        elif key == ord('*'): self.rows = min(15, self.rows + 1)
+        elif key == ord('/'): self.rows = max(1, self.rows - 1)
+        
+        # --- SEUIL ---
+        elif key == ord('['): 
+            self.threshold = max(5, self.threshold - 5)
+            print(f"Seuil: {self.threshold}")
+        elif key == ord(']'): 
+            self.threshold = min(500, self.threshold + 5)
+            print(f"Seuil: {self.threshold}")
+            
+        # --- RESET ---
+        elif key == ord('r'):
+            self.apply_default_config()
+            self.reference_depth = None
+            self.reference_set = False
+
     def run(self):
-        print("DÉMARRAGE - KINECT GRID POLYGON")
-        print("Utilisez la SOURIS pour déplacer les 4 coins.")
+        print("="*40)
+        print("  GRID DETECTION (4 POINTS / TRAPÈZE)")
+        print("="*40)
+        
+        capture_count = 0
+        current_depth = None
         
         while True:
             if self.kinect.has_new_depth_frame():
                 frame = self.kinect.get_last_depth_frame()
-                depth = frame.reshape((self.img_h, self.img_w)).astype(np.uint16)
+                current_depth = frame.reshape((self.img_h, self.img_w)).astype(np.uint16)
                 
-                # 1. Détection
-                mask = self.detect_objects(depth)
-                
-                # 2. Calcul grille (Polygonale)
+                # Traitement
+                mask = self.detect_objects(current_depth)
                 self.calculate_grid_values(mask)
-                
-                # 3. Visu
-                img = self.create_visualization(depth, mask)
+                img = self.create_visualization(current_depth, mask)
                 img = self.draw_help(img)
                 
                 cv2.imshow('Detection Binaire', img)
             
-            key = cv2.waitKey(1) & 0xFF
+            # Gestion touches
+            key = cv2.waitKeyEx(1)
+            if key == -1: continue
             
-            if key == ord('q') or key == 27:
+            # Mapping touches flèches Windows/Linux
+            if key == 2490368: key = 0   # Up
+            elif key == 2621440: key = 1 # Down
+            elif key == 2424832: key = 2 # Left
+            elif key == 2555904: key = 3 # Right
+            
+            if key == 27 or key == ord('Q') or key == ord('q'): # Quitter
                 break
-            elif key == 13: # ENTER
-                if 'depth' in locals(): self.set_reference(depth)
-            elif key == 32: # SPACE
+            elif key == 13: # Entrée
+                if current_depth is not None: self.set_reference(current_depth)
+            elif key == 32: # Espace
                 self.save_config()
-            elif key == ord('+'):
-                self.cols = min(10, self.cols + 1)
-            elif key == ord('-'):
-                self.cols = max(1, self.cols - 1)
-            elif key == ord('*'):
-                self.rows = min(10, self.rows + 1)
-            elif key == ord('/'):
-                self.rows = max(1, self.rows - 1)
-            elif key == ord('r'):
-                self.apply_default_config()
-
+            elif key == ord('c') or key == ord('C'): # Capture
+                cv2.imwrite(f"capture_{capture_count}.png", img)
+                np.savetxt(f"grid_{capture_count}.csv", self.grid_values, fmt='%d', delimiter=',')
+                print(f"📸 Capture {capture_count} sauvegardée")
+                capture_count += 1
+            else:
+                self.handle_key(key)
+        
         cv2.destroyAllWindows()
         self.kinect.close()
 
