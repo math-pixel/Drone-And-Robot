@@ -103,28 +103,34 @@ class VideoPlayer:
 
 
 if __name__ == "__main__":
-    import time
-
+    
     player = VideoPlayer(fullscreen=True)
-
-    player.load(
-        {
-            # "intro": "/home/pi/videos/intro.mp4",
-            "intro": "./utils/choix_tshirt.mp4",
-        }
-    )
-
-    def on_video_end(video_id: str):
-        print(f"✓ Vidéo '{video_id}' terminée!")
-        if video_id == "intro":
-            player.play("presentation")
-        elif video_id == "presentation":
-            player.play("credits")
-
-    player.on_finished(on_video_end)
+    
+    # Charger les vidéos
+    player.load({
+        "cine_1": "/videos/cine_1_1.mp4",
+        "cine_5": "/videos/cine_1_5.mp4",
+    })
+    
     player.set_volume(80)
-    player.play("intro")
-
+    
+    # Callback quand une vidéo se termine
+    def on_video_end(video_id: str):
+        print(f"✓ {video_id} terminée!")
+        
+        if video_id == "cine_1":
+            player.play("cine_5")
+        elif video_id == "cine_5":
+            print("✓ Toutes les vidéos jouées!")
+            # Optionnel : relancer en boucle
+            # player.play("cine_1")
+    
+    player.on_finished(on_video_end)
+    
+    # Lancer la première vidéo
+    player.play("cine_1")
+    
+    # Boucle principale
     try:
         while True:
             time.sleep(0.1)
