@@ -110,8 +110,8 @@ if __name__ == "__main__":
     
     # Charger les vidéos
     player.load({
-        "cine_1": "/videos/cine_1_1.mp4",
-        "cine_5": "/videos/cine_1_5.mp4",
+        "cine_1": "./videos/cine_1_1.mp4",
+        "cine_5": "./videos/cine_1_5.mp4",
     })
     
     player.set_volume(80)
