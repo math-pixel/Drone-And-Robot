@@ -2,82 +2,105 @@ import sys
 import os
 import numpy as np
 import threading
+import asyncio
 
-# --- BLOC MAGIQUE A METTRE TOUT EN HAUT ---
-
-# 1. On prend le chemin du fichier actuel (server.py)
+# --- BLOC MAGIQUE ---
 current_path = os.path.abspath(__file__)
-
-# 2. On prend le dossier du fichier (serveur/)
 current_dir = os.path.dirname(current_path)
-
-# 3. On remonte d'un cran pour avoir le dossier racine (PROJET/)
 parent_dir = os.path.dirname(current_dir)
-
-# 4. On ajoute la racine aux chemins de Python
 sys.path.append(parent_dir)
-
-# ------------------------------------------
+# --------------------
 
 from utils.WSClient import *
 from utils.kinect.DephDetector import DepthDetector
 import time
 
 STEPS = [
-        {
-            "id": 1, 
-            "actions": [
-                {"id": 1, "type": "activity", "finished": False},
-            ], 
-            "authorized": False, 
-            "finished": False
-        },
-    ]
+    {
+        "id": 1, 
+        "actions": [
+            {"id": 1, "type": "activity", "finished": False},
+        ], 
+        "authorized": False, 
+        "finished": False
+    },
+]
 
 class DepthDetectorDelegate:
 
-    def __init__(self, wsClient = None):
+    def __init__(self, wsClient=None):
         self.points = 0
         self.authorized = False
         self.pointsToAdd = 10
+        self.roverThresholdsTurn = [(0, 10), (50, 60), (80, 90)]
         self.maxPointsVictory = 100
         self.wsClient = wsClient
         self.action = None
+        self.loop = None  # ⬅️ Référence à la boucle asyncio principale
+
+    def _send_async(self, coro):
+        """
+        Envoie une coroutine de façon non-bloquante depuis un thread.
+        """
+        if self.loop is None:
+            print("⚠️ Event loop non défini!")
+            return None
+        
+        future = asyncio.run_coroutine_threadsafe(coro, self.loop)
+        return future
+
+    def _send_async_and_wait(self, coro, timeout=5):
+        """
+        Envoie une coroutine et attend le résultat (bloquant mais thread-safe).
+        """
+        if self.loop is None:
+            print("⚠️ Event loop non défini!")
+            return None
+        
+        future = asyncio.run_coroutine_threadsafe(coro, self.loop)
+        try:
+            return future.result(timeout=timeout)
+        except Exception as e:
+            print(f"❌ Erreur lors de l'envoi: {e}")
+            return None
 
     def start_detection(self, action: dict):
         self.action = action
         print(self.action)
         self.authorized = True
-        print("Détection de profondeur démarrée.")
+        print("✅ Détection de profondeur démarrée.")
     
     def stop_detection(self):
         self.authorized = False
-        print("Détection de profondeur arrêtée.")
+        print("🛑 Détection de profondeur arrêtée.")
 
     def add_points(self, pts):
         self.points += pts
         print(f"Points: {self.points}")
         self.set_score(self.points)
-        print(self.wsClient.data)
-        # self.wsClient.data["activity"][3]["maxScore"] = self.maxPointsVictory
-        asyncio.run(self.wsClient._send_json("update_jauge_score"))
+        
+        # ✅ Utilise run_coroutine_threadsafe (NON bloquant)
+        self._send_async(self.wsClient._send_json("update_jauge_score"))
 
     def turn_rover(self):
-        if self.points >= 0 and self.points <= 10:
-            asyncio.run(self.wsClient._send_json("rover_left_180"))
-            time.sleep(5)
-            asyncio.run(self.wsClient._send_json("rover_right_180"))
-            #turn rover  
-        if self.points >= 50 and self.points <= 60:
-            asyncio.run(self.wsClient._send_json("rover_left_180"))
-            time.sleep(5)
-            asyncio.run(self.wsClient._send_json("rover_right_180"))
-            #turn rover  
-        if self.points >= 80 and self.points <= 90:
-            asyncio.run(self.wsClient._send_json("rover_left_180"))
-            time.sleep(5)
-            asyncio.run(self.wsClient._send_json("rover_right_180"))
-            #turn rover        
+        """
+        Tourne le rover à certains seuils de points.
+        """
+        thresholds = self.roverThresholdsTurn
+        
+        for low, high in thresholds:
+            if low <= self.points <= high:
+                # ✅ Planifie la séquence de rotation de façon non-bloquante
+                self._send_async(self._rover_turn_sequence())
+                break  # Une seule rotation par appel
+
+    async def _rover_turn_sequence(self):
+        """
+        Séquence de rotation du rover (coroutine async).
+        """
+        await self.wsClient._send_json("rover_left_180")
+        await asyncio.sleep(5)  # ⬅️ asyncio.sleep au lieu de time.sleep
+        await self.wsClient._send_json("rover_right_180")
 
     def get_score(self):
         activity_list = self.wsClient.data.get("activity", [])
@@ -93,23 +116,23 @@ class DepthDetectorDelegate:
                 item["throw_activity"]["score"] = score
 
     def process(self, grid_values):
-
-        if self.authorized == False:
+        if not self.authorized:
             return
         
-        # Traiter les valeurs de la grille reçues du DepthDetector
-        print("Grille de profondeur mise à jour:")
+        print("📊 Grille de profondeur mise à jour:")
         print(grid_values)
 
-        # Add points
         self.add_points(self.pointsToAdd)
         self.turn_rover()
 
         if self.points >= self.maxPointsVictory:
-            print("Victoire atteinte!")
+            print("🏆 Victoire atteinte!")
             self.stop_detection()
             self.action["finished"] = True
-            asyncio.run(self.wsClient.send_action_finished("1", self.action["id"]))        
+            self._send_async(
+                self.wsClient.send_action_finished("1", self.action["id"])
+            )
+
 
 if __name__ == "__main__":
     config_path = os.path.join(parent_dir, "config.json")
@@ -118,21 +141,14 @@ if __name__ == "__main__":
     depth_detector = DepthDetector(delegate=depth_detector_delegate)
 
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
-        """
-        Delegate personnalisé pour gérer les actions.
-        L'utilisateur implémente ici son match case.
-        """
-        action_id = action.get("id")
         action_type = action.get("type")
         
-        print("message recu du serveur")
+        print("📨 Message reçu du serveur")
         print(action)
+        
         if action_type == "activity":
-            print("Autorisation de lancer la détection de profondeur.")
-            depth_detector.delegate.start_detection(action = action)
-            # Marquer comme terminé
-            # action["finished"] = True
-            # await client.send_action_finished(step_id, action_id)
+            print("✅ Autorisation de lancer la détection de profondeur.")
+            depth_detector.delegate.start_detection(action=action)
 
     client = WSClient(
         url="ws://192.168.10.34:8057/ws",
@@ -140,15 +156,20 @@ if __name__ == "__main__":
         action_delegate=my_action_handler,
         steps=STEPS
     )
-    depth_detector_delegate.wsClient = client
-    depth_detector_delegate.loop = asyncio.get_event_loop()
     
+    depth_detector_delegate.wsClient = client
+
     def run_detector_in_thread():
         print("📷 Démarrage du thread DepthDetector...")
-        # Cette fonction est bloquante, c'est pourquoi on la met dans un thread
-        depth_detector.run() 
+        depth_detector.run()
 
     detector_thread = threading.Thread(target=run_detector_in_thread, daemon=True)
     detector_thread.start()
+
+    # ✅ Récupère la boucle et la passe au delegate AVANT de la lancer
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    depth_detector_delegate.loop = loop
     
-    asyncio.run(client.run())
+    # ✅ Lance le client sur cette boucle
+    loop.run_until_complete(client.run())
