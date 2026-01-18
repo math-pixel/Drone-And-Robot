@@ -12,7 +12,7 @@ sys.path.append(parent_dir)
 # --------------------
 
 from utils.WSClient import *
-from utils.kinect.DephDetector import DepthDetector
+from utils.kinect.DephDetectorPolygone import DepthDetector
 import time
 
 STEPS = [
