@@ -162,6 +162,13 @@ if __name__ == "__main__":
     def run_detector_in_thread():
         print("📷 Démarrage du thread DepthDetector...")
         depth_detector.run()
+        asyncio.sleep(2)
+        print("Trying to set reference depth...")
+        if depth_detector.current_depth is not None:
+            depth_detector.set_reference(depth_detector.current_depth) 
+            print("✅ Reference depth set.")
+        else: 
+            print("No depth data available yet.")
 
     detector_thread = threading.Thread(target=run_detector_in_thread, daemon=True)
     detector_thread.start()

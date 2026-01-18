@@ -47,6 +47,7 @@ class DepthDetector:
         # === RÉFÉRENCE DE PROFONDEUR ===
         self.reference_depth = None
         self.reference_set = False
+        self.current_depth = None
         
         # === ÉTAT ===
         self.grid_values = None
@@ -303,17 +304,17 @@ class DepthDetector:
         print("="*40)
         
         capture_count = 0
-        current_depth = None
+        self.current_depth = None
         
         while True:
             if self.kinect.has_new_depth_frame():
                 frame = self.kinect.get_last_depth_frame()
-                current_depth = frame.reshape((self.img_h, self.img_w)).astype(np.uint16)
+                self.current_depth = frame.reshape((self.img_h, self.img_w)).astype(np.uint16)
                 
                 # Traitement
-                mask = self.detect_objects(current_depth)
+                mask = self.detect_objects(self.current_depth)
                 self.calculate_grid_values(mask)
-                img = self.create_visualization(current_depth, mask)
+                img = self.create_visualization(self.current_depth, mask)
                 img = self.draw_help(img)
                 
                 cv2.imshow('Detection Binaire', img)
@@ -331,7 +332,7 @@ class DepthDetector:
             if key == 27 or key == ord('Q') or key == ord('q'): # Quitter
                 break
             elif key == 13: # Entrée
-                if current_depth is not None: self.set_reference(current_depth)
+                if self.current_depth is not None: self.set_reference(self.current_depth)
             elif key == 32: # Espace
                 self.save_config()
             elif key == ord('c') or key == ord('C'): # Capture
