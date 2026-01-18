@@ -31,8 +31,11 @@ if __name__ == "__main__":
     
     
     time.sleep(2)
-    print("go to 50 deg")
-    steperMoteur.go_to(50)
+    print("go to 90 deg")
+    steperMoteur.go_to(90)
+    time.sleep(2)
+    steperMoteur.go_to(0)
+
 
     def my_action_handler(action: dict, client: WSClient, step_id: int):
         pass
@@ -40,6 +43,7 @@ if __name__ == "__main__":
     def my_key_handler(data_dict: dict, client: WSClient):
         key = data_dict.get("key", "")
         print("📥 Key reçue = " + key)
+        print("Data received: ", json.dumps(data_dict))
         
         prefix = "mom_activity_stepper_"
         command_prefix = "control_"
