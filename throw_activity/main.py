@@ -150,10 +150,23 @@ if __name__ == "__main__":
             print("✅ Autorisation de lancer la détection de profondeur.")
             depth_detector.delegate.start_detection(action=action)
 
+    async def my_connection_handler(client: WSClient, connected: bool):
+        if connected:
+            print("✅ Connecté au serveur WebSocket.")
+            # ✅ Démarre la détection si une action a deja été reçue
+            if depth_detector.delegate.action is not None:
+                depth_detector.delegate.start_detection(
+                    action=depth_detector.delegate.action
+                )
+        else:
+            depth_detector.delegate.stop_detection()
+            print("❌ Déconnecté du serveur WebSocket.")
+
     client = WSClient(
         url="ws://192.168.10.34:8057/ws",
         client_key="throw_activity",
         action_delegate=my_action_handler,
+        connection_handler=my_connection_handler,
         steps=STEPS
     )
     

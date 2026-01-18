@@ -120,12 +120,6 @@ class DepthDetectorDelegate:
             self.sound_queue.append((row, col, sound_name))
             print(f"📝 Ajouté à la queue: {sound_name} ({row}, {col})")
 
-    def start_detection(self, action: dict):
-        self.action = action
-        print(self.action)
-        self.authorized = True
-        print("Détection de profondeur démarrée.")
-
     def load_config(self, config_path):
         """Charge la config depuis un fichier JSON"""
         import json
@@ -160,10 +154,12 @@ class DepthDetectorDelegate:
     def start_detection(self, action: dict):
         self.action = action
         print(self.action)
-        # Reset the grid when starting a new detection
-        self.current_grid_completed = np.zeros((4, 4), dtype=int)  # Reset grid
         self.authorized = True
         print("Détection de profondeur démarrée.")
+
+    def stop_detection(self):
+        self.authorized = False
+        print("Détection de profondeur arrêtée.")
 
     def joinGrid(self, grid_values):
         # Validate incoming grid
@@ -229,6 +225,10 @@ class DepthDetectorDelegate:
         return None
 
     def process(self, grid_values):
+
+        if not self.authorized:
+            return
+
         # DEBUG : Afficher les grilles pour comprendre
         print(f"last_grid:\n{self.last_grid}")
         print(f"grid_values:\n{grid_values}")
@@ -268,6 +268,7 @@ if __name__ == "__main__":
         print("📷 Démarrage du thread DepthDetector...")
         # Cette fonction est bloquante, c'est pourquoi on la met dans un thread
         depth_detector.run() 
+        asyncio.sleep(2)
         print("Trying to set reference depth...")
         if depth_detector.current_depth is not None:
             depth_detector.set_reference(depth_detector.current_depth) 
@@ -295,10 +296,23 @@ if __name__ == "__main__":
             # action["finished"] = True
             # await client.send_action_finished(step_id, action_id)
 
+    async def my_connection_handler(client: WSClient, connected: bool):
+        if connected:
+            print("✅ Connecté au serveur WebSocket.")
+            # ✅ Démarre la détection si une action a deja été reçue
+            if depth_detector.delegate.action is not None:
+                depth_detector.delegate.start_detection(
+                    action=depth_detector.delegate.action
+                )
+        else:
+            depth_detector.delegate.stop_detection()
+            print("❌ Déconnecté du serveur WebSocket.")
+
     client = WSClient(
         url="ws://192.168.10.34:8057/ws",
         client_key="presentation_activity",
         action_delegate=my_action_handler,
+        connection_handler=my_connection_handler,
         steps=STEPS
     )
     depth_detector_delegate.wsClient = client
