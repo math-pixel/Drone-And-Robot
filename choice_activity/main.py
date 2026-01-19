@@ -39,22 +39,10 @@ if __name__ == "__main__":
 
     STEPS = [
         {
-            "id": 1,
+            "id":1,
             "actions": [
-                {"id": 1, "type": "video", "file": "cine_1_1.mp4", "finished": False},
-                {"id": 2, "type": "video", "file": "cine_1_2_loop.mp4", "finished": False},
-                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 4, "type": "video", "file": ["cine_1_4_choice_1.mp4", "cine_1_4_choice_2.mp4"], "finished": False},
-
-                {"id": 5, "type": "video", "file": "cine_1_5.mp4", "finished": False},
-                {"id": 6, "type": "video", "file": "cine_1_6_loop.mp4", "finished": False},
-                {"id": 7, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 8, "type": "video", "file": ["cine_1_8_choice_1.mp4", "cine_1_8_choice_2.mp4"], "finished": False},
-
-                {"id": 9, "type": "video", "file": "cine_1_9.mp4", "finished": False},
-                {"id": 10, "type": "video", "file": "cine_1_10_loop.mp4", "finished": False},
-                {"id": 11, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 12, "type": "video", "file": ["cine_1_12_choice_2.mp4","cine_1_12_choice_2.mp4"], "finished": False}, 
+                {"id": 1, "type": "video", "file": "cine_1_1_loop.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_1_2.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -63,6 +51,19 @@ if __name__ == "__main__":
             "id": 2,
             "actions": [
                 {"id": 1, "type": "video", "file": "cine_2_1.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_2_2_loop.mp4", "finished": False},
+                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 4, "type": "video", "file": ["cine_2_4_choice_1.mp4", "cine_2_4_choice_2.mp4"], "finished": False},
+
+                {"id": 5, "type": "video", "file": "cine_2_5.mp4", "finished": False},
+                {"id": 6, "type": "video", "file": "cine_2_6_loop.mp4", "finished": False},
+                {"id": 7, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 8, "type": "video", "file": ["cine_2_8_choice_1.mp4", "cine_2_8_choice_2.mp4"], "finished": False},
+
+                {"id": 9, "type": "video", "file": "cine_2_9.mp4", "finished": False},
+                {"id": 10, "type": "video", "file": "cine_2_10_loop.mp4", "finished": False},
+                {"id": 11, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 12, "type": "video", "file": ["cine_1_12_choice_1_loop.mp4","cine_2_12_choice_2.mp4"], "finished": False}, 
             ],
             "authorized": False,
             "finished": False
@@ -70,10 +71,9 @@ if __name__ == "__main__":
         {
             "id": 3,
             "actions": [
-                {"id": 1, "type": "video", "file": "cine_3_1.mp4", "finished": False},
-                {"id": 2, "type": "video", "file": "cine_3_2_loop.mp4", "finished": False},
-                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 4, "type": "video", "file": ["cine_3_4_choice_1.mp4", "cine_3_4_choice_2.mp4"], "finished": False},
+                {"id": 1, "type": "video", "file": "cine_3_1_loop.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_3_2.mp4", "finished": False},
+                {"id": 3, "type": "video", "file": "cine_3_3_loop.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -82,8 +82,11 @@ if __name__ == "__main__":
             "id": 4,
             "actions": [
                 {"id": 1, "type": "video", "file": "cine_4_1.mp4", "finished": False},
-                {"id": 2, "type": "video", "file": "cine_4_2_loop.mp4", "finished": False},
-                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 2, "type": "video", "file": "cine_4_2.mp4", "finished": False},
+                {"id": 3, "type": "video", "file": "cine_4_3_loop.mp4", "finished": False},
+                {"id": 4, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 5, "type": "video", "file": ["cine_4_5_choice_1.mp4", "cine_4_5_choice_2.mp4"], "finished": False},
+                {"id": 6, "type": "video", "file": "cine_4_6_loop.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -91,14 +94,30 @@ if __name__ == "__main__":
         {
             "id": 5,
             "actions": [
-                {"id": 1, "type": "video", "file": "cine_5_1_loop.mp4", "finished": False},
-                {"id": 2, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 3, "type": "video", "file": "cine_5_3_choice_1.mp4", "finished": False},
+                {"id": 1, "type": "video", "file": "cine_5_1.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_5_2.mp4", "finished": False},
+                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+            ],
+            "authorized": False,
+            "finished": False
+        },
+        {
+            "id": 6,
+            "actions": [
+                {"id": 1, "type": "video", "file": "cine_6_1.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_6_2_loop.mp4", "finished": False},
+                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 4, "type": "video", "file": ["cine_6_4_choice_1.mp4","cine_6_4_choice_2.mp4"], "finished": False},
+                {"id": 5, "type": "video", "file": "cine_6_5_loop.mp4", "finished": False},
+                {"id": 6, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 7, "type": "video", "file": ["cine_6_7_choice_1.mp4","cine_6_7_choice_2.mp4"], "finished": False},
             ],
             "authorized": False,
             "finished": False
         },
     ]
+
+    video_prefix = ""
 
     # --- build videos dict once ---
     videos: dict[str, str] = {}
@@ -111,7 +130,7 @@ if __name__ == "__main__":
             for name in files:
                 if name:
                     videos[name] = f"./videos/{name}"
-
+                    videos[f"vert{name}"] = f"./videos/vert{name}"
     # --- create player once ---
     player = VideoPlayer(fullscreen=True)
     player.load(videos)
@@ -162,7 +181,7 @@ if __name__ == "__main__":
     def pick_video_for_action(step_id: int, action: dict) -> str:
         file_field = action.get("file")
         if not isinstance(file_field, list):
-            return file_field
+            return apply_prefix(file_field)
 
         chosen = 0
         step = _get_step(step_id)
@@ -177,7 +196,15 @@ if __name__ == "__main__":
                             chosen = c
                         break
 
-        return file_field[min(chosen, len(file_field) - 1)]
+        return apply_prefix(file_field[min(chosen, len(file_field) - 1)])
+
+
+    def apply_prefix(name: str) -> str:
+        return f"{video_prefix}{name}" if video_prefix else name
+
+    def is_loop_video(name: str) -> bool:
+        n = os.path.basename(name)
+        return n.endswith("_loop.mp4") or n.endswith("_loop")
 
     async def wait_for_button_choice() -> int:
         global idButtonPressed
@@ -204,12 +231,22 @@ if __name__ == "__main__":
                 file_name = pick_video_for_action(step_id, action)
                 print(f"     🎥 Playing video: {file_name}")
 
-                await play_and_wait(file_name)
+                if is_loop_video(file_name):
+                    # boucle jusqu'à appui sur un bouton
+                    global idButtonPressed
+                    idButtonPressed = None
+                    while idButtonPressed is None:
+                        await play_and_wait(file_name)
+                else:
+                    await play_and_wait(file_name)
 
                 action["finished"] = True
                 await client.send_action_finished(step_id, action_id)
 
             case "choice":
+                global idButtonPressed, video_prefix
+                idButtonPressed = None
+
                 print("\n     ❓ CHOIX")
                 print("     👉 Appuyez sur GAUCHE (left) ou DROITE (right)")
 
@@ -217,8 +254,14 @@ if __name__ == "__main__":
                 action["chosen"] = selected
                 action["finished"] = True
 
+                # step 2, action 3 : si choix = 2 (donc selected == 1) => prefix "vert"
+                if step_id == 2 and action_id == 3:
+                    video_prefix = "vert" if selected == 1 else ""
+
                 print("     ✅ Sélection :", "GAUCHE" if selected == 0 else "DROITE")
                 await client.send_choice_result(step_id, action_id, selected)
+
+
 
             case _:
                 print(f"     ⚠️  Unknown action type: {action_type}")
