@@ -465,7 +465,6 @@ extension ServerManager {
             }
 
             log("➡️ Sequencing: '\(incomingKey)' -> send '\(route.outgoingKey)' to \(route.targetActivity) (authorized=true)")
-            log("📤 Sequencing payload JSON:\n\(pretty(payload))")
             targetSession.writeText(text)
         }
     }

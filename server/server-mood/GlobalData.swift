@@ -74,6 +74,7 @@ enum Sequencing {
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
             ("light_atmosphere_activity", "update_light_4_off"),
             ("light_atmosphere_activity", "update_light_2_on"),
+            ("presentation_sphero_activity", "presentation_activity_finished"),
         ],
         "choice_activity_step_3_finished": [
             ("test_activity", "test_activity_step_1_authorization"),
@@ -82,6 +83,12 @@ enum Sequencing {
             ("light_atmosphere_activity", "update_light_2_off"),
         ],
         "test_activity_finished": [
+          ("choice_activity", "choice_activity_step_4_authorization"),
+          ("sound_atmosphere_activity", "global_sound_sonnerie"),
+          ("light_atmosphere_activity", "update_light_3_off"),
+          ("light_atmosphere_activity", "update_light_2_on"),
+        ],
+        "test_activity_step_1_finished": [
           ("choice_activity", "choice_activity_step_4_authorization"),
           ("sound_atmosphere_activity", "global_sound_sonnerie"),
           ("light_atmosphere_activity", "update_light_3_off"),
@@ -108,6 +115,10 @@ enum Sequencing {
             ("test_activity", "test_activity_start"),
         ],
         
+        "mom_activity_stepper_control_turn_right_10": [
+          ("sound_atmosphere_activity", "global_sound_positif_1"),
+          ("sound_atmosphere_activity", "global_sound_rire"),
+        ],
     ]
 }
 
@@ -115,20 +126,31 @@ enum Sequencing {
 
 enum EmotionRouting {
     static let deltasByKey: [String: [String: Double]] = [
-        "choice_activity_step_1_action_3_choice_0": ["happiness": 5,  "stress": 0, "shame": 0, "angry": 0],
-        "choice_activity_step_1_action_3_choice_1": ["happiness": 10,  "stress": 0, "shame": 0, "angry": 0],
-        "choice_activity_step_1_action_7_choice_0": ["happiness": 7,  "stress": 0, "shame": 0, "angry": 0],
-        "choice_activity_step_1_action_7_choice_1": ["happiness": 0,  "stress": 3, "shame": 0, "angry": 0],
-        "choice_activity_step_1_action_11_choice_0": ["happiness": 0,  "stress": 10, "shame": 0, "angry": 0],
-        "choice_activity_step_1_action_11_choice_1": ["happiness": 10,  "stress": -18, "shame": 0, "angry": 0],
-        "choice_activity_step_3_action_3_choice_0": ["happiness": 18,  "stress": 0, "shame": 10, "angry": 0],
-        "choice_activity_step_3_action_3_choice_1": ["happiness": -10,  "stress": 0, "shame": 10, "angry": 0],
-        "choice_activity_step_4_action_3_choice_0": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
-        "choice_activity_step_4_action_3_choice_1": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
-        "choice_activity_step_5_action_3_choice_0": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
-        "choice_activity_step_5_action_3_choice_1": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_1_action_1_finished": ["happiness": 37,  "stress": 37, "shame": 37, "angry": 37],
+        "choice_activity_step_1_action_2_finished": ["happiness": -25,  "stress": -30, "shame":-36, "angry": -36],
         
-        "choice_activity_step_1_action_9_finished": ["happiness": 0,  "stress": 18, "shame": 0, "angry": 0],
+        "choice_activity_step_2_action_3_choice_0": ["happiness": 5,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_2_action_3_choice_1": ["happiness": 10,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_2_action_7_choice_0": ["happiness": 7,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_2_action_7_choice_1": ["happiness": 0,  "stress": -1, "shame": 0, "angry": 0],
+        "choice_activity_step_2_action_11_choice_0": ["happiness": 0,  "stress": 10, "shame": 0, "angry": 0],
+        "choice_activity_step_2_action_11_choice_1": ["happiness": 10,  "stress": -18, "shame": 0, "angry": 0],
+        
+        "choice_activity_step_3_action_2_finished": ["happiness": 5,  "stress": -1, "shame": 0, "angry": 0],
+        "choice_activity_step_3_action_3_finished": ["happiness": 0,  "stress": 10, "shame": 0, "angry": 0],
+        
+        
+        "choice_activity_step_4_action_5_choice_0": ["happiness": 18,  "stress": 0, "shame": 15, "angry": 0],
+        "choice_activity_step_4_action_5_choice_1": ["happiness": -10,  "stress": 0, "shame": 15, "angry": 0],
+        
+        "choice_activity_step_5_action_1_finished": ["happiness": 0,  "stress": 20, "shame": 10, "angry": 30],
+
+        
+        "good_answer": ["happiness": 1,  "stress": 0, "shame": 0, "angry": 0],
+        "wrong_answer": ["happiness": 0,  "stress": 0, "shame": 3, "angry": 1],
+        "no_answer": ["happiness": 0,  "stress": 1, "shame": 1, "angry": 3],
+        
+        
         
         "crie_4": ["happiness": 0,  "stress": -1, "shame": -1, "angry": -1],
         "crie_5": ["happiness": 0,  "stress": -2, "shame": -2, "angry": -2],
