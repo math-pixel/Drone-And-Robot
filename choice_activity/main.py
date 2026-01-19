@@ -338,6 +338,7 @@ if __name__ == "__main__":
                     await client.send_action_finished(step_id, action_id)
                     return
 
+                # ---- SPECIAL: Scene du cri ----
                 if file_name == "cine_5_2.mp4":
                     meter.start()
                     crie_task = asyncio.create_task(_stream_crie(client, countdown_s=14.0))
@@ -349,11 +350,46 @@ if __name__ == "__main__":
                             await crie_task
                         meter.stop()
 
+                # ---- SPECIAL: Loop standard (attente bouton pour passer à la suite) ----
                 elif is_loop_video(file_name):
-                    # loop normal: attend un bouton OU un stop_loop_event (choice le déclenchera)
-                    while not stop_loop_event.is_set():
-                        await play_and_wait(file_name)
+                    print(f"     🔄 Loop '{file_name}' en cours (attente bouton ou event)...")
+                    
+                    # On s'assure que l'état du bouton est vierge avant de commencer
+                    idButtonPressed = None 
 
+                    # On boucle tant que : Pas de bouton pressé ET Pas d'événement de stop externe
+                    while idButtonPressed is None and not stop_loop_event.is_set():
+                        
+                        # --- Début manuel de play_and_wait ---
+                        # On le fait manuellement pour pouvoir interrompre l'attente (sleep)
+                        _current["loop"] = asyncio.get_running_loop()
+                        ev = asyncio.Event()
+                        _current["event"] = ev
+                        _current["name"] = file_name
+                        
+                        player.play(file_name)
+
+                        # Boucle d'attente active
+                        while not ev.is_set():
+                            # 1. Vérifie si on a appuyé sur un bouton
+                            if idButtonPressed is not None:
+                                print(f"     ⏩ Bouton '{idButtonPressed}' détecté pendant le loop ! Passage à la suite.")
+                                break # Sort du while d'attente vidéo
+                            
+                            # 2. Vérifie si un event externe demande l'arrêt
+                            if stop_loop_event.is_set():
+                                break # Sort du while d'attente vidéo
+                            
+                            await asyncio.sleep(0.05) # Petite pause pour ne pas bloquer le CPU
+
+                        # --- Fin manuelle de play_and_wait ---
+                        _current["event"] = None
+                        _current["name"] = None
+                        
+                    # Ici, on est sorti de la boucle while principale, donc soit bouton, soit stop_event
+                    # La vidéo suivante va pouvoir se lancer.
+
+                # ---- CAS CLASSIQUE ----
                 else:
                     await play_and_wait(file_name)
 
@@ -385,7 +421,7 @@ if __name__ == "__main__":
     # ======================================================
 
     client = WSClient(
-        url="ws://192.168.10.182:8057/ws",
+        url="ws://192.168.10.123:8057/ws",
         client_key="choice_activity",
         action_delegate=my_action_handler,
         steps=STEPS
