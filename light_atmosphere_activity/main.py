@@ -20,10 +20,10 @@ CHANNELS_PER_LIGHT = 7 # Chaque lumière occupe 7 canaux
 # Mapping des émotions vers les couleurs et IDs
 # J'ai attribué un ID numérique (1, 2, 3, 4) pour correspondre à tes clés WS
 LIGHTS_CONFIG = {
-    1: {"name": "happiness", "color": (255, 223, 0)},   # Jaune
-    2: {"name": "stress",    "color": (255, 100, 0)},   # Orange
-    3: {"name": "shame",     "color": (180, 0, 255)},   # Violet
-    4: {"name": "angry",     "color": (255, 0, 0)}      # Rouge
+    1: {"name": "happiness", "color": (190, 0, 255)},   # Jaune
+    2: {"name": "stress",    "color": (190, 0, 255)},   # Orange
+    3: {"name": "shame",     "color": (190, 0, 255)},   # Violet
+    4: {"name": "angry",     "color": (190, 0, 255)}      # Rouge
 }
 
 # Initialisation du contrôleur DMX
@@ -130,8 +130,8 @@ if __name__ == "__main__":
     # 2. Configuration du Client WS
     STEPS = {} # Ton objet steps si nécessaire
     client = WSClient(
-        url="ws://192.168.10.182:8057/ws",
-        client_key="atmosphere_light_activity",
+        url="ws://192.168.10.123:8057/ws",
+        client_key="light_atmosphere_activity",
         action_delegate=my_action_handler,
         key_delegate=my_key_handler,
         steps=STEPS
@@ -140,6 +140,7 @@ if __name__ == "__main__":
     # 3. Lancement de la boucle asynchrone
     try:
         print("🚀 Lancement du client WebSocket...")
+        update_light_state(2, "on")  # Exemple: allumer la lumière 2 au démarrage
         asyncio.run(client.run())
     except KeyboardInterrupt:
         print("\nArrêt du programme.")

@@ -1,7 +1,7 @@
 import time
 import threading
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Any
 
 import numpy as np
 import sounddevice as sd
@@ -12,31 +12,70 @@ class LevelConfig:
     sample_rate: int = 16000
     block_size: int = 1024
     channels: int = 1
-    device: Optional[int] = None
-    smoothing: float = 0.25  # 0..1 (higher = smoother)
+    device: Optional[int] = None  # None = default input
+    smoothing: float = 0.25       # 0..1 (higher = smoother)
     calibration_db: float = 0.0
-    noise_floor_db: float = -60.0  # ~silence
+    noise_floor_db: float = -60.0 # ~silence
     max_db: float = -1.0          # ~very loud (near clipping)
 
 
 class MicrophoneLevelMeter:
+    """
+    Cross-platform (macOS/Linux/RPi) mic level meter using sounddevice.
+
+    Key Linux/RPi fixes:
+    - Force mono mapping (and keep in float32)
+    - Handle status flags + occasional callback anomalies
+    - Allow selecting input device by:
+        * cfg.device (index)
+        * env MICROPHONE_DEVICE (index)
+    - Optionally switch hostapi by using system default settings
+    """
+
     def __init__(self, cfg: LevelConfig = LevelConfig()):
         self.cfg = cfg
         self._lock = threading.Lock()
         self._stream: Optional[sd.InputStream] = None
         self._rms_smooth: float = 0.0
-        self._last_db: float = self.cfg.noise_floor_db
+        self._last_db: float = float(self.cfg.noise_floor_db)
         self._last_level: int = 0
 
+    # -----------------------------
+    # Device helpers (Linux/RPi)
+    # -----------------------------
+    def _resolve_device(self) -> Optional[int]:
+        if self.cfg.device is not None:
+            return self.cfg.device
+
+        env = os.getenv("MICROPHONE_DEVICE")
+        if env is not None:
+            try:
+                return int(env)
+            except ValueError:
+                pass
+
+        return None
+
+    @staticmethod
+    def list_devices() -> None:
+        print(sd.query_devices())
+
+    # -----------------------------
+    # Public API
+    # -----------------------------
     def start(self) -> None:
         if self._stream is not None:
             return
 
+        device = self._resolve_device()
+
+        # On Linux/RPi, specifying device can help when default is wrong.
+        # Also, setting "channels=1" is important (mono).
         self._stream = sd.InputStream(
-            samplerate=self.cfg.sample_rate,
-            blocksize=self.cfg.block_size,
-            channels=self.cfg.channels,
-            device=self.cfg.device,
+            samplerate=int(self.cfg.sample_rate),
+            blocksize=int(self.cfg.block_size),
+            channels=int(self.cfg.channels),
+            device=device,
             dtype="float32",
             callback=self._callback,
         )
@@ -59,12 +98,28 @@ class MicrophoneLevelMeter:
         with self._lock:
             return float(self._last_db)
 
-    def _callback(self, indata, frames, time_info, status) -> None:
-        x = np.asarray(indata, dtype=np.float32)
-        if x.ndim > 1:
-            x = x[:, 0]
+    # -----------------------------
+    # Internals
+    # -----------------------------
+    def _callback(self, indata: Any, frames: int, time_info: Any, status: sd.CallbackFlags) -> None:
+        # status can be non-empty on Linux (over/underflow). Don’t crash.
+        if status:
+            # keep last values, just ignore the glitchy buffer
+            return
 
-        rms = float(np.sqrt(np.mean(x * x) + 1e-12))
+        try:
+            x = np.asarray(indata, dtype=np.float32)
+            if x.size == 0:
+                return
+
+            # force mono: take first channel if multi-channel
+            if x.ndim > 1:
+                x = x[:, 0]
+
+            # RMS
+            rms = float(np.sqrt(np.mean(x * x) + 1e-12))
+        except Exception:
+            return
 
         with self._lock:
             a = float(self.cfg.smoothing)
@@ -86,13 +141,16 @@ class MicrophoneLevelMeter:
         t = (db - nf) / (mx - nf)  # 0..1
         lvl = int(np.floor(t * 6.0))  # 0..5
         return max(0, min(5, lvl))
-    
-    def get_db(self) -> float:
-        with self._lock:
-            return float(self._last_db)
+
+
+# --- needed for env in _resolve_device ---
+import os
 
 
 if __name__ == "__main__":
+    # Tips RPi:
+    # - If no input: run `python MicrophoneLevelMeter.py` then `MicrophoneLevelMeter.list_devices()`
+    # - Or set MICROPHONE_DEVICE=2 (example) before launching.
     meter = MicrophoneLevelMeter(LevelConfig())
     meter.start()
 
