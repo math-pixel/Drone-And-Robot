@@ -1,11 +1,25 @@
 {
-    "start_x": 200,
-    "start_y": 180,
-    "cols": 5,
-    "rows": 5,
-    "cell_w": 35,
-    "cell_h": 30,
-    "threshold": 500,
+    "corners": [
+        [
+            207,
+            119
+        ],
+        [
+            339,
+            127
+        ],
+        [
+            327,
+            302
+        ],
+        [
+            191,
+            291
+        ]
+    ],
+    "cols": 1,
+    "rows": 1,
+    "threshold": 35,
     "color_background": [
         255,
         100,
