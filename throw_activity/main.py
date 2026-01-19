@@ -33,10 +33,13 @@ class DepthDetectorDelegate:
         self.authorized = False
         self.pointsToAdd = 10
         self.roverThresholdsTurn = [(0, 10), (50, 60), (80, 90)]
-        self.maxPointsVictory = 100
+        self.maxPointsVictory = 180
         self.wsClient = wsClient
         self.action = None
         self.loop = None  # ⬅️ Référence à la boucle asyncio principale
+
+        self.last_score_time = 0   # Temps du dernier point marqué
+        self.SCORE_COOLDOWN = 1.0  # Délai en secondes (ex: 1 seconde)
 
     def _send_async(self, coro):
         """
@@ -80,7 +83,7 @@ class DepthDetectorDelegate:
         self.set_score(self.points)
         
         # ✅ Utilise run_coroutine_threadsafe (NON bloquant)
-        self._send_async(self.wsClient._send_json("update_jauge_score"))
+        self._send_async(self.wsClient._send_json("mom_activity_stepper_control_turn_right_10"))
 
     def turn_rover(self):
         """
@@ -119,77 +122,97 @@ class DepthDetectorDelegate:
         if not self.authorized:
             return
         
-        print("📊 Grille de profondeur mise à jour:")
-        print(grid_values)
+        # 1. Vérifier si la grille contient au moins un "1" (Détection active)
+        # (Si la grille est vide, on ne fait rien)
+        if np.any(grid_values == 1):
+            
+            # 2. Vérifier le Cooldown (Non bloquant)
+            current_time = time.time()
+            if current_time - self.last_score_time > self.SCORE_COOLDOWN:
+                
+                print(f"🎯 Impact détecté ! (+{self.pointsToAdd} pts)")
+                
+                # A. Mettre à jour le temps
+                self.last_score_time = current_time
+                
+                # B. Ajouter les points et gérer le rover
+                self.add_points(self.pointsToAdd)
+                self.turn_rover()
 
-        self.add_points(self.pointsToAdd)
-        self.turn_rover()
-
-        if self.points >= self.maxPointsVictory:
-            print("🏆 Victoire atteinte!")
-            self.stop_detection()
-            self.action["finished"] = True
-            self._send_async(
-                self.wsClient.send_action_finished("1", self.action["id"])
-            )
+                # C. Vérifier la victoire
+                if self.points >= self.maxPointsVictory:
+                    print("🏆 Victoire atteinte!")
+                    self.stop_detection()
+                    self.action["finished"] = True
+                    self._send_async(
+                        self.wsClient.send_action_finished("1", self.action["id"])
+                    )
+            else:
+                # Optionnel : Juste pour le debug, dire qu'on ignore
+                # print("⏳ Cooldown actif, point ignoré...")
+                pass
 
 
 if __name__ == "__main__":
     config_path = os.path.join(parent_dir, "config.json")
 
+    # 1. Création des objets
     depth_detector_delegate = DepthDetectorDelegate()
     depth_detector = DepthDetector(delegate=depth_detector_delegate)
+    
+    # 2. LIEN MAGIQUE (Pour que le delegate puisse prendre la ref)
+    depth_detector_delegate.detector = depth_detector 
 
+    # 3. Handlers WebSocket
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
-        action_type = action.get("type")
+        print(f"📨 Action reçue: {action['type']}")
         
-        print("📨 Message reçu du serveur")
-        print(action)
-        
-        if action_type == "activity":
-            print("✅ Autorisation de lancer la détection de profondeur.")
-            depth_detector.delegate.start_detection(action=action)
+        if action["type"] == "activity":
+            # A. On attend un peu que la caméra soit chaude (facultatif mais prudent)
+            await asyncio.sleep(1)
+            
+            # B. Prise de référence AUTOMATIQUE via le delegate (voir modif plus bas)
+            if depth_detector_delegate.detector and depth_detector_delegate.detector.current_depth is not None:
+                print("📷 Prise de référence via Handler...")
+                depth_detector_delegate.detector.set_reference(depth_detector_delegate.detector.current_depth)
+            
+            # C. Start
+            depth_detector_delegate.start_detection(action=action)
 
     async def my_connection_handler(client: WSClient, connected: bool):
         if connected:
             print("✅ Connecté au serveur WebSocket.")
-            # ✅ Démarre la détection si une action a deja été reçue
-            if depth_detector.delegate.action is not None:
-                depth_detector.delegate.start_detection(
-                    action=depth_detector.delegate.action
-                )
         else:
-            depth_detector.delegate.stop_detection()
-            print("❌ Déconnecté du serveur WebSocket.")
+            depth_detector_delegate.stop_detection()
+            print("❌ Déconnecté.")
 
+    # 4. Config Client
     client = WSClient(
-        url="ws://192.168.10.34:8057/ws",
+        url="ws://192.168.10.123:8057/ws",
         client_key="throw_activity",
         action_delegate=my_action_handler,
         connection_handler=my_connection_handler,
         steps=STEPS
     )
-    
     depth_detector_delegate.wsClient = client
 
-    def run_detector_in_thread():
-        print("📷 Démarrage du thread DepthDetector...")
+    # 5. Démarrage du WebSocket dans un THREAD SÉPARÉ
+    def run_websocket_thread():
+        print("🌐 Démarrage du thread WebSocket...")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        # On donne la loop au delegate pour qu'il puisse envoyer des messages plus tard
+        depth_detector_delegate.loop = loop
+        
+        loop.run_until_complete(client.run())
+
+    ws_thread = threading.Thread(target=run_websocket_thread, daemon=True)
+    ws_thread.start()
+
+    # 6. Démarrage de la Kinect dans le MAIN THREAD (Bloquant)
+    print("📷 Démarrage de la Kinect (Main Thread)...")
+    try:
         depth_detector.run()
-        asyncio.sleep(2)
-        print("Trying to set reference depth...")
-        if depth_detector.current_depth is not None:
-            depth_detector.set_reference(depth_detector.current_depth) 
-            print("✅ Reference depth set.")
-        else: 
-            print("No depth data available yet.")
-
-    detector_thread = threading.Thread(target=run_detector_in_thread, daemon=True)
-    detector_thread.start()
-
-    # ✅ Récupère la boucle et la passe au delegate AVANT de la lancer
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    depth_detector_delegate.loop = loop
-    
-    # ✅ Lance le client sur cette boucle
-    loop.run_until_complete(client.run())
+    except KeyboardInterrupt:
+        print("Arrêt demandé...")

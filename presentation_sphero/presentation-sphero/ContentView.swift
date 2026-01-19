@@ -5,7 +5,7 @@ struct ContentView: View {
 
     @StateObject private var vm =
         PresentationSpheroActivityViewModel(
-            wsURL: "ws://192.168.10.34:8057/ws"
+            wsURL: "ws://192.168.10.123:8057/ws"
         )
 
     var body: some View {

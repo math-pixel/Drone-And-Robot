@@ -51,8 +51,8 @@ final class RoverControlManager: ObservableObject {
     // Public commands (UI can still call these)
     func forward()  { rover?.forward(speed: 10) }
     func backward() { rover?.backward(speed: 80) }
-    func left()     { rover?.turn(degrees: -20) }
-    func right()    { rover?.turn(degrees: 20) }
+    func left()     { rover?.turn(degrees: -180) }
+    func right()    { rover?.turn(degrees: 180) }
     func stop()     { rover?.stop() }
 
     private func handleParsedWSKey(_ key: String) {

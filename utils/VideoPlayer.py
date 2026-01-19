@@ -28,8 +28,8 @@ class VideoPlayer:
         ]
 
         if fullscreen:
-            pass
-            #options.append("--fullscreen")
+            # pass
+            options.append("--fullscreen")
 
         self._instance = vlc.Instance(" ".join(options))
         self._player = self._instance.media_player_new()
@@ -110,8 +110,8 @@ if __name__ == "__main__":
     
     # Charger les vidéos
     player.load({
-        "cine_1": "./videos/cine_1_1.mp4",
-        "cine_5": "./videos/cine_1_5.mp4",
+        "cine_1": "./videos/cine_1_1_loop.mp4",
+        "cine_5": "./videos/cine_1_2.mp4",
     })
     
     player.set_volume(80)

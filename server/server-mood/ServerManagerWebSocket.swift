@@ -260,10 +260,12 @@ extension ServerManager {
                 return
             }
 
+            let key = (json["key"] as? String) ?? "—"
+
             var sent: [String] = []
             for name in activities {
                 guard let session = getSessionForActivity(name) else {
-                    log("⚠️ Forward skipped: \(name) not connected. context=\(context)")
+                    log("⚠️ Forward skipped: \(name) not connected. key=\(key) context=\(context)")
                     continue
                 }
                 session.writeText(text)
@@ -271,9 +273,10 @@ extension ServerManager {
             }
 
             if !sent.isEmpty {
-                log("➡️ Forwarded JSON -> \(sent.joined(separator: ", ")) context=\(context)")
+                log("➡️ Forward key='\(key)' -> \(sent.joined(separator: ", ")) context=\(context)")
             }
         }
+
 
 
 }

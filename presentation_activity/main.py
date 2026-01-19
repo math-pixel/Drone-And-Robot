@@ -49,6 +49,9 @@ class DepthDetectorDelegate:
         self.authorized = False
         self.action = None
 
+        self.finished_event = None
+        self.loop = None
+
         # Charger la config UNE SEULE FOIS au démarrage
         self.config = self.load_config(config_path) if config_path else {}
         print("Config loaded:", self.config)
@@ -58,7 +61,7 @@ class DepthDetectorDelegate:
         self.grid_validation = self.get_grid_validation()
         
         # Initialiser avec la bonne taille basée sur la config
-        grid_shape = self.grid_validation.shape if self.grid_validation is not None else (4, 4)
+        grid_shape = self.grid_validation.shape if self.grid_validation is not None else (5, 5)
         self.current_grid_completed = np.zeros(grid_shape, dtype=int)
 
         self.last_grid = np.zeros(grid_shape, dtype=int)
@@ -86,6 +89,9 @@ class DepthDetectorDelegate:
         # Configurer la callback
         self.player.set_on_finished_callback(self._on_sound_finished)
 
+        self.last_activation_times = np.zeros(grid_shape, dtype=float)
+        self.COOLDOWN_DELAY = 5 
+
     def _on_sound_finished(self, finished_sound_name):
         """Callback appelée quand un son est terminé"""
         print(f"✅ Son terminé: {finished_sound_name}")
@@ -110,7 +116,14 @@ class DepthDetectorDelegate:
         print("📭 Queue audio vide")
 
     def queue_sound(self, row, col, sound_name):
-        """Ajoute un son à la queue ou le joue directement"""
+        """Ajoute un son à la queue ou le joue directement (AVEC ANTI-SPAM)"""
+        
+        # ANTI-SPAM : Vérifier si ce son exact est déjà dans la file d'attente
+        for item in self.sound_queue:
+            if item == (row, col, sound_name):
+                print(f"🚫 Doublon ignoré pour la queue : {sound_name}")
+                return
+
         # Si aucun son ne joue, jouer directement
         if not self.player.is_any_playing():
             print(f"🔊 Joue directement: {sound_name} ({row}, {col})")
@@ -200,126 +213,151 @@ class DepthDetectorDelegate:
                     self.player.play(str(self.audio_grid[row][col]))
                     print(f"Jouer le son pour la cellule ({row}, {col})")
 
-    def find_new_activated_index(self, new_grid):
+    def find_new_activated_indices(self, new_grid):
         """
-        Compare la grille actuelle (stockée) avec la nouvelle grille reçue.
-        Retourne un tuple (row, col) si une nouvelle case est activée (0 -> 1).
-        Sinon retourne None.
+        Retourne TOUS les index qui viennent de passer à 1.
         """
-        # Sécurité : si les dimensions ne correspondent pas, on ignore pour éviter un crash
         if self.current_grid_completed.shape != new_grid.shape:
-            return None
+            return []
 
-        # Logique booléenne :
-        # On cherche les cases où : (Nouvelle est True) ET (Ancienne est False)
+        # Logique : (Nouveau est 1) ET (Ancien est 0)
         new_activations = (new_grid == 1) & (self.last_grid == 0)
-
-        # np.argwhere renvoie une liste des coordonnées [row, col] où la condition est Vraie
-        indices = np.argwhere(new_activations)
-
-        if indices.size > 0:
-            # On prend le premier index trouvé (même s'il y en a plusieurs)
-            # On le convertit en tuple pour le retour (ex: (1, 2))
-            return tuple(indices[0])
         
-        return None
+        # Retourne une liste de tuples [(row, col), (row, col)...]
+        indices = np.argwhere(new_activations)
+        return [tuple(idx) for idx in indices]
 
     def process(self, grid_values):
-
         if not self.authorized:
             return
 
-        # DEBUG : Afficher les grilles pour comprendre
-        print(f"last_grid:\n{self.last_grid}")
-        print(f"grid_values:\n{grid_values}")
+        if grid_values is None:
+            return
         
-        # 1. Chercher les nouvelles activations AVANT de mettre à jour last_grid
-        new_index = self.find_new_activated_index(grid_values)
+        # 1. Chercher TOUTES les nouvelles activations (avec la méthode corrigée précédente)
+        # Note: Assure-toi d'avoir implémenté la méthode find_new_activated_indices 
+        # qui retourne une liste, comme vu dans la réponse précédente.
+        new_indices = self.find_new_activated_indices(grid_values)
+        
+        current_time = time.time() # Heure actuelle
 
-        if new_index is not None:
-            print(f"!!! NOUVELLE ACTIVATION DÉTECTÉE À L'INDEX : {new_index} !!!")
-            row, col = new_index
+        for (row, col) in new_indices:
+            
+            # --- LE COOLDOWN CHECK EST ICI ---
+            last_time = self.last_activation_times[row, col]
+            
+            if current_time - last_time < self.COOLDOWN_DELAY:
+                print(f"⏳ Cooldown actif pour ({row}, {col}), ignoré.")
+                continue # On passe au suivant sans jouer le son
+            
+            # Si on est ici, c'est que le délai est passé
+            print(f"!!! NOUVELLE ACTIVATION VALIDÉE : ({row}, {col}) !!!")
+            
             if 0 <= row < len(self.audio_grid) and 0 <= col < len(self.audio_grid[row]):
                 nom_son = self.audio_grid[row][col]
+                
+                # On met à jour le temps pour cette case
+                self.last_activation_times[row, col] = current_time
+                
+                # On lance le son
                 self.queue_sound(row, col, str(nom_son))
-        else:
-            print("Pas de nouvelle activation")
 
-        # 2. Mettre à jour last_grid APRÈS la comparaison
+        # 2. Mettre à jour last_grid APRÈS avoir tout traité
         self.last_grid = grid_values.copy()
 
         # 3. Mettre à jour current_grid_completed
         self.joinGrid(grid_values)
-        
+                
         if self.isActivityFinish():
-            print("Envoie Activité terminée !")
+            print("Grille complétée détectée !")
             self.authorized = False
-            asyncio.run(self.wsClient.send_action_finished("1", self.action["id"]))
+            
+            # MODIFICATION ICI :
+            # Au lieu de lancer asyncio.run(), on signale à la boucle principale que c'est fini
+            if self.loop is not None and self.finished_event is not None:
+                print("Signal envoyé au thread principal...")
+                self.loop.call_soon_threadsafe(self.finished_event.set)
+            else:
+                print("ERREUR : Impossible de signaler la fin (Loop ou Event manquant)")
 
 if __name__ == "__main__":
-
     import pygame
-
+    
+    # 1. Initialisation
+    pygame.init() # Important si vous utilisez le mixeur audio
+    
     config_path = os.path.join(parent_dir, "./presentation_activity/config.json")
     depth_detector_delegate = DepthDetectorDelegate()
     depth_detector = DepthDetector(delegate=depth_detector_delegate)
 
-    def run_detector_in_thread():
-        print("📷 Démarrage du thread DepthDetector...")
-        # Cette fonction est bloquante, c'est pourquoi on la met dans un thread
-        depth_detector.run() 
-        asyncio.sleep(2)
-        print("Trying to set reference depth...")
-        if depth_detector.current_depth is not None:
-            depth_detector.set_reference(depth_detector.current_depth) 
-            print("✅ Reference depth set.")
-        else: 
-            print("No depth data available yet.")
-
-    detector_thread = threading.Thread(target=run_detector_in_thread, daemon=True)
-    detector_thread.start()
-    
+    # 2. Définition des Handlers
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
-        """
-        Delegate personnalisé pour gérer les actions.
-        L'utilisateur implémente ici son match case.
-        """
-        action_id = action.get("id")
-        action_type = action.get("type")
+        print(f"📩 Action reçue: {action['type']}")
         
-        print("message recu du serveur")
-        print(action)
-        if action_type == "activity":
-            print("Autorisation de lancer la détection de profondeur.")
-            depth_detector.delegate.start_detection(action = action)
-            # Marquer comme terminé
-            # action["finished"] = True
-            # await client.send_action_finished(step_id, action_id)
+        if action["type"] == "activity":
+            # A. SETUP SYNCHRO
+            loop = asyncio.get_running_loop()
+            event = asyncio.Event()
+            depth_detector.delegate.loop = loop
+            depth_detector.delegate.finished_event = event
+
+            # B. REFERENCE KINECT (On prend la ref maintenant)
+            print("📷 Prise de référence Kinect...")
+            # On attend un peu pour être sûr que la caméra a une image
+            await asyncio.sleep(1) 
+            
+            if depth_detector.current_depth is not None:
+                depth_detector.set_reference(depth_detector.current_depth)
+                print("✅ Référence définie !")
+            else:
+                print("⚠️ Pas de profondeur reçue (la fenêtre s'ouvre-t-elle ?)")
+
+            # C. START
+            depth_detector.delegate.start_detection(action=action)
+            
+            print("⏳ En attente du joueur...")
+            await event.wait()
+            
+            print("🎉 Terminé !")
+            await client.send_action_finished(str(step_id), action["id"])
 
     async def my_connection_handler(client: WSClient, connected: bool):
         if connected:
-            print("✅ Connecté au serveur WebSocket.")
-            # ✅ Démarre la détection si une action a deja été reçue
-            if depth_detector.delegate.action is not None:
-                depth_detector.delegate.start_detection(
-                    action=depth_detector.delegate.action
-                )
+            print("✅ WebSocket Connecté.")
         else:
+            print("❌ WebSocket Déconnecté.")
             depth_detector.delegate.stop_detection()
-            print("❌ Déconnecté du serveur WebSocket.")
 
+    # 3. Création du Client
     client = WSClient(
-        url="ws://192.168.10.34:8057/ws",
+        url="ws://192.168.10.123:8057/ws",
         client_key="presentation_activity",
         action_delegate=my_action_handler,
         connection_handler=my_connection_handler,
         steps=STEPS
     )
     depth_detector_delegate.wsClient = client
-    depth_detector_delegate.loop = asyncio.get_event_loop()
 
-    async def main():
-        while True:
-            time.sleep(1)
-    #asyncio.run(main())
-    asyncio.run(client.run())
+    # --- LE GRAND CHANGEMENT EST ICI ---
+
+    # 4. On lance le WebSocket dans un Thread SÉPARÉ
+    def run_websocket_thread():
+        print("🌐 Démarrage du thread WebSocket...")
+        # On crée une nouvelle boucle pour ce thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(client.run())
+
+    ws_thread = threading.Thread(target=run_websocket_thread, daemon=True)
+    ws_thread.start()
+
+    # 5. On lance la Kinect dans le MAIN THREAD (Bloquant)
+    # C'est nécessaire pour que cv2.imshow ou pygame.display fonctionnent
+    print("📷 Démarrage de la Kinect (Main Thread)...")
+    try:
+        depth_detector.run()
+    except KeyboardInterrupt:
+        print("Arrêt demandé...")
+    
+    # Quand on ferme la fenêtre Kinect, le script s'arrête
+    print("Fin du programme.")
