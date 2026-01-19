@@ -60,39 +60,50 @@ enum Sequencing {
     // ✅ now a key can trigger multiple routes
     static let routes: [String: [Route]] = [
         "choice_activity_step_1_finished": [
+            ("choice_activity", "choice_activity_step_2_authorization"),
+        ],
+        "choice_activity_step_2_finished": [
             ("presentation_activity", "presentation_activity_step_1_authorization"),
             ("presentation_sphero_activity", "presentation_sphero_activity_step_1_authorization"),
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
+            ("light_atmosphere_activity", "update_light_4_on"),
+            ("light_atmosphere_activity", "update_light_2_off"),
         ],
         "presentation_activity_finished": [
-            ("choice_activity", "choice_activity_step_2_authorization"),
+            ("choice_activity", "choice_activity_step_3_authorization"),
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
-        ],
-        "choice_activity_step_2_finished": [
-            ("test_activity", "test_activity_step_1_authorization"),
-            ("sound_atmosphere_activity", "global_sound_sonnerie"),
-        ],
-        "test_activity_finished": [
-          ("choice_activity", "choice_activity_step_3_authorization"),
-          ("sound_atmosphere_activity", "global_sound_sonnerie"),
+            ("light_atmosphere_activity", "update_light_4_off"),
+            ("light_atmosphere_activity", "update_light_2_on"),
         ],
         "choice_activity_step_3_finished": [
-            ("throw_activity", "throw_activity_step_1_authorization"),
+            ("test_activity", "test_activity_step_1_authorization"),
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
+            ("light_atmosphere_activity", "update_light_3_on"),
+            ("light_atmosphere_activity", "update_light_2_off"),
         ],
-        "throw_activity_finished": [
+        "test_activity_finished": [
           ("choice_activity", "choice_activity_step_4_authorization"),
           ("sound_atmosphere_activity", "global_sound_sonnerie"),
+          ("light_atmosphere_activity", "update_light_3_off"),
+          ("light_atmosphere_activity", "update_light_2_on"),
         ],
         "choice_activity_step_4_finished": [
-            ("mom_activity", "mom_activity_step_1_authorization"),
+            ("throw_activity", "throw_activity_step_1_authorization"),
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
+            ("light_atmosphere_activity", "update_light_1_on"),
+            ("light_atmosphere_activity", "update_light_2_off"),
         ],
-        "mom_activity_finished": [
-            ("choice_activity", "choice_activity_step_5_authorization"),
-            ("sound_atmosphere_activity", "global_sound_sonnerie"),
+        "throw_activity_finished": [
+          ("choice_activity", "choice_activity_step_5_authorization"),
+          ("sound_atmosphere_activity", "global_sound_sonnerie"),
+          ("light_atmosphere_activity", "update_light_1_off"),
+          ("light_atmosphere_activity", "update_light_2_on"),
         ],
-        
+        "choice_activity_step_5_finished": [
+            ("choice_activity", "choice_activity_step_6_authorization"),
+        ],
+
+
         "test_activity_start": [
             ("test_activity", "test_activity_start"),
         ],
@@ -117,8 +128,10 @@ enum EmotionRouting {
         "choice_activity_step_5_action_3_choice_0": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
         "choice_activity_step_5_action_3_choice_1": ["happiness": 0,  "stress": 0, "shame": 0, "angry": 0],
         
-        
         "choice_activity_step_1_action_9_finished": ["happiness": 0,  "stress": 18, "shame": 0, "angry": 0],
+        
+        "crie_4": ["happiness": 0,  "stress": -1, "shame": -1, "angry": -1],
+        "crie_5": ["happiness": 0,  "stress": -2, "shame": -2, "angry": -2],
         
         
     ]
@@ -142,7 +155,8 @@ enum GlobalDataConfig {
         "answer_3_test_activity",
         "jauge_activity",
         "mom_stepper_activity",
-        "sound_atmosphere_activity"
+        "sound_atmosphere_activity",
+        "light_atmosphere_activity"
     ]
 
     static func makeInitialGlobalJSON(wsServerAddress: String) -> [String: Any] {
@@ -177,6 +191,15 @@ enum GlobalDataConfig {
                 ],
                 [
                     "sound_atmosphere_activity": [
+                        "authorized": false,
+                        "finished": false,
+                        "ws_session_id": "",
+                        "connected": false,
+                        "steps": []
+                    ]
+                ],
+                [
+                    "light_atmosphere_activity": [
                         "authorized": false,
                         "finished": false,
                         "ws_session_id": "",

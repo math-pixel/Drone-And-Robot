@@ -40,9 +40,10 @@ if __name__ == "__main__":
         while True:
             input("Press Enter to continue...")
             ### Emotion levels example
-            # d_h, d_s, d_sh, d_a = _ask_4_numbers()
-            # k = "update_emotions"
-            # client.set_emotion_levels(d_h, d_s, d_sh, d_a)
+            d_h, d_s, d_sh, d_a = _ask_4_numbers()
+            k = "update_emotions"
+            client.set_emotion_levels(d_h, d_s, d_sh, d_a)
+            # client.set_emotion_levels(12, 20, 3, 35)
             
             ### Jauge score example
             # k = "update_jauge_score"
@@ -61,13 +62,13 @@ if __name__ == "__main__":
             # k = f'mom_activity_stepper_{x}'
 
             # k = "choice_activity_step_1_finished"
-            son = input("son")
-            k = f"global_sound_{son}"
+            # son = input("son")
+            # k = f"global_sound_{son}"
             await client._send_json(key=k)
         
 
     client = WSClient(
-            url="ws://192.168.1.13:8057/ws",
+            url="ws://192.168.10.123:8057/ws",
             client_key="atmosphere_activity",
             action_delegate=my_action_handler,
             steps=STEPS

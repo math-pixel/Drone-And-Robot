@@ -1,6 +1,9 @@
 import sys
 import os
 import asyncio
+import time
+import numpy as np
+import contextlib
 
 # --- BLOC MAGIQUE A METTRE TOUT EN HAUT ---
 current_path = os.path.abspath(__file__)
@@ -8,6 +11,7 @@ current_dir = os.path.dirname(current_path)
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
+from utils.MicrophoneLevelMeter import MicrophoneLevelMeter, LevelConfig
 from utils.WSClient import WSClient
 from utils.rpi.Bouton import Bouton
 from utils.VideoPlayer import VideoPlayer
@@ -35,26 +39,15 @@ def on_release_feedback(duration: float):
 btnLeft.on_release = on_release_feedback
 btnRight.on_release = on_release_feedback
 
+
 if __name__ == "__main__":
 
     STEPS = [
         {
             "id": 1,
             "actions": [
-                {"id": 1, "type": "video", "file": "cine_1_1.mp4", "finished": False},
-                {"id": 2, "type": "video", "file": "cine_1_2_loop.mp4", "finished": False},
-                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 4, "type": "video", "file": ["cine_1_4_choice_1.mp4", "cine_1_4_choice_2.mp4"], "finished": False},
-
-                {"id": 5, "type": "video", "file": "cine_1_5.mp4", "finished": False},
-                {"id": 6, "type": "video", "file": "cine_1_6_loop.mp4", "finished": False},
-                {"id": 7, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 8, "type": "video", "file": ["cine_1_8_choice_1.mp4", "cine_1_8_choice_2.mp4"], "finished": False},
-
-                {"id": 9, "type": "video", "file": "cine_1_9.mp4", "finished": False},
-                {"id": 10, "type": "video", "file": "cine_1_10_loop.mp4", "finished": False},
-                {"id": 11, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 12, "type": "video", "file": ["cine_1_12_choice_2.mp4","cine_1_12_choice_2.mp4"], "finished": False}, 
+                {"id": 1, "type": "video", "file": "cine_1_1_loop.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_1_2.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -63,6 +56,20 @@ if __name__ == "__main__":
             "id": 2,
             "actions": [
                 {"id": 1, "type": "video", "file": "cine_2_1.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_2_2_loop.mp4", "finished": False},
+                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 4, "type": "video", "file": ["cine_2_4_choice_1.mp4", "cine_2_4_choice_2.mp4"], "finished": False},
+
+                {"id": 5, "type": "video", "file": "cine_2_5.mp4", "finished": False},
+                {"id": 6, "type": "video", "file": "cine_2_6_loop.mp4", "finished": False},
+                {"id": 7, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 8, "type": "video", "file": ["cine_2_8_choice_1.mp4", "cine_2_8_choice_2.mp4"], "finished": False},
+
+                {"id": 9, "type": "video", "file": "cine_2_9.mp4", "finished": False},
+                {"id": 10, "type": "video", "file": "cine_2_10_loop.mp4", "finished": False},
+                {"id": 11, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 12, "type": "video", "file": ["cine_2_12_choice_2.mp4"], "finished": False},
+                {"id": 13, "type": "video", "file": "cine_2_13_loop.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -70,10 +77,9 @@ if __name__ == "__main__":
         {
             "id": 3,
             "actions": [
-                {"id": 1, "type": "video", "file": "cine_3_1.mp4", "finished": False},
-                {"id": 2, "type": "video", "file": "cine_3_2_loop.mp4", "finished": False},
-                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 4, "type": "video", "file": ["cine_3_4_choice_1.mp4", "cine_3_4_choice_2.mp4"], "finished": False},
+                {"id": 1, "type": "video", "file": "cine_3_1_loop.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_3_2.mp4", "finished": False},
+                {"id": 3, "type": "video", "file": "cine_3_3_loop.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -82,8 +88,11 @@ if __name__ == "__main__":
             "id": 4,
             "actions": [
                 {"id": 1, "type": "video", "file": "cine_4_1.mp4", "finished": False},
-                {"id": 2, "type": "video", "file": "cine_4_2_loop.mp4", "finished": False},
-                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 2, "type": "video", "file": "cine_4_2.mp4", "finished": False},
+                {"id": 3, "type": "video", "file": "cine_4_3_loop.mp4", "finished": False},
+                {"id": 4, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 5, "type": "video", "file": ["cine_4_5_choice_1.mp4", "cine_4_5_choice_2.mp4"], "finished": False},
+                {"id": 6, "type": "video", "file": "cine_4_6_loop.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -91,16 +100,38 @@ if __name__ == "__main__":
         {
             "id": 5,
             "actions": [
-                {"id": 1, "type": "video", "file": "cine_5_1_loop.mp4", "finished": False},
-                {"id": 2, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 3, "type": "video", "file": "cine_5_3_choice_1.mp4", "finished": False},
+                {"id": 1, "type": "video", "file": "cine_5_1.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_5_2.mp4", "finished": False},
+                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+            ],
+            "authorized": False,
+            "finished": False
+        },
+        {
+            "id": 6,
+            "actions": [
+                {"id": 1, "type": "video", "file": "cine_6_1.mp4", "finished": False},
+                {"id": 2, "type": "video", "file": "cine_6_2_loop.mp4", "finished": False},
+                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 4, "type": "video", "file": ["cine_6_4_choice_1.mp4", "cine_6_4_choice_2.mp4"], "finished": False},
+                {"id": 5, "type": "video", "file": "cine_6_5_loop.mp4", "finished": False},
+                {"id": 6, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 7, "type": "video", "file": ["cine_6_7_choice_1.mp4", "cine_6_7_choice_2.mp4"], "finished": False},
             ],
             "authorized": False,
             "finished": False
         },
     ]
 
-    # --- build videos dict once ---
+    # ======================================================
+    # VIDEOS
+    # ======================================================
+
+    video_prefix = ""
+
+    def apply_prefix(name: str) -> str:
+        return f"{video_prefix}{name}" if video_prefix else name
+
     videos: dict[str, str] = {}
     for step in STEPS:
         for a in step.get("actions", []):
@@ -111,13 +142,63 @@ if __name__ == "__main__":
             for name in files:
                 if name:
                     videos[name] = f"./videos/{name}"
+                    videos[f"vert{name}"] = f"./videos/vert{name}"
 
-    # --- create player once ---
     player = VideoPlayer(fullscreen=True)
     player.load(videos)
     player.set_volume(80)
 
-    # --- async wait helper using on_video_end ---
+    meter = MicrophoneLevelMeter(LevelConfig())
+
+    # ======================================================
+    # MICRO -> WS (crie)
+    # ======================================================
+
+    async def _ws_send(client: WSClient, payload: dict) -> None:
+        if hasattr(client, "send_data"):
+            await client.send_data(payload)
+            return
+        if hasattr(client, "_send_json"):
+            client.data = payload  # type: ignore[attr-defined]
+            await client._send_json(payload.get("key"))  # type: ignore[attr-defined]
+            return
+        raise AttributeError("WSClient: aucune méthode send_data/_send_json trouvée")
+
+    async def _stream_crie(client: WSClient, countdown_s: float = 14.0, poll_s: float = 0.1) -> None:
+        t0 = time.monotonic()
+        samples: list[float] = []
+
+        while True:
+            if (time.monotonic() - t0) >= countdown_s:
+                break
+            samples.append(meter.get_db())
+            await asyncio.sleep(poll_s)
+
+        base = float(np.percentile(samples, 90)) if samples else meter.get_db()
+        margin_db = 10.0
+        gate_db = base + margin_db
+
+        print(f"🔇 Calibration done ({countdown_s:.0f}s): ambient≈{base:.1f} dB, gate≈{gate_db:.1f} dB")
+
+        last = 0
+        while True:
+            db = meter.get_db()
+            if db < gate_db:
+                last = 0
+                await asyncio.sleep(poll_s)
+                continue
+
+            lvl = meter.get_level_0_to_5()
+            if 1 <= lvl <= 5 and lvl != last:
+                await _ws_send(client, {"key": f"crie_{lvl}", "level": lvl, "db": db, "gate_db": gate_db})
+                last = lvl
+
+            await asyncio.sleep(poll_s)
+
+    # ======================================================
+    # PLAYER WAIT
+    # ======================================================
+
     _current = {"name": None, "event": None, "loop": None}
 
     def on_video_end(video_id: str):
@@ -133,6 +214,8 @@ if __name__ == "__main__":
 
     player.on_finished(on_video_end)
 
+    stop_loop_event = asyncio.Event()
+
     async def play_and_wait(video_name: str):
         _current["loop"] = asyncio.get_running_loop()
         ev = asyncio.Event()
@@ -144,6 +227,19 @@ if __name__ == "__main__":
 
         _current["event"] = None
         _current["name"] = None
+
+    async def _play_loop_in_background(video_name: str) -> asyncio.Task:
+        stop_loop_event.clear()
+
+        async def _runner():
+            while not stop_loop_event.is_set():
+                await play_and_wait(video_name)
+
+        return asyncio.create_task(_runner())
+
+    # ======================================================
+    # HELPERS
+    # ======================================================
 
     def _get_step(step_id: int):
         return next((s for s in STEPS if s.get("id") == step_id), None)
@@ -159,10 +255,11 @@ if __name__ == "__main__":
                 return i
         return -1
 
-    def pick_video_for_action(step_id: int, action: dict) -> str:
+    def pick_video_for_action(step_id: int, action: dict) -> str | None:
         file_field = action.get("file")
+
         if not isinstance(file_field, list):
-            return file_field
+            return apply_prefix(file_field)
 
         chosen = 0
         step = _get_step(step_id)
@@ -177,13 +274,36 @@ if __name__ == "__main__":
                             chosen = c
                         break
 
-        return file_field[min(chosen, len(file_field) - 1)]
+        if chosen == 0 and len(file_field) == 1:
+            return None
+
+        return apply_prefix(file_field[min(chosen, len(file_field) - 1)])
+
+    def is_loop_video(name: str) -> bool:
+        n = os.path.basename(name)
+        return n.endswith("_loop.mp4") or n.endswith("_loop")
+
+    def _is_loop_action(action: dict) -> bool:
+        if action.get("type") != "video":
+            return False
+        f = action.get("file")
+        if isinstance(f, list):
+            return False
+        return isinstance(f, str) and f.endswith("_loop.mp4")
+
+    def _is_last_action_of_step(step_id: int, action: dict) -> bool:
+        step = _get_step(step_id)
+        if not step:
+            return False
+        actions = step.get("actions", [])
+        idx = _find_action_index(actions, action)
+        return idx != -1 and idx == (len(actions) - 1)
 
     async def wait_for_button_choice() -> int:
         global idButtonPressed
         idButtonPressed = None
         while idButtonPressed is None:
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0.02)
 
         if idButtonPressed == "left":
             return 0
@@ -196,15 +316,46 @@ if __name__ == "__main__":
     # ======================================================
 
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
+        global idButtonPressed, video_prefix
+
         action_id = action.get("id")
         action_type = action.get("type")
 
         match action_type:
             case "video":
                 file_name = pick_video_for_action(step_id, action)
+                if not file_name:
+                    action["finished"] = True
+                    await client.send_action_finished(step_id, action_id)
+                    return
+
                 print(f"     🎥 Playing video: {file_name}")
 
-                await play_and_wait(file_name)
+                # ---- SPECIAL: dernière action loop => on considère fini dès le lancement ----
+                if _is_loop_action(action) and _is_last_action_of_step(step_id, action):
+                    _ = await _play_loop_in_background(file_name)
+                    action["finished"] = True
+                    await client.send_action_finished(step_id, action_id)
+                    return
+
+                if file_name == "cine_5_2.mp4":
+                    meter.start()
+                    crie_task = asyncio.create_task(_stream_crie(client, countdown_s=14.0))
+                    try:
+                        await play_and_wait(file_name)
+                    finally:
+                        crie_task.cancel()
+                        with contextlib.suppress(asyncio.CancelledError):
+                            await crie_task
+                        meter.stop()
+
+                elif is_loop_video(file_name):
+                    # loop normal: attend un bouton OU un stop_loop_event (choice le déclenchera)
+                    while not stop_loop_event.is_set():
+                        await play_and_wait(file_name)
+
+                else:
+                    await play_and_wait(file_name)
 
                 action["finished"] = True
                 await client.send_action_finished(step_id, action_id)
@@ -214,8 +365,14 @@ if __name__ == "__main__":
                 print("     👉 Appuyez sur GAUCHE (left) ou DROITE (right)")
 
                 selected = await wait_for_button_choice()
+
+                stop_loop_event.set()
+
                 action["chosen"] = selected
                 action["finished"] = True
+
+                if step_id == 2 and action_id == 3:
+                    video_prefix = "vert" if selected == 1 else ""
 
                 print("     ✅ Sélection :", "GAUCHE" if selected == 0 else "DROITE")
                 await client.send_choice_result(step_id, action_id, selected)
@@ -233,7 +390,7 @@ if __name__ == "__main__":
         action_delegate=my_action_handler,
         steps=STEPS
     )
-    
+
     try:
         asyncio.run(client.run())
     except KeyboardInterrupt:
