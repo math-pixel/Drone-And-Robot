@@ -40,9 +40,9 @@ if __name__ == "__main__":
         while True:
             input("Press Enter to continue...")
             ### Emotion levels example
-            d_h, d_s, d_sh, d_a = _ask_4_numbers()
-            k = "update_emotions"
-            client.set_emotion_levels(d_h, d_s, d_sh, d_a)
+            # d_h, d_s, d_sh, d_a = _ask_4_numbers()
+            # k = "update_emotions"
+            # client.set_emotion_levels(d_h, d_s, d_sh, d_a)
             # client.set_emotion_levels(12, 20, 3, 35)
             
             ### Jauge score example
@@ -56,14 +56,17 @@ if __name__ == "__main__":
             # await client._send_json(key=key)
 
             ### Stepper motor example
-            # # k = "mom_activity_stepper_control_turn_right_90"
-            # # k = "mom_activity_stepper_control_init_position"
+            # k = "mom_activity_stepper_control_turn_right_90"
+            # k = "mom_activity_stepper_control_init_position"
             # x += 90
+            # x = input("Enter angle for stepper motor : ")
             # k = f'mom_activity_stepper_{x}'
+            # await client._send_json(key=k)
 
             # k = "choice_activity_step_1_finished"
             # son = input("son")
             # k = f"global_sound_{son}"
+            k = input("key")
             await client._send_json(key=k)
         
 

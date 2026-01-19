@@ -272,18 +272,32 @@ function nextQuestion() {
   }, 1000);
 
   countdownTimeout = setTimeout(() => {
-    stopCountdown();    
+    stopCountdown();
     if (!awaitingAnswer) return;
 
     awaitingAnswer = false;
     wsSendRootWithKey(
-      `test_activity_step_1_action_${currentActionId}_finished`
+      `test_activity_step_1_action_${currentActionId}_finished`,
     );
+
+    sendNoAnswer();
+
     stopAllTimers();
     playOnce(audio.faux);
     showFeedback(false);
     nextQuestionTimeout = setTimeout(nextQuestion, 3000);
   }, 8000);
+}
+
+function sendNoAnswer() {
+  wsSendRootWithKey("no_answer");
+}
+
+function sendGoodAnswer() {
+  wsSendRootWithKey("good_answer");
+}
+function sendWrongAnswer() {
+  wsSendRootWithKey("wrong_answer");
 }
 
 function onAnswerReceived(letterLower) {
@@ -298,9 +312,13 @@ function onAnswerReceived(letterLower) {
 
   if (isCorrect) score += 1;
 
+  // ✅ AJOUTE
+  if (isCorrect) sendGoodAnswer();
+  else sendWrongAnswer();
+
   playOnce(isCorrect ? audio.vrai : audio.faux);
 
-  showFeedback(true); // ton UI colore déjà 1 vert / 2 rouge
+  showFeedback(true);
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 
