@@ -271,68 +271,54 @@ class DepthDetectorDelegate:
                 print("ERREUR : Impossible de signaler la fin (Loop ou Event manquant)")
 
 if __name__ == "__main__":
-
     import pygame
-
+    
+    # 1. Initialisation
+    pygame.init() # Important si vous utilisez le mixeur audio
+    
     config_path = os.path.join(parent_dir, "./presentation_activity/config.json")
     depth_detector_delegate = DepthDetectorDelegate()
     depth_detector = DepthDetector(delegate=depth_detector_delegate)
 
-    def run_detector_in_thread():
-        print("📷 Démarrage de la boucle Kinect...")
-        # Cette fonction est bloquante, elle tourne à l'infini
-        depth_detector.run()
-
-    detector_thread = threading.Thread(target=run_detector_in_thread, daemon=True)
-    detector_thread.start()
-    
+    # 2. Définition des Handlers
     async def my_action_handler(action: dict, client: WSClient, step_id: int):
-        action_id = action.get("id")
-        action_type = action.get("type")
+        print(f"📩 Action reçue: {action['type']}")
         
-        print("📩 Message reçu:", action)
-        
-        if action_type == "activity":
-            print("🚀 Préparation de l'activité...")
-            
-            # 1. SETUP ASYNCIO
+        if action["type"] == "activity":
+            # A. SETUP SYNCHRO
             loop = asyncio.get_running_loop()
             event = asyncio.Event()
             depth_detector.delegate.loop = loop
             depth_detector.delegate.finished_event = event
 
-            # 2. CONFIGURATION DE LA RÉFÉRENCE KINECT (Le fix est ici !)
-            print("📷 Prise de la profondeur de référence...")
-            # On attend un tout petit peu pour être sûr que la caméra tourne
-            await asyncio.sleep(0.5) 
+            # B. REFERENCE KINECT (On prend la ref maintenant)
+            print("📷 Prise de référence Kinect...")
+            # On attend un peu pour être sûr que la caméra a une image
+            await asyncio.sleep(1) 
             
             if depth_detector.current_depth is not None:
                 depth_detector.set_reference(depth_detector.current_depth)
-                print("✅ Référence de profondeur définie !")
+                print("✅ Référence définie !")
             else:
-                print("⚠️ ATTENTION : Pas de données de profondeur (Caméra non prête ?)")
+                print("⚠️ Pas de profondeur reçue (la fenêtre s'ouvre-t-elle ?)")
 
-            # 3. DÉMARRAGE
+            # C. START
             depth_detector.delegate.start_detection(action=action)
             
-            print("⏳ En attente que l'utilisateur finisse la grille...")
+            print("⏳ En attente du joueur...")
             await event.wait()
             
-            print("🎉 Action terminée !")
+            print("🎉 Terminé !")
             await client.send_action_finished(str(step_id), action["id"])
 
     async def my_connection_handler(client: WSClient, connected: bool):
         if connected:
-            print("✅ Connecté au serveur WebSocket.")
-            # ✅ Démarre la détection si une action a deja été reçue
-            if depth_detector.delegate.action is not None:
-                depth_detector.delegate.start_detection(
-                    action=depth_detector.delegate.action
-                )
+            print("✅ WebSocket Connecté.")
         else:
+            print("❌ WebSocket Déconnecté.")
             depth_detector.delegate.stop_detection()
-            print("❌ Déconnecté du serveur WebSocket.")
 
+    # 3. Création du Client
     client = WSClient(
         url="ws://192.168.10.123:8057/ws",
         client_key="presentation_activity",
@@ -342,8 +328,26 @@ if __name__ == "__main__":
     )
     depth_detector_delegate.wsClient = client
 
-    async def main():
-        while True:
-            time.sleep(1)
-    #asyncio.run(main())
-    asyncio.run(client.run())
+    # --- LE GRAND CHANGEMENT EST ICI ---
+
+    # 4. On lance le WebSocket dans un Thread SÉPARÉ
+    def run_websocket_thread():
+        print("🌐 Démarrage du thread WebSocket...")
+        # On crée une nouvelle boucle pour ce thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(client.run())
+
+    ws_thread = threading.Thread(target=run_websocket_thread, daemon=True)
+    ws_thread.start()
+
+    # 5. On lance la Kinect dans le MAIN THREAD (Bloquant)
+    # C'est nécessaire pour que cv2.imshow ou pygame.display fonctionnent
+    print("📷 Démarrage de la Kinect (Main Thread)...")
+    try:
+        depth_detector.run()
+    except KeyboardInterrupt:
+        print("Arrêt demandé...")
+    
+    # Quand on ferme la fenêtre Kinect, le script s'arrête
+    print("Fin du programme.")
