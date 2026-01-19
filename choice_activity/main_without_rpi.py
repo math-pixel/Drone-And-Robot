@@ -195,13 +195,14 @@ if __name__ == "__main__":
                 return i
         return -1
 
-    def pick_video_for_action(step_id: int, action: dict) -> str:
+    def pick_video_for_action(step_id: int, action: dict) -> str | None:
         file_field = action.get("file")
-        if not isinstance(file_field, list):
-            return file_field
 
-        step = _get_step(step_id)
+        if not isinstance(file_field, list):
+            return apply_prefix(file_field)
+
         chosen = 0
+        step = _get_step(step_id)
         if step:
             actions = step.get("actions", [])
             idx = _find_action_index(actions, action)
@@ -213,7 +214,11 @@ if __name__ == "__main__":
                             chosen = c
                         break
 
-        return file_field[min(chosen, len(file_field) - 1)]
+        # ✅ cas: seulement une vidéo (choice 2), et on a choisi 1 => pas de vidéo
+        if chosen == 0 and len(file_field) == 1:
+            return None
+
+        return apply_prefix(file_field[min(chosen, len(file_field) - 1)])
 
     def is_loop_video(name: str) -> bool:
         return name.endswith("_loop.mp4") or name.endswith("_loop")
@@ -231,6 +236,10 @@ if __name__ == "__main__":
         match action_type:
             case "video":
                 file_name = pick_video_for_action(step_id, action)
+                if not file_name:
+                    action["finished"] = True
+                    await client.send_action_finished(step_id, action_id)
+                    return
                 print(f"     🎥 Playing video: {file_name}")
 
                 if file_name.endswith("_loop.mp4"):

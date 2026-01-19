@@ -63,7 +63,8 @@ if __name__ == "__main__":
                 {"id": 9, "type": "video", "file": "cine_2_9.mp4", "finished": False},
                 {"id": 10, "type": "video", "file": "cine_2_10_loop.mp4", "finished": False},
                 {"id": 11, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 12, "type": "video", "file": ["cine_1_12_choice_1_loop.mp4","cine_2_12_choice_2.mp4"], "finished": False}, 
+                {"id": 12, "type": "video", "file": ["cine_2_12_choice_2.mp4"], "finished": False}, 
+                {"id": 13, "type": "video", "file": "cine_2_13_loop.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
