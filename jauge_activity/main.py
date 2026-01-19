@@ -11,7 +11,7 @@ from ledController import LEDController
 
 WIFI_SSID = "Cudy-F810"
 WIFI_PASS = "13022495"
-SERVER_URL = "ws://192.168.10.34:8057/ws"
+SERVER_URL = "ws://192.168.10.123:8057/ws"
 
 NUMBER_LEDS_BY_COLUMN = 37
 NUMBER_COLOMN = 3
