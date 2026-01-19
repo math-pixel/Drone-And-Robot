@@ -61,7 +61,7 @@ class DepthDetectorDelegate:
         self.grid_validation = self.get_grid_validation()
         
         # Initialiser avec la bonne taille basée sur la config
-        grid_shape = self.grid_validation.shape if self.grid_validation is not None else (4, 4)
+        grid_shape = self.grid_validation.shape if self.grid_validation is not None else (5, 5)
         self.current_grid_completed = np.zeros(grid_shape, dtype=int)
 
         self.last_grid = np.zeros(grid_shape, dtype=int)
@@ -89,6 +89,9 @@ class DepthDetectorDelegate:
         # Configurer la callback
         self.player.set_on_finished_callback(self._on_sound_finished)
 
+        self.last_activation_times = np.zeros(grid_shape, dtype=float)
+        self.COOLDOWN_DELAY = 5 
+
     def _on_sound_finished(self, finished_sound_name):
         """Callback appelée quand un son est terminé"""
         print(f"✅ Son terminé: {finished_sound_name}")
@@ -113,7 +116,14 @@ class DepthDetectorDelegate:
         print("📭 Queue audio vide")
 
     def queue_sound(self, row, col, sound_name):
-        """Ajoute un son à la queue ou le joue directement"""
+        """Ajoute un son à la queue ou le joue directement (AVEC ANTI-SPAM)"""
+        
+        # ANTI-SPAM : Vérifier si ce son exact est déjà dans la file d'attente
+        for item in self.sound_queue:
+            if item == (row, col, sound_name):
+                print(f"🚫 Doublon ignoré pour la queue : {sound_name}")
+                return
+
         # Si aucun son ne joue, jouer directement
         if not self.player.is_any_playing():
             print(f"🔊 Joue directement: {sound_name} ({row}, {col})")
@@ -203,56 +213,56 @@ class DepthDetectorDelegate:
                     self.player.play(str(self.audio_grid[row][col]))
                     print(f"Jouer le son pour la cellule ({row}, {col})")
 
-    def find_new_activated_index(self, new_grid):
+    def find_new_activated_indices(self, new_grid):
         """
-        Compare la grille actuelle (stockée) avec la nouvelle grille reçue.
-        Retourne un tuple (row, col) si une nouvelle case est activée (0 -> 1).
-        Sinon retourne None.
+        Retourne TOUS les index qui viennent de passer à 1.
         """
-        # Sécurité : si les dimensions ne correspondent pas, on ignore pour éviter un crash
         if self.current_grid_completed.shape != new_grid.shape:
-            return None
+            return []
 
-        # Logique booléenne :
-        # On cherche les cases où : (Nouvelle est True) ET (Ancienne est False)
+        # Logique : (Nouveau est 1) ET (Ancien est 0)
         new_activations = (new_grid == 1) & (self.last_grid == 0)
-
-        # np.argwhere renvoie une liste des coordonnées [row, col] où la condition est Vraie
-        indices = np.argwhere(new_activations)
-
-        if indices.size > 0:
-            # On prend le premier index trouvé (même s'il y en a plusieurs)
-            # On le convertit en tuple pour le retour (ex: (1, 2))
-            return tuple(indices[0])
         
-        return None
+        # Retourne une liste de tuples [(row, col), (row, col)...]
+        indices = np.argwhere(new_activations)
+        return [tuple(idx) for idx in indices]
 
     def process(self, grid_values):
-
         if not self.authorized:
             return
 
         if grid_values is None:
-            print("Grid is None")
             return
-
-        # DEBUG : Afficher les grilles pour comprendre
-        print(f"last_grid:\n{self.last_grid}")
-        print(f"grid_values:\n{grid_values}")
         
-        # 1. Chercher les nouvelles activations AVANT de mettre à jour last_grid
-        new_index = self.find_new_activated_index(grid_values)
+        # 1. Chercher TOUTES les nouvelles activations (avec la méthode corrigée précédente)
+        # Note: Assure-toi d'avoir implémenté la méthode find_new_activated_indices 
+        # qui retourne une liste, comme vu dans la réponse précédente.
+        new_indices = self.find_new_activated_indices(grid_values)
+        
+        current_time = time.time() # Heure actuelle
 
-        if new_index is not None:
-            print(f"!!! NOUVELLE ACTIVATION DÉTECTÉE À L'INDEX : {new_index} !!!")
-            row, col = new_index
+        for (row, col) in new_indices:
+            
+            # --- LE COOLDOWN CHECK EST ICI ---
+            last_time = self.last_activation_times[row, col]
+            
+            if current_time - last_time < self.COOLDOWN_DELAY:
+                print(f"⏳ Cooldown actif pour ({row}, {col}), ignoré.")
+                continue # On passe au suivant sans jouer le son
+            
+            # Si on est ici, c'est que le délai est passé
+            print(f"!!! NOUVELLE ACTIVATION VALIDÉE : ({row}, {col}) !!!")
+            
             if 0 <= row < len(self.audio_grid) and 0 <= col < len(self.audio_grid[row]):
                 nom_son = self.audio_grid[row][col]
+                
+                # On met à jour le temps pour cette case
+                self.last_activation_times[row, col] = current_time
+                
+                # On lance le son
                 self.queue_sound(row, col, str(nom_son))
-        else:
-            print("Pas de nouvelle activation")
 
-        # 2. Mettre à jour last_grid APRÈS la comparaison
+        # 2. Mettre à jour last_grid APRÈS avoir tout traité
         self.last_grid = grid_values.copy()
 
         # 3. Mettre à jour current_grid_completed

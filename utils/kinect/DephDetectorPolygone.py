@@ -27,7 +27,7 @@ class DepthDetector:
             
             # Dimensions de la grille
             "cols": 5,
-            "rows": 4,
+            "rows": 5,
             
             # Détection
             "threshold": 10,          # Seuil en mm
