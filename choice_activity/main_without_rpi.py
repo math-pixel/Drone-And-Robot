@@ -8,10 +8,16 @@ current_dir = os.path.dirname(current_path)
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
+import time
+import numpy as np
+
 from utils.WSClient import WSClient
 from utils.VideoPlayer import VideoPlayer
 
+import contextlib
+import inspect
 
+from utils.MicrophoneLevelMeter import MicrophoneLevelMeter, LevelConfig
 class ChoiceListener:
     def __init__(self):
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -78,7 +84,8 @@ if __name__ == "__main__":
                 {"id": 9, "type": "video", "file": "cine_2_9.mp4", "finished": False},
                 {"id": 10, "type": "video", "file": "cine_2_10_loop.mp4", "finished": False},
                 {"id": 11, "type": "choice", "chosen": -1, "finished": False},
-                {"id": 12, "type": "video", "file": ["cine_2_12_choice_2.mp4","cine_2_12_choice_2.mp4"], "finished": False}, 
+                {"id": 12, "type": "video", "file": ["cine_2_12_choice_2.mp4"], "finished": False}, 
+                {"id": 13, "type": "video", "file": "cine_2_13_loop.mp4", "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -147,6 +154,62 @@ if __name__ == "__main__":
     player.load(videos)
     player.set_volume(80)
 
+    meter = MicrophoneLevelMeter(LevelConfig())
+
+    async def _ws_send(client: WSClient, payload: dict) -> None:
+        # ✅ ton WSClient a cette méthode
+        if hasattr(client, "send_data"):
+            await client.send_data(payload)
+            return
+
+        # ✅ fallback (si un jour tu changes de client)
+        if hasattr(client, "_send_json"):
+            client.data = payload  # type: ignore[attr-defined]
+            await client._send_json(payload.get("key"))  # type: ignore[attr-defined]
+            return
+
+        raise AttributeError("WSClient: aucune méthode send_data/_send_json trouvée")
+
+    async def _stream_crie(client: WSClient, countdown_s: float = 14.0, poll_s: float = 0.1) -> None:
+        # 1) Countdown + calibration du bruit ambiant (on n'envoie rien)
+        t0 = time.monotonic()
+        samples: list[float] = []
+
+        while True:
+            elapsed = time.monotonic() - t0
+            if elapsed >= countdown_s:
+                break
+
+            # on "set le 0 sonore" => on ignore totalement l'envoi pendant le countdown
+            samples.append(meter.get_db())
+            await asyncio.sleep(poll_s)
+
+        # 2) Déduire un seuil basé sur l'ambiance
+        # base = percentile 90 du bruit ambiant (évite les pics) + marge
+        base = float(np.percentile(samples, 90)) if samples else meter.get_db()
+        margin_db = 10.0  # ↑ augmente si tu veux qu'il faille crier plus fort
+        gate_db = base + margin_db
+
+        print(f"🔇 Calibration done ({countdown_s:.0f}s): ambient≈{base:.1f} dB, gate≈{gate_db:.1f} dB")
+
+        # 3) On envoie crie_x seulement si on dépasse gate_db
+        last = 0
+        while True:
+            db = meter.get_db()
+            if db < gate_db:
+                last = 0
+                await asyncio.sleep(poll_s)
+                continue
+
+            lvl = meter.get_level_0_to_5()  # 0..5
+            if 1 <= lvl <= 5 and lvl != last:
+                await _ws_send(client, {"key": f"crie_{lvl}", "level": lvl, "db": db, "gate_db": gate_db})
+                last = lvl
+
+            await asyncio.sleep(poll_s)
+
+
+
     _current = {"name": None, "event": None, "loop": None}
 
     def on_video_end(video_id: str):
@@ -194,6 +257,11 @@ if __name__ == "__main__":
             if a.get("id") == aid and a.get("type") == atype:
                 return i
         return -1
+    
+    video_prefix = ""  # "" ou "vert"
+
+    def apply_prefix(name: str) -> str:
+        return f"{video_prefix}{name}" if video_prefix else name
 
     def pick_video_for_action(step_id: int, action: dict) -> str | None:
         file_field = action.get("file")
@@ -240,23 +308,37 @@ if __name__ == "__main__":
                     action["finished"] = True
                     await client.send_action_finished(step_id, action_id)
                     return
+
                 print(f"     🎥 Playing video: {file_name}")
 
-                if file_name.endswith("_loop.mp4"):
-                    stop_loop_event.clear()
-
-                    loop = asyncio.get_running_loop()
-                    loop.add_reader(sys.stdin, _on_any_keypress)
+                if file_name == "cine_5_2.mp4":
+                    meter.start()
+                    crie_task = asyncio.create_task(_stream_crie(client, countdown_s=14.0))
                     try:
-                        while not stop_loop_event.is_set():
-                            await play_and_wait(file_name)
+                        await play_and_wait(file_name)
                     finally:
-                        loop.remove_reader(sys.stdin)
+                        crie_task.cancel()
+                        with contextlib.suppress(asyncio.CancelledError):
+                            await crie_task
+                        meter.stop()
+
                 else:
-                    await play_and_wait(file_name)
+                    # (garde ton code loop actuel ici inchangé)
+                    if file_name.endswith("_loop.mp4"):
+                        stop_loop_event.clear()
+                        loop = asyncio.get_running_loop()
+                        loop.add_reader(sys.stdin, _on_any_keypress)
+                        try:
+                            while not stop_loop_event.is_set():
+                                await play_and_wait(file_name)
+                        finally:
+                            loop.remove_reader(sys.stdin)
+                    else:
+                        await play_and_wait(file_name)
 
                 action["finished"] = True
                 await client.send_action_finished(step_id, action_id)
+
 
             case "choice":
                 stop_loop_event.clear()
