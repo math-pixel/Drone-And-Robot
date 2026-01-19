@@ -189,7 +189,8 @@ if __name__ == "__main__":
         pass
 
     client = WSClient(
-        url="ws://192.168.10.34:8057/ws",
+        # url="ws://192.168.10.34:8057/ws",
+        url="ws://194.12.158.155:8057/ws",
         client_key="mom_activity",
         action_delegate=my_action_handler,
         key_delegate=my_key_handler,
