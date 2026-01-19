@@ -130,8 +130,8 @@ if __name__ == "__main__":
     # 2. Configuration du Client WS
     STEPS = {} # Ton objet steps si nécessaire
     client = WSClient(
-        url="ws://192.168.10.182:8057/ws",
-        client_key="atmosphere_light_activity",
+        url="ws://192.168.10.123:8057/ws",
+        client_key="light_atmosphere_activity",
         action_delegate=my_action_handler,
         key_delegate=my_key_handler,
         steps=STEPS
