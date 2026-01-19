@@ -37,7 +37,7 @@ class DepthDetectorDelegate:
         self.wsClient = wsClient
         self.action = None
         self.loop = None  # ⬅️ Référence à la boucle asyncio principale
-
+        self.finished_event = None
         self.last_score_time = 0   # Temps du dernier point marqué
         self.SCORE_COOLDOWN = 1.0  # Délai en secondes (ex: 1 seconde)
 
@@ -144,9 +144,16 @@ class DepthDetectorDelegate:
                     print("🏆 Victoire atteinte!")
                     self.stop_detection()
                     self.action["finished"] = True
-                    self._send_async(
-                        self.wsClient.send_action_finished("1", self.action["id"])
-                    )
+                    
+                    # 🔴 C'EST ICI QU'ON DÉBLOQUE LE HANDLER
+                    if self.loop is not None and self.finished_event is not None:
+                        print("🔓 Déblocage du signal de fin...")
+                        self.loop.call_soon_threadsafe(self.finished_event.set)
+                    else:
+                        # Fallback si l'event n'est pas configuré (pour éviter que ça plante)
+                        self._send_async(
+                            self.wsClient.send_action_finished("1", self.action["id"])
+                        )
             else:
                 # Optionnel : Juste pour le debug, dire qu'on ignore
                 # print("⏳ Cooldown actif, point ignoré...")
@@ -168,16 +175,27 @@ if __name__ == "__main__":
         print(f"📨 Action reçue: {action['type']}")
         
         if action["type"] == "activity":
-            # A. On attend un peu que la caméra soit chaude (facultatif mais prudent)
-            await asyncio.sleep(1)
             
-            # B. Prise de référence AUTOMATIQUE via le delegate (voir modif plus bas)
+            # 1. Créer le signal d'attente
+            event = asyncio.Event()
+            
+            # 2. Le donner au delegate pour qu'il puisse l'activer plus tard
+            depth_detector_delegate.finished_event = event
+            
+            # 3. Setup de la caméra (code existant)
+            await asyncio.sleep(1)
             if depth_detector_delegate.detector and depth_detector_delegate.detector.current_depth is not None:
-                print("📷 Prise de référence via Handler...")
                 depth_detector_delegate.detector.set_reference(depth_detector_delegate.detector.current_depth)
             
-            # C. Start
+            # 4. Lancer le jeu
             depth_detector_delegate.start_detection(action=action)
+            
+            # 5. 🛑 BLOQUER ICI TANT QUE C'EST PAS FINI 🛑
+            print(f"⏳ Jeu en cours... Attente des {depth_detector_delegate.maxPointsVictory} points...")
+            await event.wait()
+            
+            print("🎉 Fin de l'attente, envoi de la confirmation au serveur.")
+            # Le WSClient enverra le "step_finished" automatiquement après cette ligne
 
     async def my_connection_handler(client: WSClient, connected: bool):
         if connected:
