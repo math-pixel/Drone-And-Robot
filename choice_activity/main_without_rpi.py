@@ -18,31 +18,57 @@ import contextlib
 import inspect
 
 from utils.MicrophoneLevelMeter import MicrophoneLevelMeter, LevelConfig
+# ✅ REMPLACE ta classe ChoiceListener par celle-ci (1/2 sans ENTER + stop loop dès le choix)
+
+import os
+import sys
+import tty
+import termios
+
 class ChoiceListener:
-    def __init__(self):
+    def __init__(self, stop_loop_event: asyncio.Event):
         self._loop: asyncio.AbstractEventLoop | None = None
         self._event = asyncio.Event()
         self._pending: int | None = None
+        self._stop_loop_event = stop_loop_event
+
+        self._fd = sys.stdin.fileno()
+        self._old_term: list[int] | None = None
 
     def start(self):
         self._loop = asyncio.get_running_loop()
-        self._loop.add_reader(sys.stdin, self._on_stdin)
+
+        # mode "cbreak" => on lit les touches sans ENTER
+        self._old_term = termios.tcgetattr(self._fd)
+        tty.setcbreak(self._fd)
+
+        self._loop.add_reader(self._fd, self._on_stdin)
 
     def stop(self):
         if self._loop is not None:
-            self._loop.remove_reader(sys.stdin)
+            self._loop.remove_reader(self._fd)
             self._loop = None
 
+        if self._old_term is not None:
+            termios.tcsetattr(self._fd, termios.TCSADRAIN, self._old_term)
+            self._old_term = None
+
     def _on_stdin(self):
-        line = sys.stdin.readline()
-        if not line:
+        try:
+            b = os.read(self._fd, 1)  # 1 char
+        except Exception:
             return
-        raw = line.strip()
-        if raw == "1":
+        if not b:
+            return
+
+        ch = b.decode(errors="ignore")
+        if ch == "1":
             self._pending = 0
+            self._stop_loop_event.set()     # ✅ stop la video loop en cours
             self._event.set()
-        elif raw == "2":
+        elif ch == "2":
             self._pending = 1
+            self._stop_loop_event.set()     # ✅ stop la video loop en cours
             self._event.set()
 
     def has_choice(self) -> bool:
@@ -53,6 +79,7 @@ class ChoiceListener:
         val = 0 if self._pending is None else self._pending
         self._pending = None
         self._event.clear()
+        self._stop_loop_event.clear()        # prêt pour un prochain loop
         return val
 
 
@@ -226,11 +253,32 @@ if __name__ == "__main__":
     player.on_finished(on_video_end)
 
     stop_loop_event = asyncio.Event()
+    choice_listener = ChoiceListener(stop_loop_event)
 
-    def _on_any_keypress():
-        # terminal = line buffered -> il faudra ENTER, mais ça suffit pour tester
-        sys.stdin.readline()
-        stop_loop_event.set()
+    def _is_loop_action(action: dict) -> bool:
+        if action.get("type") != "video":
+            return False
+        f = action.get("file")
+        if isinstance(f, list):
+            return False
+        return isinstance(f, str) and f.endswith("_loop.mp4")
+
+    def _is_last_action_of_step(step_id: int, action: dict) -> bool:
+        step = _get_step(step_id)
+        if not step:
+            return False
+        actions = step.get("actions", [])
+        idx = _find_action_index(actions, action)
+        return idx != -1 and idx == (len(actions) - 1)
+
+    async def _play_loop_in_background(video_name: str) -> asyncio.Task:
+        stop_loop_event.clear()
+
+        async def _runner():
+            while not stop_loop_event.is_set():
+                await play_and_wait(video_name)
+
+        return asyncio.create_task(_runner())
 
     async def play_and_wait(video_name: str):
         _current["loop"] = asyncio.get_running_loop()
@@ -291,7 +339,6 @@ if __name__ == "__main__":
     def is_loop_video(name: str) -> bool:
         return name.endswith("_loop.mp4") or name.endswith("_loop")
 
-    choice_listener = ChoiceListener()
     server_interrupt = asyncio.Event()
 
     async def my_key_handler(data: dict, client: WSClient):
@@ -311,6 +358,14 @@ if __name__ == "__main__":
 
                 print(f"     🎥 Playing video: {file_name}")
 
+                # ---- SPECIAL: dernière action loop => on considère fini dès le lancement ----
+                if _is_loop_action(action) and _is_last_action_of_step(step_id, action):
+                    _ = await _play_loop_in_background(file_name)  # on la laisse tourner
+                    action["finished"] = True
+                    await client.send_action_finished(step_id, action_id)
+                    return  # ✅ permet au WSClient d'envoyer step_finished juste après
+
+                # ---- ton cas crie ----
                 if file_name == "cine_5_2.mp4":
                     meter.start()
                     crie_task = asyncio.create_task(_stream_crie(client, countdown_s=14.0))
@@ -321,18 +376,11 @@ if __name__ == "__main__":
                         with contextlib.suppress(asyncio.CancelledError):
                             await crie_task
                         meter.stop()
-
                 else:
-                    # (garde ton code loop actuel ici inchangé)
                     if file_name.endswith("_loop.mp4"):
                         stop_loop_event.clear()
-                        loop = asyncio.get_running_loop()
-                        loop.add_reader(sys.stdin, _on_any_keypress)
-                        try:
-                            while not stop_loop_event.is_set():
-                                await play_and_wait(file_name)
-                        finally:
-                            loop.remove_reader(sys.stdin)
+                        while not stop_loop_event.is_set():
+                            await play_and_wait(file_name)
                     else:
                         await play_and_wait(file_name)
 
@@ -344,12 +392,11 @@ if __name__ == "__main__":
                 stop_loop_event.clear()
                 if not choice_listener.has_choice():
                     print("\n     ❓ CHOIX")
-                    print("     -> Tape 1 (gauche) ou 2 (droite) puis ENTER")
+                    print("     -> Tape 1 (gauche) ou 2 (droite)")
 
                 selected = await choice_listener.wait_choice()
                 action["chosen"] = selected
                 action["finished"] = True
-
                 await client.send_choice_result(step_id, action_id, selected)
 
             case _:
@@ -357,19 +404,18 @@ if __name__ == "__main__":
 
     async def main():
         choice_listener.start()
-
         client = WSClient(
             url="ws://192.168.10.34:8057/ws",
             client_key="choice_activity",
             action_delegate=my_action_handler,
-            key_delegate=my_key_handler,  # si ton WSClient n'a pas ça, dis-moi sa signature et je l'adapte
+            key_delegate=my_key_handler,
             steps=STEPS
         )
-
         try:
             await client.run()
         finally:
             choice_listener.stop()
+
 
     try:
         asyncio.run(main())

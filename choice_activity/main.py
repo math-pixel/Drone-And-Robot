@@ -4,7 +4,6 @@ import asyncio
 import time
 import numpy as np
 import contextlib
-import inspect
 
 # --- BLOC MAGIQUE A METTRE TOUT EN HAUT ---
 current_path = os.path.abspath(__file__)
@@ -215,6 +214,8 @@ if __name__ == "__main__":
 
     player.on_finished(on_video_end)
 
+    stop_loop_event = asyncio.Event()
+
     async def play_and_wait(video_name: str):
         _current["loop"] = asyncio.get_running_loop()
         ev = asyncio.Event()
@@ -226,6 +227,15 @@ if __name__ == "__main__":
 
         _current["event"] = None
         _current["name"] = None
+
+    async def _play_loop_in_background(video_name: str) -> asyncio.Task:
+        stop_loop_event.clear()
+
+        async def _runner():
+            while not stop_loop_event.is_set():
+                await play_and_wait(video_name)
+
+        return asyncio.create_task(_runner())
 
     # ======================================================
     # HELPERS
@@ -273,11 +283,27 @@ if __name__ == "__main__":
         n = os.path.basename(name)
         return n.endswith("_loop.mp4") or n.endswith("_loop")
 
+    def _is_loop_action(action: dict) -> bool:
+        if action.get("type") != "video":
+            return False
+        f = action.get("file")
+        if isinstance(f, list):
+            return False
+        return isinstance(f, str) and f.endswith("_loop.mp4")
+
+    def _is_last_action_of_step(step_id: int, action: dict) -> bool:
+        step = _get_step(step_id)
+        if not step:
+            return False
+        actions = step.get("actions", [])
+        idx = _find_action_index(actions, action)
+        return idx != -1 and idx == (len(actions) - 1)
+
     async def wait_for_button_choice() -> int:
         global idButtonPressed
         idButtonPressed = None
         while idButtonPressed is None:
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0.02)
 
         if idButtonPressed == "left":
             return 0
@@ -305,6 +331,13 @@ if __name__ == "__main__":
 
                 print(f"     🎥 Playing video: {file_name}")
 
+                # ---- SPECIAL: dernière action loop => on considère fini dès le lancement ----
+                if _is_loop_action(action) and _is_last_action_of_step(step_id, action):
+                    _ = await _play_loop_in_background(file_name)
+                    action["finished"] = True
+                    await client.send_action_finished(step_id, action_id)
+                    return
+
                 if file_name == "cine_5_2.mp4":
                     meter.start()
                     crie_task = asyncio.create_task(_stream_crie(client, countdown_s=14.0))
@@ -317,8 +350,8 @@ if __name__ == "__main__":
                         meter.stop()
 
                 elif is_loop_video(file_name):
-                    idButtonPressed = None
-                    while idButtonPressed is None:
+                    # loop normal: attend un bouton OU un stop_loop_event (choice le déclenchera)
+                    while not stop_loop_event.is_set():
                         await play_and_wait(file_name)
 
                 else:
@@ -328,12 +361,13 @@ if __name__ == "__main__":
                 await client.send_action_finished(step_id, action_id)
 
             case "choice":
-                idButtonPressed = None
-
                 print("\n     ❓ CHOIX")
                 print("     👉 Appuyez sur GAUCHE (left) ou DROITE (right)")
 
                 selected = await wait_for_button_choice()
+
+                stop_loop_event.set()
+
                 action["chosen"] = selected
                 action["finished"] = True
 

@@ -241,6 +241,7 @@ class WSClient:
         await self._send_step_finished(step_id)
 
     async def _send_step_finished(self, step_id: int):
+        print("DEBUG -> about to send step_finished", step_id)
         self.data["key"] = f"{self.client_key}_step_{step_id}_finished"
         print(f"🏁 Step {step_id} finished")
         await self._send_json()
