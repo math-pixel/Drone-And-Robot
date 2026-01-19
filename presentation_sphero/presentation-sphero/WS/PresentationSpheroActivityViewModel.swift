@@ -73,6 +73,13 @@ final class PresentationSpheroActivityViewModel: ObservableObject {
         case "presentation_sphero_activity_step_1_authorization":
             authorized = true
             print("✅ Authorized → Sphero control enabled")
+            
+        case "presentation_activity_finished":
+            authorized = false
+            useMotionControl = false
+            stopMotionControl()
+            robot?.stop()
+            print("🛑 presentation_activity_finished → Sphero stopped")
 
         default:
             break
