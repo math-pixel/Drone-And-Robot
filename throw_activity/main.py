@@ -32,7 +32,7 @@ class DepthDetectorDelegate:
         self.points = 0
         self.authorized = False
         self.pointsToAdd = 10
-        self.roverThresholdsTurn = [(0, 10), (80, 90), (175,180)]
+        self.roverThresholdsTurn = [(0, 10), (80, 90), (180,160)]
         self.voiceProfTurns = ["prof_heho", "prof_nrv", "prof_fin"]
         self.roverTurnedIndex = 0
         self.maxPointsVictory = 180
@@ -142,10 +142,8 @@ class DepthDetectorDelegate:
                 # B. Ajouter les points et gérer le rover
                 self.add_points(self.pointsToAdd)
 
-                if self.points % 10 == 0:
-                    self._send_async(
-                        self.wsClient.send("global_sound_ils_rigolent")
-                    )
+                if self.points >= 10 and self.points < 15:
+                    self._send_async(self.wsClient._send_json("global_sound_ils_rigolent"))
 
                 self.turn_rover()
 
