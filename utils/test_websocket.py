@@ -1,3 +1,4 @@
+import time
 if __name__ == "__main__":
     import asyncio
     from utils.WSClient import WSClient
@@ -68,6 +69,14 @@ if __name__ == "__main__":
             # k = f"global_sound_{son}"
             k = input("key")
             await client._send_json(key=k)
+
+            # await client._send_json(key="rover_left_180")
+            # time.sleep(2)
+            # await client._send_json(key="rover_left_180")
+            # time.sleep(2)
+            # await client._send_json(key="rover_left_180")
+            # time.sleep(2)
+            # await client._send_json(key="rover_left_180")
         
 
     client = WSClient(
