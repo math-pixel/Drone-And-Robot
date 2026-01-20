@@ -357,14 +357,17 @@ if __name__ == "__main__":
 
                 # ---- SPECIAL: Scene du cri ----
                 if file_name == "cine_5_2.mp4":
-
-                    print("     ⏳ Pause technique audio avant activation micro...")
-                    await asyncio.sleep(1.0)
+                    print("     ⏳ Pause technique audio (1s)...")
+                    await asyncio.sleep(1.0) # Important pour éviter l'erreur ALSA
+                    
                     meter.start()
-                    crie_task = asyncio.create_task(_stream_crie(client, countdown_s=5.0))
+                    # On lance la tâche (la calibration ne durera que 1s grâce à la modif)
+                    crie_task = asyncio.create_task(_stream_crie(client)) 
+                    
                     try:
                         await play_and_wait(file_name)
                     finally:
+                        print("     🛑 Fin de la scène cri, arrêt micro.")
                         crie_task.cancel()
                         with contextlib.suppress(asyncio.CancelledError):
                             await crie_task
