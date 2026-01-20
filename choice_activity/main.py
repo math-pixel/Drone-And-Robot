@@ -356,7 +356,7 @@ if __name__ == "__main__":
                     return
 
                 # ---- SPECIAL: Scene du cri ----
-                if file_name == "cine_5_2.mp4":
+                if file_name == "cine_5_3.mp4":
                     print("     ⏳ Pause technique audio (1s)...")
                     await asyncio.sleep(14.0) # Important pour éviter l'erreur ALSA
                     
