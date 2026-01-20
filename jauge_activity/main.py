@@ -30,7 +30,7 @@ strips = {
             leds_by_column=NUMBER_LEDS_BY_COLUMN,
             flip_vertical=True
         ),
-        "color": (255, 223, 0)     # Jaune
+        "color": (0, 255, 0)     # Jaune
     },
     "shame": {
         "controller": LEDController(
@@ -50,7 +50,7 @@ strips = {
             leds_by_column=NUMBER_LEDS_BY_COLUMN,
             flip_vertical=True
         ),
-        "color": (180, 0, 255)     # Violet
+        "color": (10, 0, 255)     # Violet
     },
     "angry": {
         "controller": LEDController(
@@ -125,7 +125,7 @@ def connect_wifi():
 def my_key_handler(data, client):
     key = data.get("key", "")
     print(f"🔑 [KEY DELEGATE] Received: {key}")
-    
+    print(data)
     if key == "update_emotions":
         emotions = data.get("emotions", [])
         update_emotion(emotions)
