@@ -5,6 +5,7 @@ import threading
 import asyncio
 import time
 from collections import deque
+import random
 
 # --- BLOC MAGIQUE A METTRE TOUT EN HAUT ---
 
@@ -82,12 +83,12 @@ class DepthDetectorDelegate:
                 self.player.load(self.audio_grid[row][col], chemin_complet)
 
         for chut_name in self.chut_sound:
-            chemin_chut = os.path.join(parent_dir, "audios\\" , chut_name + EXT_AUDIO)
+            chemin_chut = os.path.join(parent_dir, "audios\\" , chut_name + ".mp3")
             self.player.load(chut_name, chemin_chut)
 
         # 2. Charger Respect et Silence
-        self.player.load("respect", os.path.join(parent_dir, AUDIO_MOTS_EXPOSE, "respect.mp3"))
-        self.player.load("silence", os.path.join(parent_dir, AUDIO_MOTS_EXPOSE, "silence.mp3"))
+        self.player.load("respect", os.path.join(parent_dir, "audios\\", "respect.mp3"))
+        self.player.load("silence", os.path.join(parent_dir, "audios\\", "silence.mp3"))
                 
                 # self.audio_grid[row][col] = AUDIO_MOTS_EXPOSE + self.audio_grid[row][col] + EXT_AUDIO
         # self.player.load_multiple({
@@ -283,6 +284,16 @@ class DepthDetectorDelegate:
                 print(f"⏳ Cooldown actif pour ({row}, {col}), ignoré.")
                 continue # On passe au suivant sans jouer le son
             
+            # --- AJOUTER CE BLOC (Vérification de validité) ---
+            # On s'assure d'abord qu'on ne sort pas des limites du tableau
+            if row < self.grid_validation.shape[0] and col < self.grid_validation.shape[1]:
+                # Si la case vaut 0 dans la grille de validation (la "solution")
+                if self.grid_validation[row, col] == 0:
+                    print(f"❌ Mauvais mot détecté en ({row}, {col}) - Ignoré.")
+                    self.wsClient._send_json("bad_word")
+                    continue # On passe directement à la prochaine itération, sans jouer le son
+            # --------------------------------------------------
+
             # Si on est ici, c'est que le délai est passé
             print(f"!!! NOUVELLE ACTIVATION VALIDÉE : ({row}, {col}) !!!")
             
@@ -296,7 +307,7 @@ class DepthDetectorDelegate:
                 self.queue_sound(row, col, str(nom_son))
 
             self.count_word += 1
-            if self.count_word % 3 == 0:
+            if self.count_word % 5 == 0:
                 chut_to_play = random.choice(self.chut_sound)
                 # On envoie -1, -1 pour dire "Joue ce son quoi qu'il arrive"
                 self.queue_sound(-1, -1, chut_to_play)
