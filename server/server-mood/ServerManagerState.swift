@@ -417,22 +417,37 @@ extension ServerManager {
 
 
     func sendEmotionsUpdateToAtmosphere() {
-        guard let session = getSessionForActivity("jauge_activity") else {
+        // jauge_activity
+        if let session = getSessionForActivity("jauge_activity") {
+            var payload = globalJSON
+            payload["key"] = "update_emotions"
+
+            if let text = stringify(json: payload) {
+                log("➡️ Sending update_emotions to jauge_activity")
+                session.writeText(text)
+            } else {
+                log("❌ Failed to stringify update_emotions payload (jauge_activity)")
+            }
+        } else {
             log("🛑🛑🛑 ERROR: jauge_activity is NOT connected — cannot send update_emotions 🛑🛑🛑")
-            return
         }
 
-        var payload = globalJSON
-        payload["key"] = "update_emotions"
+        // sound_atmosphere_activity
+        if let soundSession = getSessionForActivity("sound_atmosphere_activity") {
+            var soundPayload = globalJSON
+            soundPayload["key"] = "global_sound_update_emotions"
 
-        guard let text = stringify(json: payload) else {
-            log("❌ Failed to stringify update_emotions payload")
-            return
+            if let soundText = stringify(json: soundPayload) {
+                log("➡️ Sending global_sound_update_emotions to sound_atmosphere_activity")
+                soundSession.writeText(soundText)
+            } else {
+                log("❌ Failed to stringify global_sound_update_emotions payload (sound_atmosphere_activity)")
+            }
+        } else {
+            log("🛑🛑🛑 ERROR: sound_atmosphere_activity is NOT connected — cannot send global_sound_update_emotions 🛑🛑🛑")
         }
-
-        log("➡️ Sending update_emotions to jauge_activity")
-        session.writeText(text)
     }
+
 
     func handleSequencingIfNeeded(incomingKey: String, incomingJSON: [String: Any]) {
         guard let routes = Sequencing.routes[incomingKey], !routes.isEmpty else { return }
