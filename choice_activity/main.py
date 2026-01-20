@@ -341,6 +341,9 @@ if __name__ == "__main__":
 
                 # ---- SPECIAL: Scene du cri ----
                 if file_name == "cine_5_2.mp4":
+
+                    print("     ⏳ Pause technique audio avant activation micro...")
+                    await asyncio.sleep(1.0)
                     meter.start()
                     crie_task = asyncio.create_task(_stream_crie(client, countdown_s=14.0))
                     try:
