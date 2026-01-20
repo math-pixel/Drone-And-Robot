@@ -9,7 +9,7 @@ import sounddevice as sd
 
 @dataclass
 class LevelConfig:
-    sample_rate: int = 16000
+    sample_rate: int = 48000
     block_size: int = 1024
     channels: int = 1
     device: Optional[int] = None  # None = default input

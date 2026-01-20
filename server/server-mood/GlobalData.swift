@@ -66,10 +66,12 @@ enum Sequencing {
             ("presentation_activity", "presentation_activity_step_1_authorization"),
             ("presentation_sphero_activity", "presentation_sphero_activity_step_1_authorization"),
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
+            ("sound_atmosphere_activity", "global_sound_loop_chuchottement"),
             ("light_atmosphere_activity", "update_light_4_on"),
             ("light_atmosphere_activity", "update_light_2_off"),
         ],
         "presentation_activity_finished": [
+            ("sound_atmosphere_activity", "global_sound_end_loop_chuchottement"),
             ("choice_activity", "choice_activity_step_3_authorization"),
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
             ("sound_atmosphere_activity", "global_sound_presentation_end"),
@@ -151,20 +153,34 @@ enum EmotionRouting {
         
         "choice_activity_step_4_action_5_choice_0": ["happiness": 18,  "stress": 0, "shame": 15, "angry": 0],
         "choice_activity_step_4_action_5_choice_1": ["happiness": -10,  "stress": 0, "shame": 15, "angry": 0],
-        
-        "choice_activity_step_5_action_1_finished": ["happiness": 0,  "stress": 20, "shame": 10, "angry": 30],
+        "cine_4_5_choice_1": ["happiness": 18,  "stress": 0, "shame": 15, "angry": 0],
 
+        "choice_activity_step_5_action_1_finished": ["happiness": 0,  "stress": 20, "shame": 10, "angry": 30],
+        
+        "choice_activity_step_6_action_4_choice_0": ["happiness": +20,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_6_action_4_choice_1": ["happiness": +20,  "stress": 0, "shame": 0, "angry": 0],
+        
+        "throw_activity_finished": ["happiness": -37,  "stress": +37, "shame": +37, "angry": +37],
+        
+        "choice_activity_step_6_action_7_choice_0": ["happiness": +16,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_6_action_7_choice_1": ["happiness": +16,  "stress": 0, "shame": 0, "angry": 0],
         
         "good_answer": ["happiness": 1,  "stress": 0, "shame": 0, "angry": 0],
-        "wrong_answer": ["happiness": -3,  "stress": 0, "shame": 3, "angry": 1],
+        "wrong_answer": ["happiness": -5,  "stress": 0, "shame": 3, "angry": 1],
         "no_answer": ["happiness": 0,  "stress": 1, "shame": 1, "angry": 3],
         
-        "global_sound_prof_nrv": ["happiness": 0,  "stress": 0, "shame": 5, "angry": 1],
-        "global_sound_prof_heho": ["happiness": 0,  "stress": 0, "shame": 5, "angry": 1],
-        "global_sound_prof_fin": ["happiness": 0,  "stress": 0, "shame": 15, "angry": 3],
+        "bad_word": ["happiness": -1,  "stress": 5, "shame": 2, "angry": 2],
+        
+        "test_activity_step_1_finished": ["happiness": -22,  "stress": 0, "shame": 5, "angry": 0],
+        "test_activity_finished": ["happiness": -22,  "stress": 0, "shame": 5, "angry": 0],
+        
+        "mom_activity_stepper_control_turn_right_10": ["happiness": 2,  "stress": 0, "shame": 0, "angry": 0],
+        "global_sound_prof_nrv": ["happiness": -5,  "stress": 0, "shame": 5, "angry": 1],
+        "global_sound_prof_heho": ["happiness": -7,  "stress": 0, "shame": 5, "angry": 1],
+        "global_sound_prof_fin": ["happiness": -12,  "stress": 0, "shame": 15, "angry": 3],
 
         "crie_4": ["happiness": 0,  "stress": -1, "shame": -1, "angry": -1],
-        "crie_5": ["happiness": 0,  "stress": -2, "shame": -2, "angry": -2],
+        "crie_5": ["happiness": 0,  "stress": -1, "shame": -1, "angry": -1],
         
         
     ]
