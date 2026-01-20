@@ -32,7 +32,7 @@ class DepthDetectorDelegate:
         self.points = 0
         self.authorized = False
         self.pointsToAdd = 10
-        self.roverThresholdsTurn = [(0, 10), (80, 90), (175,180)]
+        self.roverThresholdsTurn = [(0, 10), (80, 90), (180,160)]
         self.voiceProfTurns = ["prof_heho", "prof_nrv", "prof_fin"]
         self.roverTurnedIndex = 0
         self.maxPointsVictory = 180
