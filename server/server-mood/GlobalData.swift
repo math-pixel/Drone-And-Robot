@@ -123,6 +123,11 @@ enum Sequencing {
           ("sound_atmosphere_activity", "global_sound_positif_1"),
           ("sound_atmosphere_activity", "global_sound_rire"),
         ],
+        
+        "update_emotions":
+            [
+                ("sound_atmosphere_activity", "global_sound_update_emotions"),
+            ]
     ]
 }
 
