@@ -32,7 +32,7 @@ strips = {
         ),
         "color": (255, 223, 0)     # Jaune
     },
-    "stress": {
+    "shame": {
         "controller": LEDController(
             pin_num=21, 
             num_leds=NUM_LEDS,
@@ -42,7 +42,7 @@ strips = {
         ),
         "color": (255, 100, 0)     # Orange
     },
-    "shame": {
+    "stress": {
         "controller": LEDController(
             pin_num=12, 
             num_leds=NUM_LEDS,
@@ -166,10 +166,10 @@ def main():
     # Test LEDs au démarrage
     print("💡 Testing LEDs...")
     test_emotions = [
-        {"type": "happiness", "level": 0.5},
-        {"type": "stress", "level": 0.3},
-        {"type": "shame", "level": 0.7},
-        {"type": "angry", "level": 0.2}
+        {"type": "happiness", "level": 37},
+        {"type": "stress", "level": 5},
+        {"type": "shame", "level": 20},
+        {"type": "angry", "level": 37}
     ]
     update_emotion(test_emotions, delay=0.05)  # Animation lente pour le test
     time.sleep(2)
@@ -177,10 +177,10 @@ def main():
     # Test descente
     print("💡 Testing descent...")
     test_emotions_low = [
-        {"type": "happiness", "level": 0.1},
-        {"type": "stress", "level": 0.1},
-        {"type": "shame", "level": 0.1},
-        {"type": "angry", "level": 0.1}
+        {"type": "happiness", "level": 0},
+        {"type": "stress", "level": 0},
+        {"type": "shame", "level": 0},
+        {"type": "angry", "level": 0}
     ]
     update_emotion(test_emotions_low, delay=0.05)
     time.sleep(2)
