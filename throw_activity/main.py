@@ -142,10 +142,8 @@ class DepthDetectorDelegate:
                 # B. Ajouter les points et gérer le rover
                 self.add_points(self.pointsToAdd)
 
-                if self.points % 10 == 0:
-                    self._send_async(
-                        self.wsClient.send("global_sound_ils_rigolent")
-                    )
+                if self.points >= 10 and self.points < 15:
+                    self._send_async(self.wsClient._send_json("global_sound_ils_rigolent"))
 
                 self.turn_rover()
 
