@@ -1,7 +1,7 @@
 // app.js (basé sur ton code, modifs minimales)
 const WS_URL = window.APP_CONFIG.WS_URL;
 const MAPPING_URL = "./answer.mapping.json";
-const QCM_URL = "../test_activity/qcm.geometry.json"; // ajuste si besoin (même fichier que test_activity)
+const STEPS_URL = "../test_activity/steps.test_activity.json";
 
 const RECONNECT_MS = 5000;
 let reconnectTimer = null;
@@ -98,16 +98,31 @@ async function loadMapping() {
   }
 }
 
-async function loadQcm() {
+function optionIdToLetter(optionId) {
+  if (optionId === 1) return "A";
+  if (optionId === 2) return "B";
+  if (optionId === 3) return "C";
+  return "";
+}
+
+async function loadCorrectFromSteps() {
   try {
-    const res = await fetch(QCM_URL, { cache: "no-store" });
+    const res = await fetch(STEPS_URL, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const qcm = await res.json();
-    if (!qcm || !Array.isArray(qcm.questions)) throw new Error("qcm invalid");
+    const steps = await res.json();
+
+    const step0 = steps?.[0];
+    const actions = Array.isArray(step0?.actions) ? step0.actions : [];
 
     correctById = new Map();
-    for (const q of qcm.questions) {
-      correctById.set(Number(q.number), String(q.correct || "").toUpperCase());
+    for (const a of actions) {
+      const id = Number(a.id);
+      const letter =
+        (typeof a.correctLetter === "string" ? a.correctLetter : "") ||
+        (typeof a.correct === "string" ? a.correct : "") ||
+        optionIdToLetter(Number(a.correctOptionId));
+
+      correctById.set(id, String(letter || "").toUpperCase());
     }
   } catch {
     correctById = new Map();
@@ -179,7 +194,7 @@ function connect() {
 
     const mEcho = key.match(/^test_activity_step_1_action_(\d+)_(a|b|c)$/);
     if (mEcho) {
-      onAnswerEcho(Number(mEcho[1]));
+      onAnswerEcho(Number(mEcho[1]), mEcho[2]); // ✅ actionId + lettre reçue
       return;
     }
   };
@@ -293,19 +308,16 @@ function sendAnswer() {
 }
 
 function onAnswerEcho(actionId) {
-  // on ne colore que si on est sur cette question
   if (currentActionId == null || actionId !== currentActionId) return;
 
-  // calcule correct vs mapping pour cet actionId
-  const mapped = String(mapping[String(actionId)] || "").toUpperCase(); // "A"|"B"|"C"
-  const correct = String(correctById.get(actionId) || "").toUpperCase(); // "A"|"B"|"C"
+  const picked = String(currentLetter || "").toUpperCase(); // lettre envoyée par CETTE tablette
+  const correct = String(correctById.get(actionId) || "").toUpperCase();
 
   els.btnLetter.classList.remove("good", "bad");
   els.btnLetter.classList.add(
-    mapped && correct && mapped === correct ? "good" : "bad"
+    picked && correct && picked === correct ? "good" : "bad",
   );
 
-  // reste affiché/couleur jusqu’au prochain _started
   els.btnLetter.disabled = true;
 }
 
@@ -316,10 +328,14 @@ function onActionFinished(actionId) {
   )
     return;
 
-  els.btnLetter.classList.remove("good", "bad");
-  els.btnLetter.classList.add("bad");
+  // si pas déjà coloré (ex: pas d'echo), alors bad
+  if (
+    !els.btnLetter.classList.contains("good") &&
+    !els.btnLetter.classList.contains("bad")
+  ) {
+    els.btnLetter.classList.add("bad");
+  }
 
-  // ensuite on attend une prochaine _started
   waitingFinishedForActionId = null;
   currentActionId = null;
   currentLetter = null;
@@ -330,7 +346,13 @@ function onTap(e) {
   sendAnswer();
 }
 
+function onTapStart(e) {
+  e.preventDefault();
+  sendStart();
+}
+
 els.btnConnect.addEventListener("click", connect);
+els.btnStart.addEventListener("touchstart", onTapStart, { passive: false });
 els.btnStart.addEventListener("click", sendStart);
 els.btnLetter.addEventListener("touchstart", onTap, { passive: false });
 els.btnLetter.addEventListener("click", () => sendAnswer());
@@ -343,7 +365,7 @@ document.querySelectorAll(".btnPick").forEach((btn) => {
     showScreen("connect");
   });
 });
-loadQcm();
+loadCorrectFromSteps();
 showScreen("pick");
 scheduleReconnect();
 resetUI();
