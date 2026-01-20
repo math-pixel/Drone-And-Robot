@@ -157,13 +157,13 @@ enum EmotionRouting {
 
         "choice_activity_step_5_action_1_finished": ["happiness": 0,  "stress": 20, "shame": 10, "angry": 30],
         
-        "choice_activity_step_6_action_4_choice_0": ["happiness": +20,  "stress": 0, "shame": 0, "angry": 0],
-        "choice_activity_step_6_action_4_choice_1": ["happiness": +20,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_6_action_3_choice_0": ["happiness": +20,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_6_action_3_choice_1": ["happiness": +20,  "stress": 0, "shame": 0, "angry": 0],
         
         "throw_activity_finished": ["happiness": -37,  "stress": +37, "shame": +37, "angry": +37],
         
-        "choice_activity_step_6_action_7_choice_0": ["happiness": +16,  "stress": 0, "shame": 0, "angry": 0],
-        "choice_activity_step_6_action_7_choice_1": ["happiness": +16,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_6_action_6_choice_0": ["happiness": +16,  "stress": 0, "shame": 0, "angry": 0],
+        "choice_activity_step_6_action_6_choice_1": ["happiness": +16,  "stress": 0, "shame": 0, "angry": 0],
         
         "good_answer": ["happiness": 1,  "stress": 0, "shame": 0, "angry": 0],
         "wrong_answer": ["happiness": -5,  "stress": 0, "shame": 3, "angry": 1],

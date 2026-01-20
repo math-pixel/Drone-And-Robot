@@ -416,14 +416,25 @@ extension ServerManager {
     }
 
 
+    private func makeEmotionsOnlyPayload(key: String) -> [String: Any] {
+        var p: [String: Any] = [:]
+        p["name"] = globalJSON["name"] ?? "global_data_transfer"
+        p["version"] = globalJSON["version"] ?? "1.0.0"
+        p["ws_server_address"] = globalJSON["ws_server_address"] ?? (wsServerAddress ?? "")
+        p["started"] = globalJSON["started"] ?? false
+        p["message"] = globalJSON["message"] ?? ""
+        p["emotions"] = globalJSON["emotions"] ?? []
+        p["key"] = key
+        return p
+    }
+
     func sendEmotionsUpdateToAtmosphere() {
-        // jauge_activity
+        // jauge_activity (send ONLY emotions payload, no "activity" array)
         if let session = getSessionForActivity("jauge_activity") {
-            var payload = globalJSON
-            payload["key"] = "update_emotions"
+            let payload = makeEmotionsOnlyPayload(key: "update_emotions")
 
             if let text = stringify(json: payload) {
-                log("➡️ Sending update_emotions to jauge_activity")
+                log("➡️ Sending update_emotions to jauge_activity (emotions-only)")
                 session.writeText(text)
             } else {
                 log("❌ Failed to stringify update_emotions payload (jauge_activity)")
@@ -432,13 +443,12 @@ extension ServerManager {
             log("🛑🛑🛑 ERROR: jauge_activity is NOT connected — cannot send update_emotions 🛑🛑🛑")
         }
 
-        // sound_atmosphere_activity
+        // sound_atmosphere_activity (also emotions-only)
         if let soundSession = getSessionForActivity("sound_atmosphere_activity") {
-            var soundPayload = globalJSON
-            soundPayload["key"] = "global_sound_update_emotions"
+            let soundPayload = makeEmotionsOnlyPayload(key: "global_sound_update_emotions")
 
             if let soundText = stringify(json: soundPayload) {
-                log("➡️ Sending global_sound_update_emotions to sound_atmosphere_activity")
+                log("➡️ Sending global_sound_update_emotions to sound_atmosphere_activity (emotions-only)")
                 soundSession.writeText(soundText)
             } else {
                 log("❌ Failed to stringify global_sound_update_emotions payload (sound_atmosphere_activity)")
@@ -447,6 +457,7 @@ extension ServerManager {
             log("🛑🛑🛑 ERROR: sound_atmosphere_activity is NOT connected — cannot send global_sound_update_emotions 🛑🛑🛑")
         }
     }
+
 
 
     func handleSequencingIfNeeded(incomingKey: String, incomingJSON: [String: Any]) {
