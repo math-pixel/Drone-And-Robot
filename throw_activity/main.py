@@ -105,8 +105,12 @@ class DepthDetectorDelegate:
         """
         await self.wsClient._send_json(f"global_sound_{self.voiceProfTurns[self.roverTurnedIndex]}")
         self.roverTurnedIndex += 1
-        await self.wsClient._send_json("rover_left_180")
-        time.sleep(5)  # ⬅️ asyncio.sleep au lieu de time.sleep
+        await self.wsClient._send_json("rover_right_180")
+        asyncio.sleep(2)  # ⬅️ asyncio.sleep au lieu de time.sleep
+        await self.wsClient._send_json("rover_right_180")
+        asyncio.sleep(2)  # ⬅️ asyncio.sleep au lieu de time.sleep
+        await self.wsClient._send_json("rover_right_180")
+        asyncio.sleep(2)  # ⬅️ asyncio.sleep au lieu de time.sleep
         await self.wsClient._send_json("rover_right_180")
 
     def get_score(self):
