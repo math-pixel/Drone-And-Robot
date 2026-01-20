@@ -11,6 +11,7 @@
           { "id": 2, "text": "La moitié du rayon" },
           { "id": 3, "text": "Égal au rayon" }
         ],
+        "correctOptionId": 2,
         "finished": false
       },
       {
@@ -22,6 +23,7 @@
           { "id": 2, "text": "90°" },
           { "id": 3, "text": "180°" }
         ],
+        "correctOptionId": 2,
         "finished": false
       },
       {
@@ -33,6 +35,7 @@
           { "id": 2, "text": "Losange" },
           { "id": 3, "text": "Trapèze" }
         ],
+        "correctOptionId": 1,
         "finished": false
       },
       {
@@ -44,17 +47,19 @@
           { "id": 2, "text": "4" },
           { "id": 3, "text": "5" }
         ],
+        "correctOptionId": 2,
         "finished": false
       },
       {
         "id": 5,
-        "name": "Une droite est :",
+        "name": "Mon stress est :",
         "type": "choice",
         "options": [
           { "id": 1, "text": "Limitée" },
           { "id": 2, "text": "Infinie" },
           { "id": 3, "text": "Courbe" }
         ],
+        "correctOptionId": 2,
         "finished": false
       },
       {
@@ -66,6 +71,7 @@
           { "id": 2, "text": "Napoléon II" },
           { "id": 3, "text": "Napoléon I" }
         ],
+        "correctOptionId": 3,
         "finished": false
       },
       {
@@ -77,6 +83,7 @@
           { "id": 2, "text": "Le compas" },
           { "id": 3, "text": "Le rapporteur" }
         ],
+        "correctOptionId": 3,
         "finished": false
       },
       {
@@ -88,6 +95,7 @@
           { "id": 2, "text": "Son centre et son rayon" },
           { "id": 3, "text": "Ses côtés" }
         ],
+        "correctOptionId": 2,
         "finished": false
       },
       {
@@ -99,6 +107,7 @@
           { "id": 2, "text": "La moitié du rayon" },
           { "id": 3, "text": "Égal au rayon" }
         ],
+        "correctOptionId": 1,
         "finished": false
       },
       {
@@ -110,6 +119,7 @@
           { "id": 2, "text": "5" },
           { "id": 3, "text": "6" }
         ],
+        "correctOptionId": 2,
         "finished": false
       },
       {
@@ -121,6 +131,7 @@
           { "id": 2, "text": "Sont toujours perpendiculaires" },
           { "id": 3, "text": "Ne se coupent jamais" }
         ],
+        "correctOptionId": 3,
         "finished": false
       },
       {
@@ -132,94 +143,31 @@
           { "id": 2, "text": "Trois côtés égaux" },
           { "id": 3, "text": "Aucun côté égal" }
         ],
+        "correctOptionId": 2,
         "finished": false
       },
       {
         "id": 13,
-        "name": "Comment appelle-t-on un angle supérieur à 90° ?",
+        "name": "C0mm3nt 4pp3ll3-t-0n un 4ngl3 supér13ur à 90° ?",
         "type": "choice",
         "options": [
           { "id": 1, "text": "Angle aigu" },
           { "id": 2, "text": "Angle obtus" },
           { "id": 3, "text": "Angle droit" }
         ],
-        "finished": false
-      },
-      {
-        "id": 14,
-        "name": "Un losange a :",
-        "type": "choice",
-        "options": [
-          { "id": 1, "text": "4 angles droits" },
-          { "id": 2, "text": "4 côtés égaux" },
-          { "id": 3, "text": "2 côtés égaux" }
-        ],
+        "correctOptionId": 2,
         "finished": false
       },
       {
         "id": 15,
-        "name": "Combien de diagonales a un carré ?",
+        "name": "Combien de carré a une diagonale ?",
         "type": "choice",
         "options": [
           { "id": 1, "text": "1" },
           { "id": 2, "text": "2" },
           { "id": 3, "text": "4" }
         ],
-        "finished": false
-      },
-      {
-        "id": 16,
-        "name": "Un triangle rectangle possède :",
-        "type": "choice",
-        "options": [
-          { "id": 1, "text": "Deux angles droits" },
-          { "id": 2, "text": "Un angle droit" },
-          { "id": 3, "text": "Aucun angle droit" }
-        ],
-        "finished": false
-      },
-      {
-        "id": 17,
-        "name": "Quel polygone a 6 côtés ?",
-        "type": "choice",
-        "options": [
-          { "id": 1, "text": "Hexagone" },
-          { "id": 2, "text": "Heptagone" },
-          { "id": 3, "text": "Octogone" }
-        ],
-        "finished": false
-      },
-      {
-        "id": 18,
-        "name": "Le rayon d’un cercle est :",
-        "type": "choice",
-        "options": [
-          { "id": 1, "text": "Le segment qui relie deux points du cercle" },
-          { "id": 2, "text": "Le segment qui relie le centre au cercle" },
-          { "id": 3, "text": "Le contour du cercle" }
-        ],
-        "finished": false
-      },
-      {
-        "id": 19,
-        "name": "Une demi-droite :",
-        "type": "choice",
-        "options": [
-          { "id": 1, "text": "Est infinie des deux côtés" },
-          { "id": 2, "text": "A une longueur finie" },
-          { "id": 3, "text": "Commence en un point et est infinie d’un côté" }
-        ],
-        "finished": false
-      },
-      {
-        "id": 20,
-        "name": "Un angle aigu mesure :",
-        "type": "choice",
-        "options": [
-          { "id": 1, "text": "Moins de 90°" },
-          { "id": 2, "text": "Exactement 90°" },
-          { "id": 3, "text": "Plus de 90°" }
-        ],
+        "correctOptionId": 2,
         "finished": false
       }
     ],

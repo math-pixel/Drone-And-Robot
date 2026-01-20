@@ -100,9 +100,10 @@ if __name__ == "__main__":
         {
             "id": 5,
             "actions": [
-                {"id": 1, "type": "video", "file": "cine_5_1.mp4", "finished": False},
+                {"id": 1, "type": "video", "file": "cine_5_1_loop.mp4", "finished": False},
                 {"id": 2, "type": "video", "file": "cine_5_2.mp4", "finished": False},
-                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 3, "type": "video", "file": "cine_5_3.mp4", "finished": False},
+                {"id": 4, "type": "choice", "chosen": -1, "finished": False},
             ],
             "authorized": False,
             "finished": False
@@ -164,34 +165,50 @@ if __name__ == "__main__":
             return
         raise AttributeError("WSClient: aucune méthode send_data/_send_json trouvée")
 
-    async def _stream_crie(client: WSClient, countdown_s: float = 14.0, poll_s: float = 0.1) -> None:
+    async def _stream_crie(client: WSClient, countdown_s: float = 1.0, poll_s: float = 0.1) -> None:
+        # On force countdown_s à 1 seconde max pour ne pas bloquer si la vidéo est courte
+        countdown_s = 1.0 
+        
+        print(f"🎤 Calibration du micro en cours ({countdown_s}s)...")
         t0 = time.monotonic()
         samples: list[float] = []
 
+        # Phase 1 : Calibration (rapide)
         while True:
             if (time.monotonic() - t0) >= countdown_s:
                 break
-            samples.append(meter.get_db())
+            db = meter.get_db()
+            samples.append(db)
+            # Petit debug pour voir si le micro entend quelque chose
+            # print(f"   🎙️ Calib db: {db:.1f}") 
             await asyncio.sleep(poll_s)
 
+        # Calcul du seuil
         base = float(np.percentile(samples, 90)) if samples else meter.get_db()
-        margin_db = 10.0
+        margin_db = 15.0 # Marge pour éviter de déclencher sur le bruit ambiant
         gate_db = base + margin_db
 
-        print(f"🔇 Calibration done ({countdown_s:.0f}s): ambient≈{base:.1f} dB, gate≈{gate_db:.1f} dB")
+        print(f"🔇 Calibration terminée : Ambiance ≈ {base:.1f} dB | Seuil déclenchement ≈ {gate_db:.1f} dB")
+        print("🎤 Criez maintenant !")
 
         last = 0
         while True:
             db = meter.get_db()
-            if db < gate_db:
-                last = 0
-                await asyncio.sleep(poll_s)
-                continue
-
             lvl = meter.get_level_0_to_5()
-            if 1 <= lvl <= 5 and lvl != last:
-                await _ws_send(client, {"key": f"crie_{lvl}", "level": lvl, "db": db, "gate_db": gate_db})
-                last = lvl
+            
+            # Affiche le niveau en temps réel pour débugger
+            # On affiche seulement si le son est significatif (> -50dB par exemple)
+            if db > -50:
+                print(f"   🔊 Niveau: {lvl}/5 ({db:.1f} dB) [Seuil: {gate_db:.1f}]")
+
+            # Logique de déclenchement
+            if db >= gate_db:
+                if 1 <= lvl <= 5 and lvl != last:
+                    print(f"   🚀 ENVOI DU CRI : Niveau {lvl}")
+                    await _ws_send(client, {"key": f"crie_{lvl}", "level": lvl, "db": db, "gate_db": gate_db})
+                    last = lvl
+            else:
+                last = 0 # Reset si on repasse sous le seuil
 
             await asyncio.sleep(poll_s)
 
@@ -339,12 +356,18 @@ if __name__ == "__main__":
                     return
 
                 # ---- SPECIAL: Scene du cri ----
-                if file_name == "cine_5_2.mp4":
+                if file_name == "cine_5_3.mp4":
+                    print("     ⏳ Pause technique audio (1s)...")
+                    await asyncio.sleep(1.0) # Important pour éviter l'erreur ALSA
+                    
                     meter.start()
-                    crie_task = asyncio.create_task(_stream_crie(client, countdown_s=14.0))
+                    # On lance la tâche (la calibration ne durera que 1s grâce à la modif)
+                    crie_task = asyncio.create_task(_stream_crie(client)) 
+                    
                     try:
                         await play_and_wait(file_name)
                     finally:
+                        print("     🛑 Fin de la scène cri, arrêt micro.")
                         crie_task.cancel()
                         with contextlib.suppress(asyncio.CancelledError):
                             await crie_task

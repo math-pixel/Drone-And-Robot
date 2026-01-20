@@ -9,7 +9,7 @@ import sounddevice as sd
 
 @dataclass
 class LevelConfig:
-    sample_rate: int = 16000
+    sample_rate: int = 48000
     block_size: int = 1024
     channels: int = 1
     device: Optional[int] = None  # None = default input
@@ -77,8 +77,10 @@ class MicrophoneLevelMeter:
             channels=int(self.cfg.channels),
             device=device,
             dtype="float32",
+            latency="high",
             callback=self._callback,
         )
+
         self._stream.start()
 
     def stop(self) -> None:
@@ -102,21 +104,16 @@ class MicrophoneLevelMeter:
     # Internals
     # -----------------------------
     def _callback(self, indata: Any, frames: int, time_info: Any, status: sd.CallbackFlags) -> None:
-        # status can be non-empty on Linux (over/underflow). Don’t crash.
-        if status:
-            # keep last values, just ignore the glitchy buffer
-            return
+        # Sur RPi, status peut être souvent non-vide. Ne pas drop les buffers.
+        # if status: return  # ❌ surtout pas
 
         try:
             x = np.asarray(indata, dtype=np.float32)
             if x.size == 0:
                 return
-
-            # force mono: take first channel if multi-channel
             if x.ndim > 1:
                 x = x[:, 0]
 
-            # RMS
             rms = float(np.sqrt(np.mean(x * x) + 1e-12))
         except Exception:
             return
@@ -128,6 +125,7 @@ class MicrophoneLevelMeter:
             db = 20.0 * float(np.log10(self._rms_smooth + 1e-12)) + float(self.cfg.calibration_db)
             self._last_db = db
             self._last_level = self._db_to_level(db)
+
 
     def _db_to_level(self, db: float) -> int:
         nf = float(self.cfg.noise_floor_db)
