@@ -13,6 +13,12 @@ function scheduleReconnect() {
   }, RECONNECT_MS);
 }
 
+const QUESTION_SOUND_BY_ID = {
+  14: "../audios/lisez_questions.mp3",
+  7: "../audios/triche_pas.mp3",
+  3: "../audios/tshirt_test.mp3",
+};
+
 // ✅ AJOUTE en haut (après les const)
 const audio = {
   bg: new Audio("../audios/musique_de_fond.mp3"),
@@ -58,6 +64,20 @@ function stopCountdown() {
   } catch {}
 }
 
+const questionAudioCache = new Map();
+function getQuestionAudio(file) {
+  if (!questionAudioCache.has(file)) {
+    const a = new Audio(file);
+    a.preload = "auto";
+    questionAudioCache.set(file, a);
+  }
+  return questionAudioCache.get(file);
+}
+function playQuestionSoundIfAny(actionId) {
+  const file = QUESTION_SOUND_BY_ID[actionId];
+  if (!file) return;
+  playOnce(getQuestionAudio(file));
+}
 
 const els = {
   btnConnect: document.getElementById("btnConnect"),
@@ -247,6 +267,7 @@ function nextQuestion() {
 
   const action = actions[currentIndex];
   currentActionId = Number(action.id);
+  playQuestionSoundIfAny(currentActionId);
   awaitingAnswer = true;
 
   playOnce(audio.swipe);
