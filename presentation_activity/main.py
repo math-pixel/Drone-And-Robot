@@ -52,6 +52,11 @@ class DepthDetectorDelegate:
         self.finished_event = None
         self.loop = None
 
+        self.chut_sound = ["chut_1", "chut_2", "chut_3"]
+        self.count_word = 0
+        self.respect_played = False   # Flag pour respect.mp3
+        self.silence_played = False   # Flag pour silence.mp3
+
         # Charger la config UNE SEULE FOIS au démarrage
         self.config = self.load_config(config_path) if config_path else {}
         print("Config loaded:", self.config)
@@ -75,6 +80,14 @@ class DepthDetectorDelegate:
 
                 print(f"Loading sound for cell ({row}, {col}): {chemin_complet}")
                 self.player.load(self.audio_grid[row][col], chemin_complet)
+
+        for chut_name in self.chut_sound:
+            chemin_chut = os.path.join(parent_dir, "audios\\" , chut_name + EXT_AUDIO)
+            self.player.load(chut_name, chemin_chut)
+
+        # 2. Charger Respect et Silence
+        self.player.load("respect", os.path.join(parent_dir, AUDIO_MOTS_EXPOSE, "respect.mp3"))
+        self.player.load("silence", os.path.join(parent_dir, AUDIO_MOTS_EXPOSE, "silence.mp3"))
                 
                 # self.audio_grid[row][col] = AUDIO_MOTS_EXPOSE + self.audio_grid[row][col] + EXT_AUDIO
         # self.player.load_multiple({
@@ -102,6 +115,11 @@ class DepthDetectorDelegate:
         while self.sound_queue:
             row, col, sound_name = self.sound_queue.popleft()
             
+            if row == -1:
+                print(f"🔊 Joue son spécial: {sound_name}")
+                self.player.play(sound_name)
+                return
+
             # Vérifier si la cellule est TOUJOURS active
             if row < self.last_grid.shape[0] and col < self.last_grid.shape[1]:
                 if self.last_grid[row, col] == 1:
@@ -185,6 +203,21 @@ class DepthDetectorDelegate:
             print(f"Resizing grid from {self.current_grid_completed.shape} to {grid_values.shape}")
             self.current_grid_completed = np.zeros(grid_values.shape, dtype=int)
         
+        rows, cols = grid_values.shape
+        
+        # Index cible (celui qu'on veut bloquer) et Condition (celui qui doit être fini)
+        target_r, target_c = 2, 4  # Ligne 3, Col 4
+        cond_r, cond_c = 3, 4      # Ligne 4, Col 4
+
+        # Si la caméra détecte la case Cible (3,5)...
+        if grid_values[target_r, target_c] == 1:
+            
+            # ... Mais que la Condition (4,5) n'est PAS encore validée définitivement
+            if self.current_grid_completed[cond_r, cond_c] == 0:
+                # On annule l'activation de la cible pour ce tour
+                # (Note: j'enlève le print pour éviter de spammer la console)
+                grid_values[target_r, target_c] = 0 
+
         # Conversion en arrays numpy et OR logique
         self.current_grid_completed = np.logical_or(
             self.current_grid_completed, 
@@ -262,12 +295,36 @@ class DepthDetectorDelegate:
                 # On lance le son
                 self.queue_sound(row, col, str(nom_son))
 
+            self.count_word += 1
+            if self.count_word % 3 == 0:
+                chut_to_play = random.choice(self.chut_sound)
+                # On envoie -1, -1 pour dire "Joue ce son quoi qu'il arrive"
+                self.queue_sound(-1, -1, chut_to_play)
+
         # 2. Mettre à jour last_grid APRÈS avoir tout traité
         self.last_grid = grid_values.copy()
 
         # 3. Mettre à jour current_grid_completed
         self.joinGrid(grid_values)
-                
+
+
+        # 4. Vérifications spéciales pour Respect et Silence
+        # On vérifie après joinGrid car current_grid_completed vient d'être mis à jour
+        rows, cols = self.current_grid_completed.shape
+
+        # Case (3,3) -> Respect (une seule fois)
+        if 3 < rows and 3 < cols: # Vérif taille pour éviter crash
+            if self.current_grid_completed[3, 3] == 1 and not self.respect_played:
+                self.queue_sound(-1, -1, "respect")
+                self.respect_played = True
+        
+        # Case (5,3) -> Silence (une seule fois)
+        if 5 < rows and 3 < cols: # Vérif taille (Attention index 5 = 6ème ligne)
+            if self.current_grid_completed[5, 3] == 1 and not self.silence_played:
+                self.queue_sound(-1, -1, "silence")
+                self.silence_played = True
+
+        # 5. Vérifier si l'activité est terminée   
         if self.isActivityFinish():
             print("Grille complétée détectée !")
             self.authorized = False
