@@ -2,8 +2,11 @@
 const WS_URL = window.APP_CONFIG.WS_URL;
 const RECONNECT_MS = 5000;
 
+const ALWAYS_LOOP_SOUND_NAME = "ambiance";
 const SOUND_PATH = "../audios/";
 const SOUND_EXT = ".mp3";
+
+let backgroundLoopStarted = false;
 
 const els = {
   dot: document.getElementById("dot"),
@@ -272,6 +275,34 @@ function connect() {
     scheduleReconnect();
   };
 }
+
+function ensureBackgroundLoopStarted() {
+  if (backgroundLoopStarted) return;
+  backgroundLoopStarted = true;
+  startLoop(ALWAYS_LOOP_SOUND_NAME);
+}
+
+function attachFirstInteractionStart() {
+  const opts = { once: true, passive: true };
+
+  const start = () => ensureBackgroundLoopStarted();
+
+  // works on desktop + iOS
+  window.addEventListener("pointerdown", start, opts);
+  window.addEventListener("touchstart", start, opts);
+  window.addEventListener("mousedown", start, opts);
+  window.addEventListener("keydown", start, opts);
+
+  // optional: if you already have a button for enabling audio
+  if (els.btnEnableAudio) {
+    els.btnEnableAudio.addEventListener("click", start, { once: true });
+  }
+}
+
+window.addEventListener("beforeunload", () => {
+  stopLoop(ALWAYS_LOOP_SOUND_NAME);
+});
+attachFirstInteractionStart();
 
 // auto connect loop
 setConnected(false);
