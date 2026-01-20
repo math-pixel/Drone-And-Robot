@@ -405,7 +405,7 @@ if __name__ == "__main__":
     async def main():
         choice_listener.start()
         client = WSClient(
-            url="ws://192.168.10.34:8057/ws",
+            url="ws://192.168.10.123:8057/ws",
             client_key="choice_activity",
             action_delegate=my_action_handler,
             key_delegate=my_key_handler,

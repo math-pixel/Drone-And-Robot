@@ -72,6 +72,7 @@ enum Sequencing {
         "presentation_activity_finished": [
             ("choice_activity", "choice_activity_step_3_authorization"),
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
+            ("sound_atmosphere_activity", "global_sound_presentation_end"),
             ("light_atmosphere_activity", "update_light_4_off"),
             ("light_atmosphere_activity", "update_light_2_on"),
             ("presentation_sphero_activity", "presentation_activity_finished"),
@@ -79,12 +80,14 @@ enum Sequencing {
         "choice_activity_step_3_finished": [
             ("test_activity", "test_activity_step_1_authorization"),
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
+            ("sound_atmosphere_activity", "global_sound_test_intro"),
             ("light_atmosphere_activity", "update_light_3_on"),
             ("light_atmosphere_activity", "update_light_2_off"),
         ],
         "test_activity_finished": [
           ("choice_activity", "choice_activity_step_4_authorization"),
           ("sound_atmosphere_activity", "global_sound_sonnerie"),
+          ("sound_atmosphere_activity", "global_sound_test_intro"),
           ("light_atmosphere_activity", "update_light_3_off"),
           ("light_atmosphere_activity", "update_light_2_on"),
         ],
@@ -96,6 +99,7 @@ enum Sequencing {
         ],
         "choice_activity_step_4_finished": [
             ("throw_activity", "throw_activity_step_1_authorization"),
+            ("sound_atmosphere_activity", "global_sound_throw_intro"),
             ("sound_atmosphere_activity", "global_sound_sonnerie"),
             ("light_atmosphere_activity", "update_light_1_on"),
             ("light_atmosphere_activity", "update_light_2_off"),
@@ -119,6 +123,11 @@ enum Sequencing {
           ("sound_atmosphere_activity", "global_sound_positif_1"),
           ("sound_atmosphere_activity", "global_sound_rire"),
         ],
+        
+        "update_emotions":
+            [
+                ("sound_atmosphere_activity", "global_sound_update_emotions"),
+            ]
     ]
 }
 
@@ -147,11 +156,13 @@ enum EmotionRouting {
 
         
         "good_answer": ["happiness": 1,  "stress": 0, "shame": 0, "angry": 0],
-        "wrong_answer": ["happiness": 0,  "stress": 0, "shame": 3, "angry": 1],
+        "wrong_answer": ["happiness": -3,  "stress": 0, "shame": 3, "angry": 1],
         "no_answer": ["happiness": 0,  "stress": 1, "shame": 1, "angry": 3],
         
-        
-        
+        "global_sound_prof_nrv": ["happiness": 0,  "stress": 0, "shame": 5, "angry": 1],
+        "global_sound_prof_heho": ["happiness": 0,  "stress": 0, "shame": 5, "angry": 1],
+        "global_sound_prof_fin": ["happiness": 0,  "stress": 0, "shame": 15, "angry": 3],
+
         "crie_4": ["happiness": 0,  "stress": -1, "shame": -1, "angry": -1],
         "crie_5": ["happiness": 0,  "stress": -2, "shame": -2, "angry": -2],
         

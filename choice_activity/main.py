@@ -100,9 +100,10 @@ if __name__ == "__main__":
         {
             "id": 5,
             "actions": [
-                {"id": 1, "type": "video", "file": "cine_5_1.mp4", "finished": False},
+                {"id": 1, "type": "video", "file": "cine_5_1_loop.mp4", "finished": False},
                 {"id": 2, "type": "video", "file": "cine_5_2.mp4", "finished": False},
-                {"id": 3, "type": "choice", "chosen": -1, "finished": False},
+                {"id": 3, "type": "video", "file": "cine_5_3.mp4", "finished": False},
+                {"id": 4, "type": "choice", "chosen": -1, "finished": False},
             ],
             "authorized": False,
             "finished": False
