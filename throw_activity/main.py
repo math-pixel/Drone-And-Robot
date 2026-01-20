@@ -32,7 +32,9 @@ class DepthDetectorDelegate:
         self.points = 0
         self.authorized = False
         self.pointsToAdd = 10
-        self.roverThresholdsTurn = [(0, 10), (50, 60), (80, 90)]
+        self.roverThresholdsTurn = [(0, 10), (80, 90), (175,180)]
+        self.voiceProfTurns = ["prof_heho", "prof_nrv", "prof_fin"]
+        self.roverTurnedIndex = 0
         self.maxPointsVictory = 180
         self.wsClient = wsClient
         self.action = None
@@ -101,8 +103,10 @@ class DepthDetectorDelegate:
         """
         Séquence de rotation du rover (coroutine async).
         """
+        await self.wsClient._send_json(f"global_sound_{self.voiceProfTurns[self.roverTurnedIndex]}")
+        self.roverTurnedIndex += 1
         await self.wsClient._send_json("rover_left_180")
-        await asyncio.sleep(5)  # ⬅️ asyncio.sleep au lieu de time.sleep
+        time.sleep(5)  # ⬅️ asyncio.sleep au lieu de time.sleep
         await self.wsClient._send_json("rover_right_180")
 
     def get_score(self):
@@ -137,6 +141,12 @@ class DepthDetectorDelegate:
                 
                 # B. Ajouter les points et gérer le rover
                 self.add_points(self.pointsToAdd)
+
+                if self.points % 10 == 0:
+                    self._send_async(
+                        self.wsClient.send("global_sound_ils_rigolent")
+                    )
+
                 self.turn_rover()
 
                 # C. Vérifier la victoire
