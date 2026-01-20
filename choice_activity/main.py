@@ -358,7 +358,7 @@ if __name__ == "__main__":
                 # ---- SPECIAL: Scene du cri ----
                 if file_name == "cine_5_2.mp4":
                     print("     ⏳ Pause technique audio (1s)...")
-                    await asyncio.sleep(1.0) # Important pour éviter l'erreur ALSA
+                    await asyncio.sleep(14.0) # Important pour éviter l'erreur ALSA
                     
                     meter.start()
                     # On lance la tâche (la calibration ne durera que 1s grâce à la modif)
