@@ -165,7 +165,7 @@ if __name__ == "__main__":
             return
         raise AttributeError("WSClient: aucune méthode send_data/_send_json trouvée")
 
-        async def _stream_crie(client: WSClient, countdown_s: float = 1.0, poll_s: float = 0.1) -> None:
+    async def _stream_crie(client: WSClient, countdown_s: float = 1.0, poll_s: float = 0.1) -> None:
         # On force countdown_s à 1 seconde max pour ne pas bloquer si la vidéo est courte
         countdown_s = 1.0 
         
