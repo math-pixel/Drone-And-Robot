@@ -1,7 +1,6 @@
-// app.js (même fonctionnement, juste adapté au nouveau DOM)
+// app.js
 const WS_URL = window.APP_CONFIG.WS_URL;
-const STEPS_URL = "./steps.test_activity.json";
-const QCM_URL = "./qcm.geometry.json";
+const STEPS_URL = "./steps.test_activity.json"; // ✅ seul JSON
 const RECONNECT_MS = 5000;
 let reconnectTimer = null;
 
@@ -14,12 +13,12 @@ function scheduleReconnect() {
 }
 
 const QUESTION_SOUND_BY_ID = {
-  14: "../audios/lisez_questions.mp3",
-  7: "../audios/triche_pas.mp3",
+  7: "../audios/lisez_questions.mp3",
+  11: "../audios/triche_pas.mp3",
   3: "../audios/tshirt_test.mp3",
 };
 
-// ✅ AJOUTE en haut (après les const)
+// ✅ audio
 const audio = {
   bg: new Audio("../audios/musique_de_fond.mp3"),
   swipe: new Audio("../audios/swipe.mp3"),
@@ -56,7 +55,6 @@ function stopBg() {
     audio.bg.currentTime = 0;
   } catch {}
 }
-
 function stopCountdown() {
   try {
     audio.countdown.pause();
@@ -64,6 +62,7 @@ function stopCountdown() {
   } catch {}
 }
 
+// question sounds cache
 const questionAudioCache = new Map();
 function getQuestionAudio(file) {
   if (!questionAudioCache.has(file)) {
@@ -101,9 +100,9 @@ let ws = null;
 let lastRoot = null;
 let score = 0;
 
+// ✅ seul JSON -> on lit "correctAnswerLetter" depuis steps.test_activity.json
 let TEST_ACTIVITY_STEPS = null;
-let QCM = null;
-let correctById = new Map();
+let correctById = new Map(); // actionId -> "A"|"B"|"C"
 
 let actions = [];
 let currentIndex = -1;
@@ -156,22 +155,37 @@ async function loadJson(url) {
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   return await res.json();
 }
+
+function optionIdToLetter(optionId) {
+  // convention: option 1->A, 2->B, 3->C
+  if (optionId === 1) return "A";
+  if (optionId === 2) return "B";
+  if (optionId === 3) return "C";
+  return "";
+}
+
 async function bootLoad() {
   TEST_ACTIVITY_STEPS = await loadJson(STEPS_URL);
   if (!Array.isArray(TEST_ACTIVITY_STEPS))
     throw new Error("steps JSON must be an array");
 
-  QCM = await loadJson(QCM_URL);
-  if (!QCM || !Array.isArray(QCM.questions))
-    throw new Error("qcm JSON invalid");
-
-  correctById = new Map();
-  for (const q of QCM.questions) {
-    correctById.set(Number(q.number), String(q.correct).toUpperCase());
-  }
-
   const step0 = TEST_ACTIVITY_STEPS?.[0];
   actions = Array.isArray(step0?.actions) ? step0.actions : [];
+
+  // ✅ build correctById from steps.json
+  // needs ONE of these per action:
+  // - correctOptionId: 1|2|3
+  // - correct: "A"|"B"|"C"
+  // - correctLetter: "A"|"B"|"C"
+  correctById = new Map();
+  for (const a of actions) {
+    const id = Number(a.id);
+    const letter =
+      (typeof a.correctLetter === "string" ? a.correctLetter : "") ||
+      (typeof a.correct === "string" ? a.correct : "") ||
+      optionIdToLetter(Number(a.correctOptionId));
+    correctById.set(id, String(letter || "").toUpperCase());
+  }
 }
 
 function stopAllTimers() {
@@ -229,15 +243,13 @@ function renderQuestion(action, index, total) {
   els.feedback.classList.remove("show");
 }
 
-function showFeedback(ok) {
-  // reset
+function showFeedback() {
   document
     .querySelectorAll(".hl")
     .forEach((el) => el.classList.remove("ok", "ko"));
 
   const correct = (correctById.get(currentActionId) || "").toUpperCase(); // "A"|"B"|"C"
 
-  // Correct en vert
   if (correct === "A")
     document.querySelector(".answerA .hl")?.classList.add("ok");
   if (correct === "B")
@@ -245,7 +257,6 @@ function showFeedback(ok) {
   if (correct === "C")
     document.querySelector(".answerC .hl")?.classList.add("ok");
 
-  // Les 2 autres en rouge (même si bonne réponse)
   if (correct !== "A")
     document.querySelector(".answerA .hl")?.classList.add("ko");
   if (correct !== "B")
@@ -254,12 +265,20 @@ function showFeedback(ok) {
     document.querySelector(".answerC .hl")?.classList.add("ko");
 }
 
+function sendNoAnswer() {
+  wsSendRootWithKey("no_answer");
+}
+function sendGoodAnswer() {
+  wsSendRootWithKey("good_answer");
+}
+function sendWrongAnswer() {
+  wsSendRootWithKey("wrong_answer");
+}
 
 function nextQuestion() {
   stopAllTimers();
 
   currentIndex += 1;
-
   if (currentIndex >= actions.length) {
     finishQuiz();
     return;
@@ -267,6 +286,7 @@ function nextQuestion() {
 
   const action = actions[currentIndex];
   currentActionId = Number(action.id);
+
   playQuestionSoundIfAny(currentActionId);
   awaitingAnswer = true;
 
@@ -285,7 +305,6 @@ function nextQuestion() {
     if (remaining < 0) remaining = 0;
     els.timer.textContent = `${remaining}s`;
 
-    // play countdown sound once when entering last 3 seconds
     if (!countdownPlayedForThisQuestion && remaining === 3) {
       countdownPlayedForThisQuestion = true;
       playOnce(audio.countdown);
@@ -300,25 +319,13 @@ function nextQuestion() {
     wsSendRootWithKey(
       `test_activity_step_1_action_${currentActionId}_finished`,
     );
-
     sendNoAnswer();
 
     stopAllTimers();
     playOnce(audio.faux);
-    showFeedback(false);
+    showFeedback();
     nextQuestionTimeout = setTimeout(nextQuestion, 3000);
   }, 8000);
-}
-
-function sendNoAnswer() {
-  wsSendRootWithKey("no_answer");
-}
-
-function sendGoodAnswer() {
-  wsSendRootWithKey("good_answer");
-}
-function sendWrongAnswer() {
-  wsSendRootWithKey("wrong_answer");
 }
 
 function onAnswerReceived(letterLower) {
@@ -327,19 +334,18 @@ function onAnswerReceived(letterLower) {
   stopCountdown();
   stopAllTimers();
 
-  const picked = letterLower.toUpperCase(); // "A"|"B"|"C"
+  const picked = letterLower.toUpperCase();
   const correct = (correctById.get(currentActionId) || "").toUpperCase();
   const isCorrect = !!correct && picked === correct;
 
   if (isCorrect) score += 1;
 
-  // ✅ AJOUTE
   if (isCorrect) sendGoodAnswer();
   else sendWrongAnswer();
 
   playOnce(isCorrect ? audio.vrai : audio.faux);
 
-  showFeedback(true);
+  showFeedback();
   nextQuestionTimeout = setTimeout(nextQuestion, 3000);
 }
 
@@ -349,7 +355,7 @@ function startQuiz() {
     showScreen("startPrompt");
     return;
   }
-  score = 0; // ✅ reset score
+  score = 0;
   currentIndex = -1;
   showScreen("quiz");
   nextQuestion();
@@ -363,11 +369,10 @@ function finishQuiz() {
   wsSendRootWithKey("test_activity_step_1_finished");
 
   if (els.finalScore)
-    els.finalScore.textContent = `${score}/${actions.length || 20}`;
-  stopBg();  
+    els.finalScore.textContent = `${score}/20`;
+  stopBg();
   showScreen("done");
 }
-
 
 function connect() {
   if (
@@ -391,9 +396,7 @@ function connect() {
   ws.onmessage = (evt) => {
     const raw = typeof evt.data === "string" ? evt.data : "";
     const parsed = safeJsonParse(raw);
-    if (!parsed) return;
-
-    const root = normalizeRoot(parsed);
+    const root = parsed ? normalizeRoot(parsed) : null;
     if (!root) return;
 
     lastRoot = root;
@@ -406,7 +409,7 @@ function connect() {
 
     if (key === "test_activity_step_1_authorization") {
       hasAuthorization = true;
-      startBg(); // 🔊 musique de fond dès authorize
+      startBg();
       if (!hasStartSignal) showScreen("startPrompt");
       else startQuiz();
       return;
@@ -418,7 +421,6 @@ function connect() {
       else showScreen("startPrompt");
       return;
     }
-    
 
     if (awaitingAnswer && currentActionId != null) {
       const prefix = `test_activity_step_1_action_${currentActionId}_`;
@@ -431,7 +433,6 @@ function connect() {
   };
 
   ws.onerror = () => {
-    // force un onclose derrière dans pas mal de cas, sinon on planifie quand même
     try {
       ws?.close();
     } catch {}
@@ -456,7 +457,5 @@ function connect() {
 
 els.btnConnect.addEventListener("click", () => connect());
 
-bootLoad().catch(() => {
-  // si JSON pas dispo, on laisse connect possible, mais ça ne jouera pas
-});
+bootLoad().catch(() => {});
 showScreen("connect");
