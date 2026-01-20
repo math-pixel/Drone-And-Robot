@@ -241,18 +241,23 @@ extension ServerManager {
     }
     
     @discardableResult
-        func sendJSON(_ json: [String: Any], to activityName: String, context: String) -> Bool {
-            guard let session = getSessionForActivity(activityName) else {
-                log("🛑🛑🛑 ERROR: \(activityName) is NOT connected — cannot send. context=\(context) 🛑🛑🛑")
-                return false
-            }
-            guard let text = stringify(json: json) else {
-                log("❌ Failed to stringify JSON. context=\(context)")
-                return false
-            }
-            session.writeText(text)
-            return true
+    func sendJSON(_ json: [String: Any], to activityName: String, context: String) -> Bool {
+        guard (activityConnected[activityName] ?? false) else {
+            log("⚠️ sendJSON skipped: \(activityName) flagged disconnected. context=\(context)")
+            return false
         }
+        guard let session = getSessionForActivity(activityName) else {
+            log("🛑 Cannot send: \(activityName) not connected. context=\(context)")
+            return false
+        }
+        guard let text = stringify(json: json) else {
+            log("❌ Failed to stringify JSON. context=\(context)")
+            return false
+        }
+        session.writeText(text)
+        return true
+    }
+
 
         func forwardJSON(_ json: [String: Any], to activities: [String], context: String) {
             guard let text = stringify(json: json) else {
