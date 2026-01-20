@@ -151,9 +151,10 @@ enum EmotionRouting {
         "choice_activity_step_3_action_3_finished": ["happiness": 0,  "stress": 10, "shame": 0, "angry": 0],
         
         
-        "choice_activity_step_4_action_5_choice_0": ["happiness": 18,  "stress": 0, "shame": 15, "angry": 0],
-        "choice_activity_step_4_action_5_choice_1": ["happiness": -10,  "stress": 0, "shame": 15, "angry": 0],
+        "choice_activity_step_4_action_4_choice_0": ["happiness": 18,  "stress": 0, "shame": 15, "angry": 0],
+        "choice_activity_step_4_action_4_choice_1": ["happiness": -10,  "stress": 0, "shame": 15, "angry": 0],
         "cine_4_5_choice_1": ["happiness": 18,  "stress": 0, "shame": 15, "angry": 0],
+        "vertcine_4_5_choice_1": ["happiness": 18,  "stress": 0, "shame": 15, "angry": 0],
 
         "choice_activity_step_5_action_1_finished": ["happiness": 0,  "stress": 20, "shame": 10, "angry": 30],
         
