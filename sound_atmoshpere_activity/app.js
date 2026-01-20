@@ -23,6 +23,9 @@ let lastRoot = null;
 // one Audio element per file (cache)
 const audioCache = new Map();
 
+// loop controllers by sound name
+const loopControllers = new Map(); // name -> { stop: boolean }
+
 function log(line) {
   const ts = new Date().toLocaleTimeString();
   els.log.value = `[${ts}] ${line}\n` + els.log.value;
@@ -76,10 +79,85 @@ async function playSound(file) {
   }
 }
 
+function stopLoop(name) {
+  const ctrl = loopControllers.get(name);
+  if (ctrl) ctrl.stop = true;
+  loopControllers.delete(name);
+
+  const file = `${SOUND_PATH}${name}${SOUND_EXT}`;
+  const a = audioCache.get(file);
+  if (a) {
+    try {
+      a.pause();
+      a.currentTime = 0;
+    } catch {}
+  }
+
+  log(`⏹️ loop stopped: ${name}`);
+}
+
+async function startLoop(name) {
+  if (!name) return;
+
+  // stop previous loop for same sound, then restart
+  stopLoop(name);
+
+  const ctrl = { stop: false };
+  loopControllers.set(name, ctrl);
+
+  const file = `${SOUND_PATH}${name}${SOUND_EXT}`;
+  const a = getAudio(file);
+
+  log(`🔁 loop start: ${name} -> ${file}`);
+
+  while (!ctrl.stop) {
+    if (!audioEnabled) {
+      log(`🔇 audio disabled (blocked) — loop paused: ${file}`);
+      break;
+    }
+
+    try {
+      a.loop = false; // we handle looping ourselves
+      a.currentTime = 0;
+      await a.play();
+
+      await new Promise((resolve) => {
+        const onEnded = () => {
+          a.removeEventListener("ended", onEnded);
+          resolve();
+        };
+        a.addEventListener("ended", onEnded, { once: true });
+      });
+
+      log(`🔁 loop replay: ${file}`);
+    } catch (e) {
+      log(`🔇 loop play failed: ${file} (${String(e?.message || e)})`);
+      break;
+    }
+  }
+}
+
 function handleKey(key) {
   if (!key) return;
 
+  const loopPrefix = "global_sound_loop_";
+  const endLoopPrefix = "global_sound_end_loop_";
   const prefix = "global_sound_";
+
+  if (key.startsWith(loopPrefix)) {
+    const name = key.slice(loopPrefix.length).trim();
+    if (!name) return log(`key=${key} (invalid)`);
+    startLoop(name);
+    return;
+  }
+
+  if (key.startsWith(endLoopPrefix)) {
+    const name = key.slice(endLoopPrefix.length).trim();
+    if (!name) return log(`key=${key} (invalid)`);
+    stopLoop(name);
+    return;
+  }
+
   if (!key.startsWith(prefix)) {
     log(`key=${key} (unknown)`);
     return;
@@ -137,7 +215,10 @@ function sendIdentificationSoundAtmosphere() {
 }
 
 function connect() {
-  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+  if (
+    ws &&
+    (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)
+  ) {
     return;
   }
 
@@ -175,7 +256,6 @@ function connect() {
         break;
 
       default:
-        // ton code existant: jouer son selon SOUND_BY_KEY / log unknown
         handleKey(key);
         break;
     }
