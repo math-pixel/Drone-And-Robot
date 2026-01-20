@@ -108,3 +108,19 @@ body {
   cursor: pointer;
 }
 .btnPick:active{ transform: translateY(1px); }
+
+*,
+*::before,
+*::after{
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  -webkit-touch-callout: none; /* iOS: pas de menu copier/coller */
+}
+
+/* Bonus: évite le highlight bleu au tap (mobile) */
+html, body{
+  -webkit-tap-highlight-color: transparent;
+}
