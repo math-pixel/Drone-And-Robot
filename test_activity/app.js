@@ -16,6 +16,9 @@ const QUESTION_SOUND_BY_ID = {
   7: "../audios/lisez_questions.mp3",
   11: "../audios/triche_pas.mp3",
   3: "../audios/tshirt_test.mp3",
+  5: "../audios/chut_1.mp3",
+  10: "../audios/chut_1.mp3",
+  15: "../audios/chut_1.mp3",
 };
 
 // ✅ audio
